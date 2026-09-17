@@ -62,15 +62,22 @@ public partial class LaunchpadViewModel : BaseViewModel
             return;
         }
 
-        AudioClip? clip = await _libraryService.ImportFromPickerAsync();
-        if(clip is null)
+        try
         {
-            return;
-        }
+            AudioClip? clip = await _libraryService.ImportFromPickerAsync();
+            if(clip is null)
+            {
+                return;
+            }
 
-        string color = PadPalette[pad.Index % PadPalette.Length];
-        Logger.LogDebug("Assigned clip '{ClipName}' to pad {PadIndex}.", clip.Name, pad.Index);
-        pad.Assign(clip.FilePath, clip.Name, color);
+            string color = PadPalette[pad.Index % PadPalette.Length];
+            Logger.LogDebug("Assigned clip '{ClipName}' to pad {PadIndex}.", clip.Name, pad.Index);
+            pad.Assign(clip.FilePath, clip.Name, color);
+        } catch(Exception ex)
+        {
+            Logger.LogError(ex, "Failed to assign a sample to pad {PadIndex}.", pad.Index);
+            StatusMessage = "Couldn't import that sample.";
+        }
     }
 
     ///<summary>
@@ -79,8 +86,14 @@ public partial class LaunchpadViewModel : BaseViewModel
     [RelayCommand]
     private void StopAll()
     {
-        Logger.LogDebug("Stopping all pads.");
-        _playbackService.StopAllPads();
+        try
+        {
+            Logger.LogDebug("Stopping all pads.");
+            _playbackService.StopAllPads();
+        } catch(Exception ex)
+        {
+            Logger.LogError(ex, "Failed to stop all pads.");
+        }
     }
     ///<summary>
     ///Stops every currently-sounding voice for a single pad.
@@ -93,8 +106,14 @@ public partial class LaunchpadViewModel : BaseViewModel
             return;
         }
 
-        Logger.LogDebug("Stopping pad {PadIndex}.", pad.Index);
-        _playbackService.StopPad(pad.Index);
+        try
+        {
+            Logger.LogDebug("Stopping pad {PadIndex}.", pad.Index);
+            _playbackService.StopPad(pad.Index);
+        } catch(Exception ex)
+        {
+            Logger.LogError(ex, "Failed to stop pad {PadIndex}.", pad.Index);
+        }
     }
 
     ///<summary>
@@ -122,8 +141,15 @@ public partial class LaunchpadViewModel : BaseViewModel
             return;
         }
 
-        Logger.LogDebug("Triggering pad {PadIndex}.", pad.Index);
-        _playbackService.TriggerPad(pad.Pad);
+        try
+        {
+            Logger.LogDebug("Triggering pad {PadIndex}.", pad.Index);
+            _playbackService.TriggerPad(pad.Pad);
+        } catch(Exception ex)
+        {
+            Logger.LogError(ex, "Failed to trigger pad {PadIndex}.", pad.Index);
+            StatusMessage = "Couldn't play that pad.";
+        }
     }
     #endregion
 
