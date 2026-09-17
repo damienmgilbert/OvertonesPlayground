@@ -33,6 +33,11 @@ public class SoundSynthesisService : ISoundSynthesisService
             DrumType.HiHat => DrumSynthesizer.HiHat(parameters),
             DrumType.Clap => DrumSynthesizer.Clap(parameters),
             DrumType.Bass => DrumSynthesizer.Bass(parameters),
+            DrumType.Tom => DrumSynthesizer.Tom(parameters),
+            DrumType.OpenHiHat => DrumSynthesizer.OpenHiHat(parameters),
+            DrumType.Rimshot => DrumSynthesizer.Rimshot(parameters),
+            DrumType.Crash => DrumSynthesizer.Crash(parameters),
+            DrumType.Shaker => DrumSynthesizer.Shaker(parameters),
             _ => throw new ArgumentOutOfRangeException(nameof(drum)),
         };
 

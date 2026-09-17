@@ -21,6 +21,7 @@ internal static class WaveformGenerator
         var frameCount = Math.Max(1, (int)(durationSeconds * sampleRate));
         var samples = new short[frameCount];
         var random = Random.Shared;
+        var pinkState = type == WaveformType.PinkNoise ? new double[7] : null;
 
         for (var i = 0; i < frameCount; i++)
         {
@@ -34,6 +35,7 @@ internal static class WaveformGenerator
                 WaveformType.Triangle => (4 * Math.Abs(phase - 0.5)) - 1,
                 WaveformType.Sawtooth => (2 * phase) - 1,
                 WaveformType.WhiteNoise => (random.NextDouble() * 2) - 1,
+                WaveformType.PinkNoise => NextPinkSample(random, pinkState!),
                 _ => 0.0,
             };
 
@@ -42,6 +44,24 @@ internal static class WaveformGenerator
         }
 
         return samples;
+    }
+
+    /// <summary>Paul Kellet's refined pink-noise filter: shapes white noise to a -3dB/octave slope.</summary>
+    private static double NextPinkSample(Random random, double[] state)
+    {
+        var white = (random.NextDouble() * 2) - 1;
+
+        state[0] = (0.99886 * state[0]) + (white * 0.0555179);
+        state[1] = (0.99332 * state[1]) + (white * 0.0750759);
+        state[2] = (0.96900 * state[2]) + (white * 0.1538520);
+        state[3] = (0.86650 * state[3]) + (white * 0.3104856);
+        state[4] = (0.55000 * state[4]) + (white * 0.5329522);
+        state[5] = (-0.7616 * state[5]) - (white * 0.0168980);
+
+        var pink = state[0] + state[1] + state[2] + state[3] + state[4] + state[5] + state[6] + (white * 0.5362);
+        state[6] = white * 0.115926;
+
+        return pink * 0.11;
     }
 
     private static double ApplyEnvelope(double t, double duration, double attack, double release)

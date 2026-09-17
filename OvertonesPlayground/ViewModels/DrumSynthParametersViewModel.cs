@@ -68,10 +68,10 @@ public partial class DrumSynthParametersViewModel : ObservableObject
     public partial double FilterResonance { get; set; }
 
     /// <summary>True when pitch-sweep controls are relevant for the selected drum.</summary>
-    public bool ShowPitchSweep => DrumType is DrumType.Kick or DrumType.Bass;
+    public bool ShowPitchSweep => DrumType is DrumType.Kick or DrumType.Bass or DrumType.Tom;
 
     /// <summary>True when snare-specific controls should be shown.</summary>
-    public bool ShowSnareControls => DrumType is DrumType.Snare;
+    public bool ShowSnareControls => DrumType is DrumType.Snare or DrumType.Rimshot;
 
     /// <summary>True when clap-specific controls should be shown.</summary>
     public bool ShowClapControls => DrumType is DrumType.Clap;

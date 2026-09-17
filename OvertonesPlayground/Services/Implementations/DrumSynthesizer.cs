@@ -14,7 +14,21 @@ internal static class DrumSynthesizer
 
     public static short[] Bass(DrumSynthParameters p) => PitchSweep(p);
 
-    public static short[] Snare(DrumSynthParameters p)
+    public static short[] Tom(DrumSynthParameters p) => PitchSweep(p);
+
+    public static short[] Snare(DrumSynthParameters p) => ToneAndNoise(p);
+
+    public static short[] Rimshot(DrumSynthParameters p) => ToneAndNoise(p);
+
+    public static short[] HiHat(DrumSynthParameters p) => DecayingNoise(p);
+
+    public static short[] OpenHiHat(DrumSynthParameters p) => DecayingNoise(p);
+
+    public static short[] Crash(DrumSynthParameters p) => DecayingNoise(p);
+
+    public static short[] Shaker(DrumSynthParameters p) => DecayingNoise(p);
+
+    private static short[] ToneAndNoise(DrumSynthParameters p)
     {
         var frameCount = (int)(p.DurationSeconds * p.SampleRate);
         var buffer = new double[frameCount];
@@ -34,7 +48,7 @@ internal static class DrumSynthesizer
         return Finalize(buffer, p);
     }
 
-    public static short[] HiHat(DrumSynthParameters p)
+    private static short[] DecayingNoise(DrumSynthParameters p)
     {
         var frameCount = (int)(p.DurationSeconds * p.SampleRate);
         var buffer = new double[frameCount];

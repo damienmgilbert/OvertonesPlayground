@@ -19,4 +19,7 @@ public enum WaveformType
 
     /// <summary>White noise source.</summary>
     WhiteNoise,
+
+    /// <summary>Noise with a -3dB/octave roll-off - softer and less hissy than white noise.</summary>
+    PinkNoise,
 }

@@ -38,6 +38,8 @@ public partial class ToneGeneratorViewModel : BaseViewModel
 
     public IReadOnlyList<WaveformType> WaveformOptions { get; } = Enum.GetValues<WaveformType>();
 
+    public IReadOnlyList<TonePreset> Presets { get; } = TonePreset.All;
+
     public ToneGeneratorViewModel(
         ISoundSynthesisService synthesisService,
         IAudioEditorService editorService,
@@ -49,6 +51,15 @@ public partial class ToneGeneratorViewModel : BaseViewModel
         _playbackService = playbackService;
         _libraryService = libraryService;
         Title = "Tone Generator";
+    }
+
+    [RelayCommand]
+    private void SelectPreset(TonePreset preset)
+    {
+        SelectedWaveform = preset.Waveform;
+        FrequencyHz = preset.FrequencyHz;
+        DurationSeconds = preset.DurationSeconds;
+        Amplitude = preset.Amplitude;
     }
 
     [RelayCommand]

@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:OvertonesPlayground.ViewModels"
              xmlns:controls="clr-namespace:OvertonesPlayground.Controls"
+             xmlns:toolkit="clr-namespace:CommunityToolkit.Maui.Views;assembly=CommunityToolkit.Maui"
              x:Class="OvertonesPlayground.Views.AudioEditorPage"
              x:DataType="vm:AudioEditorViewModel"
              Title="{Binding Title}">
@@ -14,33 +15,45 @@
 
             <GraphicsView x:Name="WaveformView" HeightRequest="160" BackgroundColor="{StaticResource Gray950}" />
 
-            <Button Text="Preview" Command="{Binding PreviewCommand}" />
+            <Button Text="▶ Preview" Command="{Binding PreviewCommand}" />
 
-            <BoxView HeightRequest="1" Color="{StaticResource Gray300}" />
+            <toolkit:Expander IsExpanded="True">
+                <toolkit:Expander.Header>
+                    <Label Text="✂ Trim" FontAttributes="Bold" Padding="0,10" />
+                </toolkit:Expander.Header>
+                <VerticalStackLayout Spacing="12" Padding="0,4,0,12">
+                    <controls:LabeledSlider LabelText="Start (s)" Minimum="0" Maximum="{Binding DurationSeconds}" Digits="2" Value="{Binding TrimStartSeconds}" />
+                    <controls:LabeledSlider LabelText="End (s)" Minimum="0" Maximum="{Binding DurationSeconds}" Digits="2" Value="{Binding TrimEndSeconds}" />
+                    <Button Text="Apply Trim" Command="{Binding TrimCommand}" />
+                </VerticalStackLayout>
+            </toolkit:Expander>
 
-            <Label Text="Trim" FontAttributes="Bold" />
-            <controls:LabeledSlider LabelText="Start (s)" Minimum="0" Maximum="{Binding DurationSeconds}" Digits="2" Value="{Binding TrimStartSeconds}" />
-            <controls:LabeledSlider LabelText="End (s)" Minimum="0" Maximum="{Binding DurationSeconds}" Digits="2" Value="{Binding TrimEndSeconds}" />
-            <Button Text="Apply Trim" Command="{Binding TrimCommand}" />
+            <toolkit:Expander IsExpanded="True">
+                <toolkit:Expander.Header>
+                    <Label Text="🔊 Gain" FontAttributes="Bold" Padding="0,10" />
+                </toolkit:Expander.Header>
+                <VerticalStackLayout Spacing="12" Padding="0,4,0,12">
+                    <controls:LabeledSlider LabelText="Gain (dB)" Minimum="-24" Maximum="24" Digits="1" Value="{Binding GainDb}" />
+                    <Button Text="Apply Gain" Command="{Binding ApplyGainCommand}" />
+                </VerticalStackLayout>
+            </toolkit:Expander>
 
-            <BoxView HeightRequest="1" Color="{StaticResource Gray300}" />
-
-            <Label Text="Gain" FontAttributes="Bold" />
-            <controls:LabeledSlider LabelText="Gain (dB)" Minimum="-24" Maximum="24" Digits="1" Value="{Binding GainDb}" />
-            <Button Text="Apply Gain" Command="{Binding ApplyGainCommand}" />
-
-            <BoxView HeightRequest="1" Color="{StaticResource Gray300}" />
-
-            <Label Text="Fade In / Out (seconds)" FontAttributes="Bold" />
-            <controls:LabeledSlider LabelText="Fade in" Minimum="0" Maximum="5" Digits="2" Value="{Binding FadeInSeconds}" />
-            <controls:LabeledSlider LabelText="Fade out" Minimum="0" Maximum="5" Digits="2" Value="{Binding FadeOutSeconds}" />
-            <Button Text="Apply Fade" Command="{Binding ApplyFadeCommand}" />
+            <toolkit:Expander IsExpanded="False">
+                <toolkit:Expander.Header>
+                    <Label Text="📉 Fade In / Out" FontAttributes="Bold" Padding="0,10" />
+                </toolkit:Expander.Header>
+                <VerticalStackLayout Spacing="12" Padding="0,4,0,12">
+                    <controls:LabeledSlider LabelText="Fade in" Minimum="0" Maximum="5" Digits="2" Value="{Binding FadeInSeconds}" />
+                    <controls:LabeledSlider LabelText="Fade out" Minimum="0" Maximum="5" Digits="2" Value="{Binding FadeOutSeconds}" />
+                    <Button Text="Apply Fade" Command="{Binding ApplyFadeCommand}" />
+                </VerticalStackLayout>
+            </toolkit:Expander>
 
             <BoxView HeightRequest="1" Color="{StaticResource Gray300}" />
 
             <HorizontalStackLayout Spacing="12">
-                <Button Text="Reverse" Command="{Binding ReverseCommand}" />
-                <Button Text="Normalize" Command="{Binding NormalizeCommand}" />
+                <Button Text="⏪ Reverse" Command="{Binding ReverseCommand}" />
+                <Button Text="⚖ Normalize" Command="{Binding NormalizeCommand}" />
             </HorizontalStackLayout>
 
             <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />

@@ -107,6 +107,52 @@ public class DrumSynthParameters
             BurstCount = 4,
             BurstSpacingSeconds = 0.012,
         },
+        DrumType.Tom => new DrumSynthParameters
+        {
+            DurationSeconds = 0.3,
+            StartFrequencyHz = 220,
+            EndFrequencyHz = 90,
+            SweepRate = 12,
+            DecayRate = 6,
+            Amplitude = 0.85,
+        },
+        DrumType.OpenHiHat => new DrumSynthParameters
+        {
+            DurationSeconds = 0.4,
+            DecayRate = 8,
+            Amplitude = 0.5,
+            FilterType = FilterType.HighPass,
+            FilterCutoffHz = 7000,
+            FilterResonance = 0.7,
+        },
+        DrumType.Rimshot => new DrumSynthParameters
+        {
+            DurationSeconds = 0.06,
+            DecayRate = 50,
+            ToneFrequencyHz = 900,
+            ToneDecayRate = 60,
+            ToneLevel = 0.8,
+            NoiseLevel = 0.3,
+            Amplitude = 0.9,
+        },
+        DrumType.Crash => new DrumSynthParameters
+        {
+            DurationSeconds = 1.5,
+            DecayRate = 2,
+            Amplitude = 0.4,
+            FilterType = FilterType.BandPass,
+            FilterCutoffHz = 6000,
+            FilterResonance = 1.2,
+        },
+        DrumType.Shaker => new DrumSynthParameters
+        {
+            DurationSeconds = 0.15,
+            DecayRate = 20,
+            Amplitude = 0.5,
+            FilterType = FilterType.HighPass,
+            FilterCutoffHz = 5000,
+            FilterResonance = 0.7,
+        },
         _ => new DrumSynthParameters(),
     };
 }
