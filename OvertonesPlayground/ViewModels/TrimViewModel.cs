@@ -93,6 +93,11 @@ public partial class TrimViewModel : BaseViewModel
             WaveformPeaks = await _editorService.GetWaveformPeaksAsync(clip.FilePath, 400);
             await _playbackService.LoadAsync(clip);
         }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException or NotSupportedException)
+        {
+            Log_LoadClipFailed(ex, clipId);
+            StatusMessage = "Couldn't load that clip.";
+        }
         finally
         {
             IsBusy = false;
@@ -102,8 +107,14 @@ public partial class TrimViewModel : BaseViewModel
     [LoggerMessage(Level = LogLevel.Debug, Message = "Clip {ClipId} not found.")]
     private partial void Log_ClipNotFound(string clipId);
 
+    [LoggerMessage(Level = LogLevel.Error, Message = "Failed to load clip {ClipId} into the trim editor.")]
+    private partial void Log_LoadClipFailed(Exception exception, string clipId);
+
     [LoggerMessage(Level = LogLevel.Debug, Message = "Loading clip '{ClipName}' ({ClipId}) into the trim editor.")]
     private partial void Log_LoadingClip(string clipName, string clipId);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Failed to save the trimmed clip from '{ClipName}'.")]
+    private partial void Log_SaveFailed(Exception exception, string clipName);
 
     [LoggerMessage(Level = LogLevel.Debug, Message = "Saved trimmed clip '{ClipName}'.")]
     private partial void Log_SavedTrim(string clipName);
@@ -222,6 +233,11 @@ public partial class TrimViewModel : BaseViewModel
             AudioClip saved = await _libraryService.AddClipAsync(outputPath, baseName, isUserRecording: true);
             Log_SavedTrim(saved.Name);
             await Shell.Current.GoToAsync("..");
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException or NotSupportedException)
+        {
+            Log_SaveFailed(ex, LoadedClip.Name);
+            StatusMessage = "Couldn't save the trimmed clip.";
         }
         finally
         {

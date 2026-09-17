@@ -4,6 +4,12 @@ namespace OvertonesPlayground.Services.Interfaces;
 ///Non-destructive-by-convention edits over 16-bit PCM WAV files: every operation reads the source file and writes a
 ///brand new file, leaving the original untouched.
 ///</summary>
+///<remarks>
+///Every method validates its string arguments and throws <see cref="ArgumentException"/> if one is null, empty, or
+///whitespace. Reading the source file can also throw <see cref="FileNotFoundException"/> (missing file),
+///<see cref="InvalidDataException"/> (not a well-formed RIFF/WAV file), or <see cref="NotSupportedException"/> (not
+///uncompressed 16-bit PCM).
+///</remarks>
 public interface IAudioEditorService
 {
     #region Public methods

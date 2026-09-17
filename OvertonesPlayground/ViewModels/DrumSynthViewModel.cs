@@ -63,11 +63,19 @@ public partial class DrumSynthViewModel : BaseViewModel
             CanSave = true;
             StatusMessage = "Previewing - tap Save to keep it in your library.";
         }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException or NotSupportedException)
+        {
+            Log_GenerateFailed(ex, SelectedDrumParams.DrumType);
+            StatusMessage = "Couldn't generate that drum sample.";
+        }
         finally
         {
             IsBusy = false;
         }
     }
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Failed to generate a drum sample for {DrumType}.")]
+    private partial void Log_GenerateFailed(Exception exception, DrumType drumType);
 
     [LoggerMessage(Level = LogLevel.Debug, Message = "Generating drum sample for {DrumType}.")]
     private partial void Log_GeneratingDrumSample(DrumType drumType);

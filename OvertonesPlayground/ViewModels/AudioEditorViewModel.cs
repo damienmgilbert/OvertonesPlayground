@@ -45,6 +45,11 @@ public partial class AudioEditorViewModel : BaseViewModel
             await SetLoadedClipAsync(newClip);
             StatusMessage = newClip.PublicStorageLocation is { } location ? $"Saved as '{newClip.Name}' - also in {location}." : $"Saved as '{newClip.Name}' in your library.";
         }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException or NotSupportedException)
+        {
+            Log_EditFailed(ex, operationName, LoadedClip.Name);
+            StatusMessage = $"Couldn't apply that {operationName}.";
+        }
         finally
         {
             IsBusy = false;
@@ -73,6 +78,11 @@ public partial class AudioEditorViewModel : BaseViewModel
             Log_LoadingClip(clip.Name, clipId);
             await SetLoadedClipAsync(clip);
         }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException or NotSupportedException)
+        {
+            Log_LoadClipFailed(ex, clipId);
+            StatusMessage = "Couldn't load that clip.";
+        }
         finally
         {
             IsBusy = false;
@@ -84,6 +94,12 @@ public partial class AudioEditorViewModel : BaseViewModel
 
     [LoggerMessage(Level = LogLevel.Debug, Message = "Clip {ClipId} not found.")]
     private partial void Log_ClipNotFound(string clipId);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Failed to apply '{Operation}' to clip '{ClipName}'.")]
+    private partial void Log_EditFailed(Exception exception, string operation, string clipName);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Failed to load clip {ClipId} into editor.")]
+    private partial void Log_LoadClipFailed(Exception exception, string clipId);
 
     [LoggerMessage(Level = LogLevel.Debug, Message = "Loading clip '{ClipName}' ({ClipId}) into editor.")]
     private partial void Log_LoadingClip(string clipName, string clipId);

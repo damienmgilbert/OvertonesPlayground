@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFrameworks>net10.0-android</TargetFrameworks>
@@ -27,6 +27,7 @@
 		       <MauiXaml Update="MyPage.xaml" Inflator="Runtime" /> (force runtime inflation) -->
 		<MauiXamlInflator>SourceGen</MauiXamlInflator>
 
+		
 		<!-- Display name -->
 		<ApplicationTitle>OvertonesPlayground</ApplicationTitle>
 
@@ -53,6 +54,7 @@
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net10.0-android|AnyCPU'">
 	  <TreatWarningsAsErrors>False</TreatWarningsAsErrors>
 	  <WarningLevel>8</WarningLevel>
+      <Optimize>True</Optimize>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -75,7 +77,6 @@
 
 	<ItemGroup>
 		<PackageReference Include="CommunityToolkit.Common" Version="8.4.2" />
-		<PackageReference Include="CommunityToolkit.Diagnostics" Version="8.4.2" />
 		<PackageReference Include="CommunityToolkit.HighPerformance" Version="8.4.2" />
 		<PackageReference Include="CommunityToolkit.Maui" Version="15.0.1" />
 		<PackageReference Include="CommunityToolkit.Maui.Core" Version="15.0.1" />

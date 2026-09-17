@@ -62,11 +62,19 @@ public partial class ToneGeneratorViewModel : BaseViewModel
             CanSave = true;
             StatusMessage = "Previewing - tap Save to keep it in your library.";
         }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException or NotSupportedException)
+        {
+            Log_GenerateFailed(ex, SelectedWaveform);
+            StatusMessage = "Couldn't generate that tone.";
+        }
         finally
         {
             IsBusy = false;
         }
     }
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Failed to generate a {Waveform} tone.")]
+    private partial void Log_GenerateFailed(Exception exception, WaveformType waveform);
 
     [LoggerMessage(Level = LogLevel.Debug, Message = "Generating tone '{Name}' ({DurationSeconds}s, amplitude {Amplitude}).")]
     private partial void Log_GeneratingTone(string name, double durationSeconds, double amplitude);

@@ -13,6 +13,16 @@ public class AudioEditorService : IAudioEditorService
     private static short ClampToShort(double value) => (short)Math.Clamp(value, short.MinValue, short.MaxValue);
 
     ///<summary>
+    ///Replaces characters that aren't valid in a file name (e.g. a clip named with a "/" or ":") with "_", so an
+    ///arbitrary clip/operation name can never produce an invalid or unexpectedly-nested output path.
+    ///</summary>
+    private static string SanitizeFileNameSegment(string value)
+    {
+        char[] invalid = Path.GetInvalidFileNameChars();
+        return string.Concat(value.Select(c => invalid.Contains(c) ? '_' : c));
+    }
+
+    ///<summary>
     ///Writes <paramref name="samples"/> as a new WAV file alongside <paramref name="source"/>'s format and returns its
     ///path.
     ///</summary>
@@ -20,7 +30,7 @@ public class AudioEditorService : IAudioEditorService
     {
         WavFile derived = new() { Channels = source.Channels, SampleRate = source.SampleRate, BitsPerSample = source.BitsPerSample, Samples = samples, };
 
-        string fileName = $"{outputName}_{DateTime.Now:yyyyMMdd_HHmmss}.wav";
+        string fileName = $"{SanitizeFileNameSegment(outputName)}_{DateTime.Now:yyyyMMdd_HHmmss}.wav";
         string path = Path.Combine(ExportsDirectory, fileName);
         await derived.WriteAsync(path);
         return path;
@@ -46,6 +56,9 @@ public class AudioEditorService : IAudioEditorService
     ///<inheritdoc/>
     public async Task<string> ApplyFadeAsync(string sourcePath, TimeSpan fadeIn, TimeSpan fadeOut, string outputName)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
+        ArgumentException.ThrowIfNullOrWhiteSpace(outputName);
+
         WavFile wav = await WavFile.ReadAsync(sourcePath);
         int frameCount = wav.Channels * wav.SampleRate;
         int fadeInFrames = (int)(fadeIn.TotalSeconds * frameCount);
@@ -73,6 +86,9 @@ public class AudioEditorService : IAudioEditorService
     ///<inheritdoc/>
     public async Task<string> ApplyGainAsync(string sourcePath, double gainDb, string outputName)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
+        ArgumentException.ThrowIfNullOrWhiteSpace(outputName);
+
         WavFile wav = await WavFile.ReadAsync(sourcePath);
         double factor = Math.Pow(10, gainDb / 20.0);
 
@@ -89,6 +105,9 @@ public class AudioEditorService : IAudioEditorService
     ///<inheritdoc/>
     public async Task<string> CutAsync(string sourcePath, TimeSpan start, TimeSpan end, string outputName)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
+        ArgumentException.ThrowIfNullOrWhiteSpace(outputName);
+
         WavFile wav = await WavFile.ReadAsync(sourcePath);
         int frameCount = wav.Channels * wav.SampleRate;
 
@@ -106,6 +125,8 @@ public class AudioEditorService : IAudioEditorService
     ///<inheritdoc/>
     public async Task<float[]> GetWaveformPeaksAsync(string filePath, int peakCount)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
+
         WavFile wav = await WavFile.ReadAsync(filePath);
         bool isEmpty = wav.Samples.Length == 0;
         bool isInvalidPeakCount = peakCount <= 0;
@@ -140,6 +161,9 @@ public class AudioEditorService : IAudioEditorService
     ///<inheritdoc/>
     public async Task<string> NormalizeAsync(string sourcePath, string outputName)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
+        ArgumentException.ThrowIfNullOrWhiteSpace(outputName);
+
         WavFile wav = await WavFile.ReadAsync(sourcePath);
         bool isEmpty = wav.Samples.Length == 0;
         if (isEmpty)
@@ -171,6 +195,9 @@ public class AudioEditorService : IAudioEditorService
     ///<inheritdoc/>
     public async Task<string> ReverseAsync(string sourcePath, string outputName)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
+        ArgumentException.ThrowIfNullOrWhiteSpace(outputName);
+
         WavFile wav = await WavFile.ReadAsync(sourcePath);
         int frames = wav.Samples.Length / wav.Channels;
         short[] output = new short[wav.Samples.Length];
@@ -190,6 +217,9 @@ public class AudioEditorService : IAudioEditorService
     ///<inheritdoc/>
     public async Task<string> TrimAsync(string sourcePath, TimeSpan start, TimeSpan end, string outputName)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
+        ArgumentException.ThrowIfNullOrWhiteSpace(outputName);
+
         WavFile wav = await WavFile.ReadAsync(sourcePath);
         int frameCount = wav.Channels * wav.SampleRate;
 

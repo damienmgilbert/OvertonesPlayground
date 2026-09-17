@@ -1,3 +1,5 @@
 <Solution>
-  <Project Path="OvertonesPlayground/OvertonesPlayground.csproj" />
+  <Project Path="OvertonesPlayground/OvertonesPlayground.csproj">
+    <Deploy Solution="Debug|*" />
+  </Project>
 </Solution>

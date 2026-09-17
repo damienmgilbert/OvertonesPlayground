@@ -1,5 +1,3 @@
-using CommunityToolkit.Diagnostics;
-
 namespace OvertonesPlayground.Services.Implementations;
 
 ///<summary>
@@ -9,69 +7,150 @@ namespace OvertonesPlayground.Services.Implementations;
 ///</summary>
 internal sealed class WavFile
 {
+    #region Constants
+    ///<summary>
+    ///The only audio format code this reader accepts (uncompressed PCM); anything else (e.g. compressed or
+    ///IEEE-float WAV) is rejected rather than silently misinterpreted as raw PCM.
+    ///</summary>
+    private const short PcmAudioFormat = 1;
+
+    ///<summary>
+    ///The only sample depth this reader/writer supports.
+    ///</summary>
+    private const short SupportedBitsPerSample = 16;
+    #endregion
+
     #region Public methods
+    ///<summary>
+    ///Reads a WAV file from <paramref name="path"/> and returns its parsed format and samples.
+    ///</summary>
+    ///<exception cref="ArgumentException"><paramref name="path"/> is null, empty, or whitespace.</exception>
+    ///<exception cref="FileNotFoundException"><paramref name="path"/> does not exist.</exception>
+    ///<exception cref="InvalidDataException">The file isn't a well-formed RIFF/WAV file, or is truncated/corrupt.</exception>
+    ///<exception cref="NotSupportedException">The file isn't uncompressed 16-bit PCM.</exception>
     public static async Task<WavFile> ReadAsync(string path)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+
         await using FileStream stream = File.OpenRead(path);
         using BinaryReader reader = new(stream);
 
-        bool isNotRiff = new string(reader.ReadChars(4)) != "RIFF";
-        if (isNotRiff)
+        try
         {
-            ThrowHelper.ThrowInvalidDataException($"'{path}' is not a RIFF/WAV file.");
-        }
-
-        reader.ReadInt32(); // chunk size, unused
-        bool isNotWave = new string(reader.ReadChars(4)) != "WAVE";
-        if (isNotWave)
-        {
-            ThrowHelper.ThrowInvalidDataException($"'{path}' is not a WAVE file.");
-        }
-
-        short channels = 0, bitsPerSample = 0;
-        int sampleRate = 0;
-        short[] samples = [];
-
-        while (stream.Position < stream.Length)
-        {
-            string chunkId = new(reader.ReadChars(4));
-            int chunkSize = reader.ReadInt32();
-
-            bool isFmtChunk = chunkId == "fmt ";
-            bool isDataChunk = chunkId == "data";
-            if (isFmtChunk)
+            bool isNotRiff = new string(reader.ReadChars(4)) != "RIFF";
+            if (isNotRiff)
             {
-                reader.ReadInt16(); // audio format (1 = PCM)
-                channels = reader.ReadInt16();
-                sampleRate = reader.ReadInt32();
-                reader.ReadInt32(); // byte rate
-                reader.ReadInt16(); // block align
-                bitsPerSample = reader.ReadInt16();
+                throw new InvalidDataException($"'{path}' is not a RIFF/WAV file.");
+            }
 
-                int remaining = chunkSize - 16;
-                if (remaining > 0)
+            reader.ReadInt32(); // chunk size, unused
+            bool isNotWave = new string(reader.ReadChars(4)) != "WAVE";
+            if (isNotWave)
+            {
+                throw new InvalidDataException($"'{path}' is not a WAVE file.");
+            }
+
+            short channels = 0, bitsPerSample = 0;
+            int sampleRate = 0;
+            short[] samples = [];
+            bool hasFmtChunk = false;
+            bool hasDataChunk = false;
+
+            while (stream.Position < stream.Length)
+            {
+                string chunkId = new(reader.ReadChars(4));
+                int chunkSize = reader.ReadInt32();
+                if (chunkSize < 0)
                 {
-                    reader.ReadBytes(remaining);
+                    throw new InvalidDataException($"'{path}' has a malformed '{chunkId}' chunk.");
+                }
+
+                bool isFmtChunk = chunkId == "fmt ";
+                bool isDataChunk = chunkId == "data";
+                if (isFmtChunk)
+                {
+                    if (chunkSize < 16)
+                    {
+                        throw new InvalidDataException($"'{path}' has a malformed 'fmt ' chunk.");
+                    }
+
+                    short audioFormat = reader.ReadInt16();
+                    channels = reader.ReadInt16();
+                    sampleRate = reader.ReadInt32();
+                    reader.ReadInt32(); // byte rate
+                    reader.ReadInt16(); // block align
+                    bitsPerSample = reader.ReadInt16();
+
+                    int remaining = chunkSize - 16;
+                    if (remaining > 0)
+                    {
+                        reader.ReadBytes(remaining);
+                    }
+
+                    if (audioFormat != PcmAudioFormat)
+                    {
+                        throw new NotSupportedException($"'{path}' uses audio format {audioFormat}; only uncompressed PCM is supported.");
+                    }
+
+                    if (bitsPerSample != SupportedBitsPerSample)
+                    {
+                        throw new NotSupportedException($"'{path}' uses {bitsPerSample}-bit samples; only 16-bit PCM is supported.");
+                    }
+
+                    hasFmtChunk = true;
+                }
+                else if (isDataChunk)
+                {
+                    byte[] bytes = reader.ReadBytes(chunkSize);
+                    samples = new short[bytes.Length / 2];
+                    Buffer.BlockCopy(bytes, 0, samples, 0, samples.Length * 2);
+                    hasDataChunk = true;
+                }
+                else
+                {
+                    reader.ReadBytes(chunkSize);
                 }
             }
-            else if (isDataChunk)
-            {
-                byte[] bytes = reader.ReadBytes(chunkSize);
-                samples = new short[bytes.Length / 2];
-                Buffer.BlockCopy(bytes, 0, samples, 0, samples.Length * 2);
-            }
-            else
-            {
-                reader.ReadBytes(chunkSize);
-            }
-        }
 
-        WavFile wavFile = new() { Channels = channels, SampleRate = sampleRate, BitsPerSample = bitsPerSample, Samples = samples, };
-        return wavFile;
+            bool hasNoValidFormat = !hasFmtChunk || channels <= 0 || sampleRate <= 0;
+            if (hasNoValidFormat)
+            {
+                throw new InvalidDataException($"'{path}' has no valid 'fmt ' chunk.");
+            }
+
+            bool hasNoDataChunk = !hasDataChunk;
+            if (hasNoDataChunk)
+            {
+                throw new InvalidDataException($"'{path}' has no 'data' chunk.");
+            }
+
+            return new WavFile { Channels = channels, SampleRate = sampleRate, BitsPerSample = bitsPerSample, Samples = samples, };
+        }
+        catch (EndOfStreamException ex)
+        {
+            // A chunk claimed more bytes than the file actually has left - report it as the corrupt/truncated file it
+            // is, rather than letting a raw EndOfStreamException (with no file path) surface to callers.
+            throw new InvalidDataException($"'{path}' is truncated or corrupt.", ex);
+        }
     }
 
+    ///<summary>
+    ///Writes this instance to <paramref name="path"/> as a 16-bit PCM WAV file.
+    ///</summary>
+    ///<exception cref="ArgumentException"><paramref name="path"/> is null, empty, or whitespace.</exception>
+    ///<exception cref="InvalidOperationException">
+    ///<see cref="Channels"/> or <see cref="SampleRate"/> is not positive, or <see cref="BitsPerSample"/> isn't 16.
+    ///</exception>
     public async Task WriteAsync(string path)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+
+        bool hasInvalidFormat = Channels <= 0 || SampleRate <= 0 || BitsPerSample != SupportedBitsPerSample;
+        if (hasInvalidFormat)
+        {
+            throw new InvalidOperationException($"Cannot write a WAV file with {Channels} channel(s), a {SampleRate} Hz sample rate, and {BitsPerSample}-bit samples.");
+        }
+
         await using FileStream stream = File.Create(path);
         await using BinaryWriter writer = new(stream);
 
@@ -85,7 +164,7 @@ internal sealed class WavFile
 
         writer.Write("fmt ".ToCharArray());
         writer.Write(16);
-        writer.Write((short)1); // PCM
+        writer.Write(PcmAudioFormat);
         writer.Write(Channels);
         writer.Write(SampleRate);
         writer.Write(byteRate);
