@@ -2,7 +2,6 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:OvertonesPlayground.ViewModels"
-             xmlns:controls="clr-namespace:OvertonesPlayground.Controls"
              x:Class="OvertonesPlayground.Views.MixerPage"
              x:DataType="vm:MixerViewModel"
              Title="{Binding Title}">
@@ -11,41 +10,68 @@
         <ToolbarItem Text="⏹ Stop All" Command="{Binding StopAllCommand}" />
     </ContentPage.ToolbarItems>
 
+    <!-- Channel strips sit side by side like a real mixing console, scrolling horizontally as tracks are added,
+         instead of wrapping into a card grid. -->
     <CollectionView ItemsSource="{Binding Channels}" Margin="12">
         <CollectionView.ItemsLayout>
-            <GridItemsLayout Orientation="Vertical" Span="4" HorizontalItemSpacing="12" VerticalItemSpacing="12" />
+            <LinearItemsLayout Orientation="Horizontal" ItemSpacing="2" />
         </CollectionView.ItemsLayout>
         <CollectionView.ItemTemplate>
             <DataTemplate x:DataType="vm:MixerChannelViewModel">
-                <Border StrokeShape="RoundRectangle 14" Padding="14" HorizontalOptions="Fill">
-                    <Grid RowDefinitions="Auto,Auto,220,Auto,Auto,Auto" RowSpacing="10">
-                        <Label Grid.Row="0" Text="{Binding Name}" FontAttributes="Bold" HorizontalTextAlignment="Center" />
-                        <Label Grid.Row="1" Text="{Binding SourceLabel}" FontSize="11"
+                <Border StrokeShape="RoundRectangle 6,6,0,0" Padding="10,12" VerticalOptions="Fill">
+                    <Border.Triggers>
+                        <DataTrigger TargetType="Border" Binding="{Binding IsDimmed}" Value="True">
+                            <Setter Property="Opacity" Value="0.45" />
+                        </DataTrigger>
+                    </Border.Triggers>
+
+                    <Grid RowDefinitions="4,Auto,Auto,220,Auto,Auto,Auto,Auto,Auto" RowSpacing="6">
+
+                        <!-- Track color tab, mirroring the Launchpad's per-pad colors for at-a-glance identity. -->
+                        <BoxView Grid.Row="0" HeightRequest="4" CornerRadius="2"
+                                 Color="{Binding ColorHex, Converter={StaticResource HexColor}}" />
+
+                        <Entry Grid.Row="1" Text="{Binding Name}" FontAttributes="Bold" FontSize="13"
+                               HorizontalTextAlignment="Center" />
+
+                        <Label Grid.Row="2" Text="{Binding SourceLabel}" FontSize="10"
                                TextColor="{StaticResource Gray500}" HorizontalTextAlignment="Center"
                                LineBreakMode="TailTruncation" />
 
-                        <Slider Grid.Row="2"
+                        <!-- Vertical fader: Rotation is a render-only transform, so the Slider still lays out at its
+                             unrotated WidthRequest/HeightRequest - that's why the row height matches WidthRequest. -->
+                        <Slider Grid.Row="3"
                                 Rotation="270"
                                 WidthRequest="220"
+                                HeightRequest="36"
                                 HorizontalOptions="Center"
+                                VerticalOptions="Center"
                                 Minimum="0" Maximum="1"
                                 Value="{Binding Volume}" />
 
-                        <controls:LabeledSlider Grid.Row="3" LabelText="Pan" Minimum="-1" Maximum="1" Digits="2" Value="{Binding Pan}" />
+                        <Label Grid.Row="4" Text="{Binding Volume, StringFormat='{0:P0}'}" FontSize="10"
+                               TextColor="{StaticResource Gray500}" HorizontalTextAlignment="Center" />
 
-                        <HorizontalStackLayout Grid.Row="4" Spacing="8" HorizontalOptions="Center">
-                            <Button Text="M" WidthRequest="42" Padding="0"
+                        <Slider Grid.Row="5" Minimum="-1" Maximum="1" Value="{Binding Pan}" />
+
+                        <Label Grid.Row="6" Text="{Binding Pan, StringFormat='Pan {0:+0.00;-0.00;C}'}" FontSize="10"
+                               TextColor="{StaticResource Gray500}" HorizontalTextAlignment="Center" />
+
+                        <HorizontalStackLayout Grid.Row="7" Spacing="6" HorizontalOptions="Center">
+                            <Button Text="M" WidthRequest="36" HeightRequest="34" Padding="0" FontSize="12"
                                     BackgroundColor="{Binding IsMuted, Converter={StaticResource BoolToAccent}}"
                                     Command="{Binding ToggleMuteCommand}" />
-                            <Button Text="S" WidthRequest="42" Padding="0"
+                            <Button Text="S" WidthRequest="36" HeightRequest="34" Padding="0" FontSize="12"
+                                    BackgroundColor="{Binding IsSoloed, Converter={StaticResource BoolToAccent}}"
                                     Command="{Binding ToggleSoloCommand}" />
                         </HorizontalStackLayout>
 
-                        <HorizontalStackLayout Grid.Row="5" Spacing="8" HorizontalOptions="Center">
-                            <Button Text="📂 Load"
+                        <HorizontalStackLayout Grid.Row="8" Spacing="6" HorizontalOptions="Center">
+                            <Button Text="📂" WidthRequest="36" HeightRequest="34" Padding="0"
                                     Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MixerViewModel}}, Path=LoadSampleCommand}"
                                     CommandParameter="{Binding .}" />
                             <Button Text="{Binding IsPlaying, Converter={StaticResource PlayPauseIcon}}"
+                                    WidthRequest="36" HeightRequest="34" Padding="0"
                                     IsEnabled="{Binding HasSource}"
                                     Command="{Binding TogglePlaybackCommand}" />
                         </HorizontalStackLayout>

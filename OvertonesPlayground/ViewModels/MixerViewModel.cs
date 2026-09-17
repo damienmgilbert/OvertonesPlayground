@@ -11,6 +11,14 @@ namespace OvertonesPlayground.ViewModels;
 ///</summary>
 public partial class MixerViewModel : BaseViewModel
 {
+    #region Constants
+    ///<summary>
+    ///Colors assigned round-robin to channel strips, matching the palette used by the Launchpad so track colors read
+    ///consistently across the app.
+    ///</summary>
+    private static readonly string[] ChannelPalette = [ "#512BD4", "#D600AA", "#2B9348", "#F77F00", "#0077B6", "#9D4EDD", "#E5383B", "#FFB703", ];
+    #endregion
+
     #region Fields
     private readonly IAudioLibraryService _libraryService;
     private readonly IAudioPlaybackService _playbackService;
@@ -28,13 +36,33 @@ public partial class MixerViewModel : BaseViewModel
 
         for(int i = 1; i <= 4; i++)
         {
-            MixerChannelStrip strip = new() { Name = $"Track {i}" };
-            Channels.Add(new MixerChannelViewModel(strip, _playbackService));
+            MixerChannelStrip strip = new() { Name = $"Track {i}", ColorHex = ChannelPalette[(i - 1) % ChannelPalette.Length] };
+            MixerChannelViewModel channel = new(strip, _playbackService);
+            channel.PropertyChanged += OnChannelPropertyChanged;
+            Channels.Add(channel);
         }
     }
     #endregion
 
     #region Private methods
+    ///<summary>
+    ///Re-evaluates solo dimming whenever any channel's solo state changes, so soloing one channel visually dims the
+    ///others - matching Ableton/Audacity mixer behavior.
+    ///</summary>
+    private void OnChannelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if(e.PropertyName != nameof(MixerChannelViewModel.IsSoloed))
+        {
+            return;
+        }
+
+        bool anySoloed = Channels.Any(c => c.IsSoloed);
+        foreach(MixerChannelViewModel channel in Channels)
+        {
+            channel.IsDimmed = anySoloed && !channel.IsSoloed;
+        }
+    }
+
     ///<summary>
     ///Opens the file picker and assigns the chosen sample to a channel (without starting playback).
     ///</summary>

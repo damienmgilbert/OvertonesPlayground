@@ -37,6 +37,8 @@ public partial class MixerChannelViewModel : ObservableObject
 
     partial void OnIsSoloedChanged(bool value) { Channel.IsSoloed = value; }
 
+    partial void OnNameChanged(string value) { Channel.Name = value; }
+
     partial void OnPanChanged(double value)
     {
         Channel.Pan = value;
@@ -100,7 +102,19 @@ public partial class MixerChannelViewModel : ObservableObject
     ///</summary>
     public MixerChannelStrip Channel { get; }
 
+    ///<summary>
+    ///Hex color identifying this channel strip, shown as a colored tab at the top of the strip.
+    ///</summary>
+    public string ColorHex => Channel.ColorHex;
+
     public bool HasSource => !string.IsNullOrEmpty(Channel.SourceClipPath);
+
+    ///<summary>
+    ///Set by <see cref="MixerViewModel"/> to dim this strip when another channel is soloed, matching how DAWs like
+    ///Ableton and Audacity visually indicate a channel is silenced by another track's solo.
+    ///</summary>
+    [ObservableProperty]
+    public partial bool IsDimmed { get; set; }
 
     ///<summary>
     ///Whether the channel is muted.
