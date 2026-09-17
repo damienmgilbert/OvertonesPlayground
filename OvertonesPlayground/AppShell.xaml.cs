@@ -14,6 +14,7 @@ public partial class AppShell : Shell
         _logger = logger;
 
         Routing.RegisterRoute("editor", typeof(AudioEditorPage));
+        Routing.RegisterRoute("trim", typeof(TrimPage));
 
 
         Navigating += (_, e) => Log_Navigating(e.Current?.Location, e.Target?.Location);

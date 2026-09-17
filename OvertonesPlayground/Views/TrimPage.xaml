@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:OvertonesPlayground.ViewModels"
+             xmlns:models="clr-namespace:OvertonesPlayground.Models"
+             xmlns:controls="clr-namespace:OvertonesPlayground.Controls"
+             x:Class="OvertonesPlayground.Views.TrimPage"
+             x:DataType="vm:TrimViewModel"
+             Title="{Binding Title}">
+
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="↶ Undo" Command="{Binding UndoCommand}" />
+        <ToolbarItem Text="↷ Redo" Command="{Binding RedoCommand}" />
+        <ToolbarItem Text="💾 Save" Command="{Binding SaveCommand}" />
+    </ContentPage.ToolbarItems>
+
+    <Grid RowDefinitions="Auto,Auto,*,Auto,Auto" Padding="16,12" RowSpacing="12">
+
+        <Label Grid.Row="0" Text="{Binding LoadedClip.Name}" FontSize="18" FontAttributes="Bold" LineBreakMode="TailTruncation" />
+
+        <!-- Start/end time steppers, with the total duration centered between them -->
+        <Grid Grid.Row="1" ColumnDefinitions="*,Auto,*" ColumnSpacing="8">
+            <HorizontalStackLayout Grid.Column="0" Spacing="4" HorizontalOptions="Start">
+                <Button Text="−" Padding="12,6" FontAttributes="Bold" Command="{Binding DecreaseStartCommand}" />
+                <Label Text="{Binding StartTimeText}" VerticalOptions="Center" FontAttributes="Bold" MinimumWidthRequest="60" HorizontalTextAlignment="Center" />
+                <Button Text="+" Padding="12,6" FontAttributes="Bold" Command="{Binding IncreaseStartCommand}" />
+            </HorizontalStackLayout>
+
+            <VerticalStackLayout Grid.Column="1" HorizontalOptions="Center" VerticalOptions="Center">
+                <Label Text="Total" FontSize="11" TextColor="{StaticResource Gray500}" HorizontalTextAlignment="Center" />
+                <Label Text="{Binding TotalTimeText}" FontAttributes="Bold" HorizontalTextAlignment="Center" />
+            </VerticalStackLayout>
+
+            <HorizontalStackLayout Grid.Column="2" Spacing="4" HorizontalOptions="End">
+                <Button Text="−" Padding="12,6" FontAttributes="Bold" Command="{Binding DecreaseEndCommand}" />
+                <Label Text="{Binding EndTimeText}" VerticalOptions="Center" FontAttributes="Bold" MinimumWidthRequest="60" HorizontalTextAlignment="Center" />
+                <Button Text="+" Padding="12,6" FontAttributes="Bold" Command="{Binding IncreaseEndCommand}" />
+            </HorizontalStackLayout>
+        </Grid>
+
+        <!-- Waveform, with draggable start/end handles and a scrub-to-seek gesture -->
+        <Grid Grid.Row="2" x:Name="WaveformContainer" SizeChanged="OnWaveformContainerSizeChanged" VerticalOptions="Center">
+            <Grid.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnWaveformTapped" />
+            </Grid.GestureRecognizers>
+
+            <GraphicsView x:Name="WaveformView" HeightRequest="240" BackgroundColor="{StaticResource Gray950}" />
+
+            <BoxView WidthRequest="2" Color="#0078D4" HorizontalOptions="Start" VerticalOptions="Fill" HeightRequest="240"
+                     Margin="-1,0,0,0" TranslationX="{Binding StartHandleX}" InputTransparent="True" />
+            <Border WidthRequest="32" HeightRequest="32" StrokeShape="RoundRectangle 16" Stroke="Transparent" BackgroundColor="#0078D4"
+                    HorizontalOptions="Start" VerticalOptions="Center" Margin="-16,0,0,0" TranslationX="{Binding StartHandleX}">
+                <Label Text="&#8249;" TextColor="White" FontAttributes="Bold" FontSize="16" HorizontalTextAlignment="Center" VerticalTextAlignment="Center" InputTransparent="True" />
+                <Border.GestureRecognizers>
+                    <PanGestureRecognizer PanUpdated="OnStartHandlePanUpdated" />
+                </Border.GestureRecognizers>
+            </Border>
+
+            <BoxView WidthRequest="2" Color="#0078D4" HorizontalOptions="Start" VerticalOptions="Fill" HeightRequest="240"
+                     Margin="-1,0,0,0" TranslationX="{Binding EndHandleX}" InputTransparent="True" />
+            <Border WidthRequest="32" HeightRequest="32" StrokeShape="RoundRectangle 16" Stroke="Transparent" BackgroundColor="#0078D4"
+                    HorizontalOptions="Start" VerticalOptions="Center" Margin="-16,0,0,0" TranslationX="{Binding EndHandleX}">
+                <Label Text="&#8250;" TextColor="White" FontAttributes="Bold" FontSize="16" HorizontalTextAlignment="Center" VerticalTextAlignment="Center" InputTransparent="True" />
+                <Border.GestureRecognizers>
+                    <PanGestureRecognizer PanUpdated="OnEndHandlePanUpdated" />
+                </Border.GestureRecognizers>
+            </Border>
+        </Grid>
+
+        <!-- Trim mode toggle -->
+        <HorizontalStackLayout Grid.Row="3" Spacing="10" HorizontalOptions="Center">
+            <Button Text="✂ Trim" Command="{Binding SetModeCommand}" CommandParameter="{x:Static models:TrimMode.Trim}">
+                <Button.Triggers>
+                    <DataTrigger TargetType="Button" Binding="{Binding Mode}" Value="{x:Static models:TrimMode.TrimMiddle}">
+                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardBackgroundDark}}" />
+                        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+                    </DataTrigger>
+                </Button.Triggers>
+            </Button>
+            <Button Text="✂ Trim Middle" Command="{Binding SetModeCommand}" CommandParameter="{x:Static models:TrimMode.TrimMiddle}">
+                <Button.Triggers>
+                    <DataTrigger TargetType="Button" Binding="{Binding Mode}" Value="{x:Static models:TrimMode.Trim}">
+                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardBackgroundDark}}" />
+                        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+                    </DataTrigger>
+                </Button.Triggers>
+            </Button>
+        </HorizontalStackLayout>
+
+        <!-- Playback transport + bottom quick-action bar -->
+        <VerticalStackLayout Grid.Row="4" Spacing="12">
+
+            <HorizontalStackLayout Spacing="20" HorizontalOptions="Center">
+                <Button Text="⏮" Command="{Binding SkipToStartCommand}" WidthRequest="52" HeightRequest="52" CornerRadius="26" FontSize="18" />
+                <Button Text="{Binding IsPlaying, Converter={StaticResource PlayPauseIcon}}" Command="{Binding PlayPauseCommand}"
+                        WidthRequest="72" HeightRequest="72" CornerRadius="36" FontSize="26" />
+                <Button Text="⏭" Command="{Binding SkipToEndCommand}" WidthRequest="52" HeightRequest="52" CornerRadius="26" FontSize="18" />
+            </HorizontalStackLayout>
+
+            <Border StrokeShape="Rectangle"
+                    Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardStrokeDark}}"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource CardBackgroundDark}}">
+                <VerticalStackLayout Padding="16,12" Spacing="10">
+
+                    <HorizontalStackLayout Spacing="16" HorizontalOptions="Center">
+                        <Button Text="🔊 Volume" Padding="12,8" Command="{Binding ToggleToolCommand}" CommandParameter="{x:Static models:TrimTool.Volume}"
+                                BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardBackgroundDark}}"
+                                TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}">
+                            <Button.Triggers>
+                                <DataTrigger TargetType="Button" Binding="{Binding ActiveTool}" Value="{x:Static models:TrimTool.Volume}">
+                                    <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+                                    <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource PrimaryDarkText}}" />
+                                </DataTrigger>
+                            </Button.Triggers>
+                        </Button>
+                        <Button Text="📈 Fade In" Padding="12,8" Command="{Binding ToggleToolCommand}" CommandParameter="{x:Static models:TrimTool.FadeIn}"
+                                BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardBackgroundDark}}"
+                                TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}">
+                            <Button.Triggers>
+                                <DataTrigger TargetType="Button" Binding="{Binding ActiveTool}" Value="{x:Static models:TrimTool.FadeIn}">
+                                    <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+                                    <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource PrimaryDarkText}}" />
+                                </DataTrigger>
+                            </Button.Triggers>
+                        </Button>
+                        <Button Text="📉 Fade Out" Padding="12,8" Command="{Binding ToggleToolCommand}" CommandParameter="{x:Static models:TrimTool.FadeOut}"
+                                BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardBackgroundDark}}"
+                                TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}">
+                            <Button.Triggers>
+                                <DataTrigger TargetType="Button" Binding="{Binding ActiveTool}" Value="{x:Static models:TrimTool.FadeOut}">
+                                    <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+                                    <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource PrimaryDarkText}}" />
+                                </DataTrigger>
+                            </Button.Triggers>
+                        </Button>
+                    </HorizontalStackLayout>
+
+                    <controls:LabeledSlider IsVisible="{Binding ActiveTool, Converter={StaticResource EnumEquals}, ConverterParameter=Volume}"
+                                             LabelText="Volume (dB)" Minimum="-24" Maximum="24" Digits="1" Value="{Binding GainDb}" />
+                    <controls:LabeledSlider IsVisible="{Binding ActiveTool, Converter={StaticResource EnumEquals}, ConverterParameter=FadeIn}"
+                                             LabelText="Fade in (s)" Minimum="0" Maximum="5" Digits="2" Value="{Binding FadeInSeconds}" />
+                    <controls:LabeledSlider IsVisible="{Binding ActiveTool, Converter={StaticResource EnumEquals}, ConverterParameter=FadeOut}"
+                                             LabelText="Fade out (s)" Minimum="0" Maximum="5" Digits="2" Value="{Binding FadeOutSeconds}" />
+
+                    <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
+                    <Label Text="{Binding StatusMessage}" TextColor="{StaticResource Gray500}" IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBool}}" />
+                </VerticalStackLayout>
+            </Border>
+        </VerticalStackLayout>
+
+    </Grid>
+
+</ContentPage>

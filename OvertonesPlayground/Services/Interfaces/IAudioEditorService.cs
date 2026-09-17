@@ -18,6 +18,12 @@ public interface IAudioEditorService
     Task<string> ApplyGainAsync(string sourcePath, double gainDb, string outputName);
 
     ///<summary>
+    ///Removes the [<paramref name="start"/>, <paramref name="end"/>] range from the middle, splicing what's before and
+    ///after it back together.
+    ///</summary>
+    Task<string> CutAsync(string sourcePath, TimeSpan start, TimeSpan end, string outputName);
+
+    ///<summary>
     ///Reads a WAV file and downsamples it into <paramref name="peakCount"/> amplitude peaks for waveform display.
     ///</summary>
     Task<float[]> GetWaveformPeaksAsync(string filePath, int peakCount);

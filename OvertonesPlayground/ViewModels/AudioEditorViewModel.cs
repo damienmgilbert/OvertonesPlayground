@@ -91,6 +91,18 @@ public partial class AudioEditorViewModel : BaseViewModel
     }
 
     [RelayCommand]
+    private async Task OpenTrimEditorAsync()
+    {
+        if (LoadedClip is null)
+        {
+            return;
+        }
+
+        Log_OpeningTrimEditor(LoadedClip.Name);
+        await Shell.Current.GoToAsync($"trim?clipId={LoadedClip.Id}");
+    }
+
+    [RelayCommand]
     private async Task PreviewAsync()
     {
         if (LoadedClip is null)
@@ -128,6 +140,9 @@ public partial class AudioEditorViewModel : BaseViewModel
 
     [LoggerMessage(Level = LogLevel.Debug, Message = "Loading clip '{ClipName}' ({ClipId}) into editor.")]
     private partial void Log_LoadingClip(string clipName, string clipId);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Opening the trim editor for clip '{ClipName}'.")]
+    private partial void Log_OpeningTrimEditor(string clipName);
 
     [LoggerMessage(Level = LogLevel.Debug, Message = "Previewing clip '{ClipName}'.")]
     private partial void Log_PreviewingClip(string clipName);

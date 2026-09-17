@@ -15,7 +15,10 @@
 
             <GraphicsView x:Name="WaveformView" HeightRequest="160" BackgroundColor="{StaticResource Gray950}" />
 
-            <Button Text="▶ Preview" Command="{Binding PreviewCommand}" />
+            <HorizontalStackLayout Spacing="12">
+                <Button Text="▶ Preview" Command="{Binding PreviewCommand}" />
+                <Button Text="✂ Open Trim Editor" Command="{Binding OpenTrimEditorCommand}" />
+            </HorizontalStackLayout>
 
             <toolkit:Expander IsExpanded="True">
                 <toolkit:Expander.Header>

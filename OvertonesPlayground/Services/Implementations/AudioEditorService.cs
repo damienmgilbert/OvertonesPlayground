@@ -86,6 +86,23 @@ public class AudioEditorService : IAudioEditorService
     }
 
     ///<inheritdoc/>
+    public async Task<string> CutAsync(string sourcePath, TimeSpan start, TimeSpan end, string outputName)
+    {
+        WavFile wav = await WavFile.ReadAsync(sourcePath);
+        int frameCount = wav.Channels * wav.SampleRate;
+
+        int startIndex = Math.Clamp((int)(start.TotalSeconds * frameCount), 0, wav.Samples.Length);
+        int endIndex = Math.Clamp((int)(end.TotalSeconds * frameCount), startIndex, wav.Samples.Length);
+
+        short[] output = new short[wav.Samples.Length - (endIndex - startIndex)];
+        Array.Copy(wav.Samples, 0, output, 0, startIndex);
+        Array.Copy(wav.Samples, endIndex, output, startIndex, wav.Samples.Length - endIndex);
+
+        string outputPath = await SaveDerivedAsync(wav, output, outputName);
+        return outputPath;
+    }
+
+    ///<inheritdoc/>
     public async Task<float[]> GetWaveformPeaksAsync(string filePath, int peakCount)
     {
         WavFile wav = await WavFile.ReadAsync(filePath);

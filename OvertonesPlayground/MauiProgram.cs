@@ -84,6 +84,9 @@ public static class MauiProgram
         services.AddTransient<AudioEditorViewModel>();
         services.AddTransient<AudioEditorPage>();
 
+        services.AddTransient<TrimViewModel>();
+        services.AddTransient<TrimPage>();
+
         services.AddTransient<SettingsViewModel>();
         services.AddTransient<SettingsPage>();
 
