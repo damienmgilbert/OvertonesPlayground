@@ -1,6 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Microsoft.Extensions.Logging;
 using OvertonesPlayground.Models;
 using OvertonesPlayground.Services.Interfaces;
 
@@ -40,7 +39,10 @@ public partial class AudioEditorViewModel : BaseViewModel
         IsBusy = true;
         try
         {
-            _logger.LogDebug("Applying '{Operation}' to clip '{ClipName}'.", operationName, LoadedClip.Name);
+            if (_logger.IsEnabled(LogLevel.Debug))
+            {
+                _logger.LogDebug("Applying '{Operation}' to clip '{ClipName}'.", operationName, LoadedClip.Name);
+            }
             string outputPath = await operation(LoadedClip);
             AudioClip newClip = await _libraryService.AddClipAsync(outputPath, $"{LoadedClip.Name} (edited)", isUserRecording: true);
             await SetLoadedClipAsync(newClip);
@@ -66,12 +68,18 @@ public partial class AudioEditorViewModel : BaseViewModel
             AudioClip? clip = clips.FirstOrDefault(c => c.Id == clipId);
             if (clip is null)
             {
-                _logger.LogDebug("Clip {ClipId} not found.", clipId);
+                if (_logger.IsEnabled(LogLevel.Debug))
+                {
+                    _logger.LogDebug("Clip {ClipId} not found.", clipId);
+                }
                 StatusMessage = "Could not find that clip.";
                 return;
             }
 
-            _logger.LogDebug("Loading clip '{ClipName}' ({ClipId}) into editor.", clip.Name, clipId);
+            if (_logger.IsEnabled(LogLevel.Debug))
+            {
+                _logger.LogDebug("Loading clip '{ClipName}' ({ClipId}) into editor.", clip.Name, clipId);
+            }
             await SetLoadedClipAsync(clip);
         }
         finally
@@ -99,7 +107,10 @@ public partial class AudioEditorViewModel : BaseViewModel
             return;
         }
 
-        _logger.LogDebug("Previewing clip '{ClipName}'.", LoadedClip.Name);
+        if (_logger.IsEnabled(LogLevel.Debug))
+        {
+            _logger.LogDebug("Previewing clip '{ClipName}'.", LoadedClip.Name);
+        }
         await _playbackService.LoadAsync(LoadedClip);
         _playbackService.Play();
     }

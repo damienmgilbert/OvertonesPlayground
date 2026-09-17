@@ -18,10 +18,14 @@ public partial class App : Application
         _logger.LogDebug("App constructed.");
         SettingsViewModel.ApplyTheme(SettingsViewModel.LoadSavedThemePreference());
 
-
         AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
+        AppDomain.CurrentDomain.FirstChanceException += CurrentDomain_FirstChanceException;
 
+    }
 
+    private void CurrentDomain_FirstChanceException(object? sender, System.Runtime.ExceptionServices.FirstChanceExceptionEventArgs e)
+    {
+        _logger.LogError(e.Exception, "First chance exception.");
     }
 
     private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)

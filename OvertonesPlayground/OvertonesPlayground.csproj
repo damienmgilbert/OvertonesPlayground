@@ -10,6 +10,7 @@
 		either BOTH runtimes must be indicated or ONLY macatalyst-x64. -->
 		<!-- For example: <RuntimeIdentifiers>maccatalyst-x64;maccatalyst-arm64</RuntimeIdentifiers> -->
 
+		<LangVersion>preview</LangVersion>
 		<OutputType>Exe</OutputType>
 		<RootNamespace>OvertonesPlayground</RootNamespace>
 		<UseMaui>true</UseMaui>
@@ -72,11 +73,19 @@
 		<PackageReference Include="CommunityToolkit.Maui.Core" Version="15.0.1" />
 		<PackageReference Include="CommunityToolkit.Maui.Markup" Version="8.0.0" />
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Console" Version="10.0.11" />
-		<PackageReference Include="Microsoft.Maui.Controls" Version="10.0.100" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.11" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.12" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.12" />
+		<PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.12" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.12" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Console" Version="10.0.12" />
+		<PackageReference Include="Microsoft.Maui.Controls" Version="10.0.101" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.12" />
 		<PackageReference Include="Plugin.Maui.Audio" Version="4.0.0" />
-		<PackageReference Include="SkiaSharp.Views.Maui.Controls" Version="4.151.2" />
+		<PackageReference Include="SkiaSharp.Views.Maui.Controls" Version="4.152.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Using Include="Microsoft.Extensions.Logging" />
 	</ItemGroup>
 
 </Project>

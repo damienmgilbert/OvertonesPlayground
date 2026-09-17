@@ -12,6 +12,7 @@ namespace OvertonesPlayground;
 /// <summary>Configures and builds the MAUI app: fonts, audio plugin, dependency injection, and logging.</summary>
 public static class MauiProgram
 {
+
     /// <summary>Builds the fully-configured <see cref="MauiApp"/> used as the app's host.</summary>
     public static MauiApp CreateMauiApp()
     {
@@ -32,6 +33,7 @@ public static class MauiProgram
 
 #if DEBUG
         builder.Logging.AddDebug();
+        builder.Logging.AddConsole();
         builder.Logging.SetMinimumLevel(LogLevel.Debug);
 #endif
 
@@ -51,7 +53,10 @@ public static class MauiProgram
         services.AddSingleton<IPublicStorageService, PublicStorageService>();
     }
 
-    /// <summary>Registers every page and view model: singletons for the live-session screens (Player/Launchpad/Mixer), transients elsewhere.</summary>
+    ///<summary>
+    ///Registers every page and view model: singletons for the live-session screens (Player/Launchpad/Mixer), transients
+    ///elsewhere.
+    ///</summary>
     private static void RegisterViewModelsAndPages(IServiceCollection services)
     {
         // Reflect the app's live audio session, so their state survives flyout navigation.
@@ -87,8 +92,6 @@ public static class MauiProgram
         services.AddTransient<AppShell>();
     }
 
-    private static void AddSystemDiagnosticLogger()
-    {
 
-    }
+
 }
