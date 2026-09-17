@@ -33,10 +33,13 @@ public partial class PlayerViewModel : BaseViewModel, IDisposable
     [ObservableProperty]
     public partial double Volume { get; set; } = 1.0;
 
+    /// <summary>Current position formatted as mm:ss.</summary>
     public string PositionText => TimeSpan.FromSeconds(PositionSeconds).ToString(@"mm\:ss");
 
+    /// <summary>Total duration formatted as mm:ss.</summary>
     public string DurationText => TimeSpan.FromSeconds(DurationSeconds).ToString(@"mm\:ss");
 
+    /// <summary>Creates the view model and syncs its initial state from the shared playback service.</summary>
     public PlayerViewModel(IAudioPlaybackService playbackService)
     {
         _playbackService = playbackService;
@@ -46,6 +49,7 @@ public partial class PlayerViewModel : BaseViewModel, IDisposable
         RefreshFromService();
     }
 
+    /// <summary>Starts a periodic timer that refreshes the displayed position while the page is visible.</summary>
     public void StartTicking(IDispatcher dispatcher)
     {
         if (_positionTimer is not null)
@@ -59,8 +63,10 @@ public partial class PlayerViewModel : BaseViewModel, IDisposable
         _positionTimer.Start();
     }
 
+    /// <summary>Stops the position-refresh timer, e.g. when the page is no longer visible.</summary>
     public void StopTicking() => _positionTimer?.Stop();
 
+    /// <summary>Pauses if currently playing, otherwise resumes/starts playback.</summary>
     [RelayCommand]
     private void PlayPause()
     {
@@ -74,9 +80,11 @@ public partial class PlayerViewModel : BaseViewModel, IDisposable
         }
     }
 
+    /// <summary>Stops playback and resets position to the start.</summary>
     [RelayCommand]
     private void Stop() => _playbackService.Stop();
 
+    /// <summary>Moves playback to the given position, in seconds.</summary>
     [RelayCommand]
     private void Seek(double positionSeconds) => _playbackService.Seek(TimeSpan.FromSeconds(positionSeconds));
 
@@ -84,6 +92,7 @@ public partial class PlayerViewModel : BaseViewModel, IDisposable
 
     private void OnPlaybackStateChanged(object? sender, EventArgs e) => RefreshFromService();
 
+    /// <summary>Pulls the latest clip name, playing state, and position/duration from the playback service.</summary>
     private void RefreshFromService()
     {
         ClipName = _playbackService.CurrentClip?.Name ?? "Nothing loaded";
@@ -94,6 +103,7 @@ public partial class PlayerViewModel : BaseViewModel, IDisposable
         OnPropertyChanged(nameof(DurationText));
     }
 
+    /// <summary>Unsubscribes from the playback service and stops the position timer.</summary>
     public void Dispose()
     {
         _playbackService.PlaybackStateChanged -= OnPlaybackStateChanged;

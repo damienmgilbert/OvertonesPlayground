@@ -14,6 +14,7 @@ public partial class MixerViewModel : BaseViewModel
     private readonly IAudioPlaybackService _playbackService;
     private readonly IAudioLibraryService _libraryService;
 
+    /// <summary>Creates the view model and populates it with four empty channel strips.</summary>
     public MixerViewModel(IAudioPlaybackService playbackService, IAudioLibraryService libraryService)
     {
         _playbackService = playbackService;
@@ -30,6 +31,7 @@ public partial class MixerViewModel : BaseViewModel
     /// <summary>Collection of mixer channel view models shown in the UI.</summary>
     public ObservableCollection<MixerChannelViewModel> Channels { get; } = [];
 
+    /// <summary>Opens the file picker and assigns the chosen sample to a channel (without starting playback).</summary>
     [RelayCommand]
     private async Task LoadSampleAsync(MixerChannelViewModel? channel)
     {
@@ -45,9 +47,11 @@ public partial class MixerViewModel : BaseViewModel
         }
     }
 
+    /// <summary>Stops a single channel's voice.</summary>
     [RelayCommand]
     private void StopChannel(MixerChannelViewModel? channel) => channel?.Stop();
 
+    /// <summary>Stops every channel's voice.</summary>
     [RelayCommand]
     private void StopAll()
     {

@@ -2,8 +2,10 @@ using OvertonesPlayground.Services.Interfaces;
 
 namespace OvertonesPlayground.Services.Implementations;
 
+/// <inheritdoc cref="IAudioEditorService" />
 public class AudioEditorService : IAudioEditorService
 {
+    /// <summary>App-private folder where every edit's derived output file is written.</summary>
     private static string ExportsDirectory
     {
         get
@@ -14,6 +16,7 @@ public class AudioEditorService : IAudioEditorService
         }
     }
 
+    /// <inheritdoc />
     public async Task<float[]> GetWaveformPeaksAsync(string filePath, int peakCount)
     {
         var wav = await WavFile.ReadAsync(filePath);
@@ -45,6 +48,7 @@ public class AudioEditorService : IAudioEditorService
         return peaks;
     }
 
+    /// <inheritdoc />
     public async Task<string> TrimAsync(string sourcePath, TimeSpan start, TimeSpan end, string outputName)
     {
         var wav = await WavFile.ReadAsync(sourcePath);
@@ -57,6 +61,7 @@ public class AudioEditorService : IAudioEditorService
         return await SaveDerivedAsync(wav, trimmed, outputName);
     }
 
+    /// <inheritdoc />
     public async Task<string> ApplyGainAsync(string sourcePath, double gainDb, string outputName)
     {
         var wav = await WavFile.ReadAsync(sourcePath);
@@ -71,6 +76,7 @@ public class AudioEditorService : IAudioEditorService
         return await SaveDerivedAsync(wav, output, outputName);
     }
 
+    /// <inheritdoc />
     public async Task<string> ApplyFadeAsync(string sourcePath, TimeSpan fadeIn, TimeSpan fadeOut, string outputName)
     {
         var wav = await WavFile.ReadAsync(sourcePath);
@@ -96,6 +102,7 @@ public class AudioEditorService : IAudioEditorService
         return await SaveDerivedAsync(wav, output, outputName);
     }
 
+    /// <inheritdoc />
     public async Task<string> ReverseAsync(string sourcePath, string outputName)
     {
         var wav = await WavFile.ReadAsync(sourcePath);
@@ -114,6 +121,7 @@ public class AudioEditorService : IAudioEditorService
         return await SaveDerivedAsync(wav, output, outputName);
     }
 
+    /// <inheritdoc />
     public async Task<string> NormalizeAsync(string sourcePath, string outputName)
     {
         var wav = await WavFile.ReadAsync(sourcePath);
@@ -142,9 +150,11 @@ public class AudioEditorService : IAudioEditorService
         return await SaveDerivedAsync(wav, output, outputName);
     }
 
+    /// <summary>Rounds and clamps a sample value into the valid 16-bit PCM range.</summary>
     private static short ClampToShort(double value) =>
         (short)Math.Clamp(value, short.MinValue, short.MaxValue);
 
+    /// <summary>Writes <paramref name="samples"/> as a new WAV file alongside <paramref name="source"/>'s format and returns its path.</summary>
     private static async Task<string> SaveDerivedAsync(WavFile source, short[] samples, string outputName)
     {
         var derived = new WavFile

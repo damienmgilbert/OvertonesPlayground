@@ -3,10 +3,12 @@ using OvertonesPlayground.Services.Interfaces;
 
 namespace OvertonesPlayground.Services.Implementations;
 
+/// <inheritdoc cref="ISoundSynthesisService" />
 public class SoundSynthesisService : ISoundSynthesisService
 {
     private const int SampleRate = 44_100;
 
+    /// <summary>App-private folder where every generated preview WAV file is written.</summary>
     private static string SynthDirectory
     {
         get
@@ -17,6 +19,7 @@ public class SoundSynthesisService : ISoundSynthesisService
         }
     }
 
+    /// <inheritdoc />
     public async Task<AudioClip> GenerateToneAsync(
         WaveformType waveform, double frequencyHz, double durationSeconds, double amplitude, string name)
     {
@@ -24,6 +27,7 @@ public class SoundSynthesisService : ISoundSynthesisService
         return await WriteAsync(samples, SampleRate, $"tone_{waveform}", name);
     }
 
+    /// <inheritdoc />
     public async Task<AudioClip> GenerateDrumAsync(DrumType drum, string name, DrumSynthParameters parameters)
     {
         var samples = drum switch
@@ -44,6 +48,7 @@ public class SoundSynthesisService : ISoundSynthesisService
         return await WriteAsync(samples, parameters.SampleRate, $"drum_{drum}", name);
     }
 
+    /// <summary>Writes raw PCM samples out as a mono 16-bit WAV file and wraps the result in an unsaved <see cref="AudioClip"/>.</summary>
     private static async Task<AudioClip> WriteAsync(short[] samples, int sampleRate, string prefix, string name)
     {
         var wav = new WavFile

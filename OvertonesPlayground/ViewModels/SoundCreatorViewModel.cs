@@ -30,6 +30,7 @@ public partial class SoundCreatorViewModel : BaseViewModel
     #endregion
 
     #region Constructors
+    /// <summary>Creates the view model and subscribes to the recorder's elapsed-time updates.</summary>
     public SoundCreatorViewModel(IAudioRecorderService recorderService, IAudioLibraryService libraryService, IPermissionsService permissionsService)
     {
         _recorderService = recorderService;
@@ -42,6 +43,7 @@ public partial class SoundCreatorViewModel : BaseViewModel
     #endregion
 
     #region Private methods
+    /// <summary>Stops recording, if in progress, and discards the captured audio.</summary>
     [RelayCommand]
     private async Task CancelRecordingAsync()
     {
@@ -55,6 +57,7 @@ public partial class SoundCreatorViewModel : BaseViewModel
         StatusMessage = "Recording discarded.";
     }
 
+    /// <summary>Requests microphone permission if needed, then starts recording.</summary>
     private async Task StartRecordingAsync()
     {
         bool granted = await _permissionsService.EnsureMicrophonePermissionAsync();
@@ -70,6 +73,7 @@ public partial class SoundCreatorViewModel : BaseViewModel
         StatusMessage = null;
     }
 
+    /// <summary>Stops recording and saves the captured audio into the library.</summary>
     private async Task StopRecordingAsync()
     {
         if (!IsRecording)
@@ -87,6 +91,7 @@ public partial class SoundCreatorViewModel : BaseViewModel
             : $"Saved '{clip.Name}' to your library.";
     }
 
+    /// <summary>Starts recording if idle, or stops (and saves) it if already recording.</summary>
     [RelayCommand]
     private async Task ToggleRecordingAsync()
     {

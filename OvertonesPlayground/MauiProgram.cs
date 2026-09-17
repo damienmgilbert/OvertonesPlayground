@@ -9,8 +9,10 @@ using Plugin.Maui.Audio;
 
 namespace OvertonesPlayground;
 
+/// <summary>Configures and builds the MAUI app: fonts, audio plugin, dependency injection, and logging.</summary>
 public static class MauiProgram
 {
+    /// <summary>Builds the fully-configured <see cref="MauiApp"/> used as the app's host.</summary>
     public static MauiApp CreateMauiApp()
     {
         var builder = MauiApp.CreateBuilder();
@@ -35,6 +37,7 @@ public static class MauiProgram
         return builder.Build();
     }
 
+    /// <summary>Registers every app service, all as singletons so state (playback, library) is shared across the app.</summary>
     private static void RegisterServices(IServiceCollection services)
     {
         services.AddSingleton<IPermissionsService, PermissionsService>();
@@ -47,6 +50,7 @@ public static class MauiProgram
         services.AddSingleton<IPublicStorageService, PublicStorageService>();
     }
 
+    /// <summary>Registers every page and view model: singletons for the live-session screens (Player/Launchpad/Mixer), transients elsewhere.</summary>
     private static void RegisterViewModelsAndPages(IServiceCollection services)
     {
         // Reflect the app's live audio session, so their state survives flyout navigation.

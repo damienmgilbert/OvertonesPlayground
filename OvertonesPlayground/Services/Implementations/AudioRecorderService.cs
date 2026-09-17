@@ -5,6 +5,7 @@ using Plugin.Maui.Audio;
 
 namespace OvertonesPlayground.Services.Implementations;
 
+/// <inheritdoc cref="IAudioRecorderService" />
 public class AudioRecorderService : IAudioRecorderService, IDisposable
 {
     private readonly IAudioManager _audioManager;
@@ -13,6 +14,7 @@ public class AudioRecorderService : IAudioRecorderService, IDisposable
     private readonly System.Timers.Timer _tickTimer;
     private string? _currentFilePath;
 
+    /// <summary>Creates the recorder service and its underlying platform recorder.</summary>
     public AudioRecorderService(IAudioManager audioManager)
     {
         _audioManager = audioManager;
@@ -22,12 +24,16 @@ public class AudioRecorderService : IAudioRecorderService, IDisposable
         _tickTimer.Elapsed += (_, _) => ElapsedChanged?.Invoke(this, Elapsed);
     }
 
+    /// <inheritdoc />
     public bool IsRecording => _recorder.IsRecording;
 
+    /// <inheritdoc />
     public TimeSpan Elapsed => _stopwatch.Elapsed;
 
+    /// <inheritdoc />
     public event EventHandler<TimeSpan>? ElapsedChanged;
 
+    /// <inheritdoc />
     public async Task StartAsync()
     {
         var directory = Path.Combine(FileSystem.AppDataDirectory, "Clips");
@@ -46,6 +52,7 @@ public class AudioRecorderService : IAudioRecorderService, IDisposable
         _tickTimer.Start();
     }
 
+    /// <inheritdoc />
     public async Task<AudioClip> StopAsync(string name)
     {
         var source = await _recorder.StopAsync();
@@ -63,6 +70,7 @@ public class AudioRecorderService : IAudioRecorderService, IDisposable
         };
     }
 
+    /// <inheritdoc />
     public async Task CancelAsync()
     {
         if (_recorder.IsRecording)
@@ -79,6 +87,7 @@ public class AudioRecorderService : IAudioRecorderService, IDisposable
         }
     }
 
+    /// <summary>Releases the tick timer and the underlying platform recorder.</summary>
     public void Dispose()
     {
         _tickTimer.Dispose();

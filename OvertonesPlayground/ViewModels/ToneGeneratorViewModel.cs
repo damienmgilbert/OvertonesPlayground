@@ -16,30 +16,40 @@ public partial class ToneGeneratorViewModel : BaseViewModel
     private readonly IAudioPlaybackService _playbackService;
     private readonly IAudioLibraryService _libraryService;
 
+    /// <summary>The most recently generated, not-yet-saved preview clip; null once saved or before the first Generate.</summary>
     private AudioClip? _pendingClip;
 
+    /// <summary>The oscillator/noise type to generate.</summary>
     [ObservableProperty]
     public partial WaveformType SelectedWaveform { get; set; } = WaveformType.Sine;
 
+    /// <summary>Oscillator frequency in Hz.</summary>
     [ObservableProperty]
     public partial double FrequencyHz { get; set; } = 440;
 
+    /// <summary>Length of the generated tone in seconds.</summary>
     [ObservableProperty]
     public partial double DurationSeconds { get; set; } = 1.0;
 
+    /// <summary>Output level from 0 (silent) to 1 (full scale).</summary>
     [ObservableProperty]
     public partial double Amplitude { get; set; } = 0.8;
 
+    /// <summary>Waveform peaks for the most recently generated preview, used to draw the waveform view.</summary>
     [ObservableProperty]
     public partial float[] WaveformPeaks { get; set; } = [];
 
+    /// <summary>Whether there's a generated preview waiting to be saved.</summary>
     [ObservableProperty]
     public partial bool CanSave { get; set; }
 
+    /// <summary>Every waveform type the Wave picker can select from.</summary>
     public IReadOnlyList<WaveformType> WaveformOptions { get; } = Enum.GetValues<WaveformType>();
 
+    /// <summary>Quick-select presets shown above the manual controls.</summary>
     public IReadOnlyList<TonePreset> Presets { get; } = TonePreset.All;
 
+    /// <summary>Creates the view model with its default sine-wave settings.</summary>
     public ToneGeneratorViewModel(
         ISoundSynthesisService synthesisService,
         IAudioEditorService editorService,
@@ -53,6 +63,7 @@ public partial class ToneGeneratorViewModel : BaseViewModel
         Title = "Tone Generator";
     }
 
+    /// <summary>Loads a preset's waveform, frequency, duration, and level into the manual controls.</summary>
     [RelayCommand]
     private void SelectPreset(TonePreset preset)
     {
@@ -62,6 +73,7 @@ public partial class ToneGeneratorViewModel : BaseViewModel
         Amplitude = preset.Amplitude;
     }
 
+    /// <summary>Synthesizes the current settings, previews the result, and enables Save.</summary>
     [RelayCommand]
     private async Task GenerateAsync()
     {
@@ -90,6 +102,7 @@ public partial class ToneGeneratorViewModel : BaseViewModel
         }
     }
 
+    /// <summary>Persists the pending preview clip into the library (and, best-effort, the shared Music folder).</summary>
     [RelayCommand]
     private async Task SaveAsync()
     {

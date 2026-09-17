@@ -5,6 +5,7 @@ using System.Text.Json;
 
 namespace OvertonesPlayground.Services.Implementations;
 
+/// <inheritdoc cref="IAudioLibraryService" />
 public class AudioLibraryService : IAudioLibraryService
 {
     private const string LibraryFileName = "library.json";
@@ -14,12 +15,16 @@ public class AudioLibraryService : IAudioLibraryService
     private readonly SemaphoreSlim _lock = new(1, 1);
     private List<AudioClip>? _cache;
 
+    /// <summary>Creates the library service.</summary>
+    /// <param name="audioManager">Used to probe a clip's duration when it's added.</param>
+    /// <param name="publicStorageService">Used to export user-created clips into the shared Music folder.</param>
     public AudioLibraryService(IAudioManager audioManager, IPublicStorageService publicStorageService)
     {
         _audioManager = audioManager;
         _publicStorageService = publicStorageService;
     }
 
+    /// <summary>App-private folder where imported and picked audio files are copied.</summary>
     private static string ClipsDirectory
     {
         get
@@ -30,8 +35,10 @@ public class AudioLibraryService : IAudioLibraryService
         }
     }
 
+    /// <summary>Path to the JSON file backing the persisted library catalog.</summary>
     private static string LibraryFilePath => Path.Combine(FileSystem.AppDataDirectory, LibraryFileName);
 
+    /// <inheritdoc />
     public async Task<IReadOnlyList<AudioClip>> GetClipsAsync()
     {
         await EnsureLoadedAsync();
@@ -39,6 +46,7 @@ public class AudioLibraryService : IAudioLibraryService
         return audioClips;
     }
 
+    /// <inheritdoc />
     public async Task<AudioClip?> ImportFromPickerAsync()
     {
         var audioFileType = new FilePickerFileType(new Dictionary<DevicePlatform, IEnumerable<string>>
@@ -67,6 +75,7 @@ public class AudioLibraryService : IAudioLibraryService
         return await AddClipAsync(destination, Path.GetFileNameWithoutExtension(result.FileName));
     }
 
+    /// <inheritdoc />
     public async Task<AudioClip> AddClipAsync(string filePath, string name, bool isUserRecording = false)
     {
         var duration = await GetDurationAsync(filePath);
@@ -91,6 +100,7 @@ public class AudioLibraryService : IAudioLibraryService
         return clip;
     }
 
+    /// <inheritdoc />
     public async Task DeleteClipAsync(AudioClip clip)
     {
         await EnsureLoadedAsync();
@@ -110,6 +120,7 @@ public class AudioLibraryService : IAudioLibraryService
         }
     }
 
+    /// <inheritdoc />
     public async Task RenameClipAsync(AudioClip clip, string newName)
     {
         await EnsureLoadedAsync();
@@ -121,6 +132,7 @@ public class AudioLibraryService : IAudioLibraryService
         }
     }
 
+    /// <summary>Loads a file just long enough to read its duration; returns <see cref="TimeSpan.Zero"/> if that fails.</summary>
     private Task<TimeSpan> GetDurationAsync(string filePath)
     {
         try
@@ -134,6 +146,7 @@ public class AudioLibraryService : IAudioLibraryService
         }
     }
 
+    /// <summary>Loads the persisted catalog from disk into <see cref="_cache"/> on first use.</summary>
     private async Task EnsureLoadedAsync()
     {
         if (_cache is not null)
@@ -165,6 +178,7 @@ public class AudioLibraryService : IAudioLibraryService
         }
     }
 
+    /// <summary>Persists the current in-memory catalog to disk as JSON.</summary>
     private async Task SaveAsync()
     {
         var json = JsonSerializer.Serialize(_cache);

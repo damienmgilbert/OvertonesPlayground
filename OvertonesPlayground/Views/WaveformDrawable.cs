@@ -1,9 +1,12 @@
 namespace OvertonesPlayground.Views;
 
+/// <summary>Renders a simple mirrored bar-chart waveform from a set of amplitude peaks.</summary>
 public class WaveformDrawable : IDrawable
 {
+    /// <summary>Normalized amplitude peaks (0 to 1) to render, left to right.</summary>
     public float[] Peaks { get; set; } = [];
 
+    /// <summary>Draws the waveform, or nothing if <see cref="Peaks"/> is empty.</summary>
     public void Draw(ICanvas canvas, RectF dirtyRect)
     {
         canvas.FillColor = Colors.Transparent;

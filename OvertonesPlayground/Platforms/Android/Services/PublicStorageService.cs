@@ -18,6 +18,7 @@ public class PublicStorageService : IPublicStorageService
 {
     private const string SubFolder = "OvertonesPlayground";
 
+    /// <inheritdoc />
     public async Task<string?> ExportToMusicAsync(string sourceFilePath, string displayFileName)
     {
         try
@@ -32,6 +33,7 @@ public class PublicStorageService : IPublicStorageService
         }
     }
 
+    /// <summary>Inserts a pending MediaStore entry, streams the file's bytes into it, then clears the pending flag.</summary>
     [SupportedOSPlatform("android29.0")]
     private static async Task<string?> ExportViaMediaStoreAsync(string sourceFilePath, string displayFileName)
     {
@@ -72,6 +74,7 @@ public class PublicStorageService : IPublicStorageService
         return $"Music/{SubFolder}/{displayFileName}";
     }
 
+    /// <summary>Pre-Android-10 fallback: writes directly into the public Music directory and asks the media scanner to index it.</summary>
     private static async Task<string?> ExportLegacyAsync(string sourceFilePath, string displayFileName)
     {
         var musicDir = AndroidEnvironment.GetExternalStoragePublicDirectory(AndroidEnvironment.DirectoryMusic);

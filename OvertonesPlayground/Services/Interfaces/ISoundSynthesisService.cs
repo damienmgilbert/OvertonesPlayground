@@ -10,8 +10,10 @@ namespace OvertonesPlayground.Services.Interfaces;
 /// </summary>
 public interface ISoundSynthesisService
 {
+    /// <summary>Synthesizes a single oscillator tone with the given waveform, pitch, length, and level.</summary>
     Task<AudioClip> GenerateToneAsync(
         WaveformType waveform, double frequencyHz, double durationSeconds, double amplitude, string name);
 
+    /// <summary>Synthesizes a drum-machine one-shot using the given type and tunable parameters.</summary>
     Task<AudioClip> GenerateDrumAsync(DrumType drum, string name, DrumSynthParameters parameters);
 }

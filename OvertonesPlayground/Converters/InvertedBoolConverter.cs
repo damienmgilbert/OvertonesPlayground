@@ -2,6 +2,7 @@ using System.Globalization;
 
 namespace OvertonesPlayground.Converters;
 
+/// <summary>Logically negates a bool value; symmetric, so it also works for two-way bindings.</summary>
 public class InvertedBoolConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture) =>

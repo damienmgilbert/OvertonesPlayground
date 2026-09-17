@@ -3,11 +3,13 @@ using OvertonesPlayground.ViewModels;
 
 namespace OvertonesPlayground.Views;
 
+/// <summary>Code-behind for the Sound Editor page: wires the waveform view to the view model's peaks.</summary>
 public partial class AudioEditorPage : ContentPage
 {
     private readonly AudioEditorViewModel _viewModel;
     private readonly WaveformDrawable _drawable = new();
 
+    /// <summary>Creates the page and hooks up its waveform drawable.</summary>
     public AudioEditorPage(AudioEditorViewModel viewModel)
     {
         InitializeComponent();
@@ -17,6 +19,7 @@ public partial class AudioEditorPage : ContentPage
         _viewModel.PropertyChanged += OnViewModelPropertyChanged;
     }
 
+    /// <summary>Redraws the waveform whenever the view model loads a new clip's peaks.</summary>
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(AudioEditorViewModel.WaveformPeaks))

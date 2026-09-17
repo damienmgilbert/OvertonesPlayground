@@ -2,6 +2,7 @@ using System.Globalization;
 
 namespace OvertonesPlayground.Converters;
 
+/// <summary>Converts a "#RRGGBB" (or "#AARRGGBB") hex string into a <see cref="Color"/>; falls back to transparent for null/empty input.</summary>
 public class HexColorConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture) =>

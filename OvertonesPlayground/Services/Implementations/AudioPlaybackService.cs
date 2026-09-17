@@ -17,6 +17,7 @@ public class AudioPlaybackService : IAudioPlaybackService
     private readonly Dictionary<string, IAudioPlayer> _channelPlayers = [];
     private IAudioPlayer? _mainPlayer;
 
+    /// <summary>Creates the playback service and starts listening for audio focus changes.</summary>
     public AudioPlaybackService(IAudioManager audioManager, IAudioFocusService audioFocusService)
     {
         _audioManager = audioManager;
@@ -24,23 +25,28 @@ public class AudioPlaybackService : IAudioPlaybackService
         _audioFocusService.FocusChanged += OnAudioFocusChanged;
     }
 
+    /// <summary>Pauses the main transport when focus is lost (a call, another app, etc.) rather than fighting for the speaker.</summary>
     private void OnAudioFocusChanged(object? sender, bool haveFocus)
     {
-        // Lost focus to a phone call, another music app, etc. - pause rather than fight for the speaker.
         if (!haveFocus)
         {
             Pause();
         }
     }
 
+    /// <inheritdoc />
     public AudioClip? CurrentClip { get; private set; }
 
+    /// <inheritdoc />
     public bool IsPlaying => _mainPlayer?.IsPlaying ?? false;
 
+    /// <inheritdoc />
     public TimeSpan Position => TimeSpan.FromSeconds(_mainPlayer?.CurrentPosition ?? 0);
 
+    /// <inheritdoc />
     public TimeSpan Duration => TimeSpan.FromSeconds(_mainPlayer?.Duration ?? 0);
 
+    /// <inheritdoc />
     public double Volume
     {
         get => _mainPlayer?.Volume ?? 1.0;
@@ -50,9 +56,13 @@ public class AudioPlaybackService : IAudioPlaybackService
         }
     }
 
+    /// <inheritdoc />
     public event EventHandler? PlaybackStateChanged;
+
+    /// <inheritdoc />
     public event EventHandler? PlaybackEnded;
 
+    /// <inheritdoc />
     public Task LoadAsync(AudioClip clip)
     {
         _mainPlayer?.Stop();
@@ -65,6 +75,7 @@ public class AudioPlaybackService : IAudioPlaybackService
         return Task.CompletedTask;
     }
 
+    /// <inheritdoc />
     public void Play()
     {
         _audioFocusService.RequestFocus();
@@ -72,26 +83,31 @@ public class AudioPlaybackService : IAudioPlaybackService
         PlaybackStateChanged?.Invoke(this, EventArgs.Empty);
     }
 
+    /// <inheritdoc />
     public void Pause()
     {
         _mainPlayer?.Pause();
         PlaybackStateChanged?.Invoke(this, EventArgs.Empty);
     }
 
+    /// <inheritdoc />
     public void Stop()
     {
         _mainPlayer?.Stop();
         PlaybackStateChanged?.Invoke(this, EventArgs.Empty);
     }
 
+    /// <inheritdoc />
     public void Seek(TimeSpan position) => _mainPlayer?.Seek(position.TotalSeconds);
 
+    /// <summary>Forwards the main player's own end-of-clip event as both state-changed and playback-ended.</summary>
     private void OnMainPlaybackEnded(object? sender, EventArgs e)
     {
         PlaybackStateChanged?.Invoke(this, EventArgs.Empty);
         PlaybackEnded?.Invoke(this, EventArgs.Empty);
     }
 
+    /// <inheritdoc />
     public void TriggerPad(LaunchpadPad pad)
     {
         if (!pad.HasClip)
@@ -121,6 +137,7 @@ public class AudioPlaybackService : IAudioPlaybackService
         voice.Play();
     }
 
+    /// <inheritdoc />
     public void StopPad(int padIndex)
     {
         if (!_padVoices.TryGetValue(padIndex, out var voices))
@@ -137,6 +154,7 @@ public class AudioPlaybackService : IAudioPlaybackService
         voices.Clear();
     }
 
+    /// <inheritdoc />
     public void StopAllPads()
     {
         foreach (var index in _padVoices.Keys.ToArray())
@@ -145,6 +163,7 @@ public class AudioPlaybackService : IAudioPlaybackService
         }
     }
 
+    /// <inheritdoc />
     public void PlayChannel(MixerChannelStrip channel)
     {
         if (string.IsNullOrEmpty(channel.SourceClipPath))
@@ -164,6 +183,7 @@ public class AudioPlaybackService : IAudioPlaybackService
         player.Play();
     }
 
+    /// <inheritdoc />
     public void StopChannel(string channelId)
     {
         if (_channelPlayers.Remove(channelId, out var player))
@@ -173,6 +193,7 @@ public class AudioPlaybackService : IAudioPlaybackService
         }
     }
 
+    /// <inheritdoc />
     public void UpdateChannel(MixerChannelStrip channel)
     {
         if (_channelPlayers.TryGetValue(channel.Id, out var player))
@@ -182,6 +203,7 @@ public class AudioPlaybackService : IAudioPlaybackService
         }
     }
 
+    /// <inheritdoc />
     public void StopAllChannels()
     {
         foreach (var id in _channelPlayers.Keys.ToArray())
@@ -190,6 +212,7 @@ public class AudioPlaybackService : IAudioPlaybackService
         }
     }
 
+    /// <inheritdoc />
     public void StopEverything()
     {
         Stop();

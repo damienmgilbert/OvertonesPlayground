@@ -16,19 +16,25 @@ public partial class DrumSynthViewModel : BaseViewModel
     private readonly IAudioPlaybackService _playbackService;
     private readonly IAudioLibraryService _libraryService;
 
+    /// <summary>The most recently generated, not-yet-saved preview clip; null once saved or before the first Generate.</summary>
     private AudioClip? _pendingClip;
 
+    /// <summary>The tunable parameters for the currently selected drum type.</summary>
     [ObservableProperty]
     public partial DrumSynthParametersViewModel SelectedDrumParams { get; set; }
 
+    /// <summary>Waveform peaks for the most recently generated preview, used to draw the waveform view.</summary>
     [ObservableProperty]
     public partial float[] WaveformPeaks { get; set; } = [];
 
+    /// <summary>Whether there's a generated preview waiting to be saved.</summary>
     [ObservableProperty]
     public partial bool CanSave { get; set; }
 
+    /// <summary>Every drum type the Generate row can select from.</summary>
     public IReadOnlyList<DrumType> DrumOptions { get; } = Enum.GetValues<DrumType>();
 
+    /// <summary>Creates the view model with Kick selected as the initial drum type.</summary>
     public DrumSynthViewModel(
         ISoundSynthesisService synthesisService,
         IAudioEditorService editorService,
@@ -44,6 +50,7 @@ public partial class DrumSynthViewModel : BaseViewModel
         SelectedDrumParams = new DrumSynthParametersViewModel(DrumType.Kick);
     }
 
+    /// <summary>Switches to a new drum type, loading its default parameters and clearing any pending preview.</summary>
     [RelayCommand]
     private void SelectDrum(DrumType drum)
     {
@@ -52,6 +59,7 @@ public partial class DrumSynthViewModel : BaseViewModel
         WaveformPeaks = [];
     }
 
+    /// <summary>Synthesizes the current parameters, previews the result, and enables Save.</summary>
     [RelayCommand]
     private async Task GenerateAsync()
     {
@@ -79,6 +87,7 @@ public partial class DrumSynthViewModel : BaseViewModel
         }
     }
 
+    /// <summary>Persists the pending preview clip into the library (and, best-effort, the shared Music folder).</summary>
     [RelayCommand]
     private async Task SaveAsync()
     {

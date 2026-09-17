@@ -14,13 +14,16 @@ public class AudioFocusService : Java.Lang.Object, IAudioFocusService, AudioMana
     private readonly AudioManager? _audioManager;
     private AudioFocusRequestClass? _focusRequest;
 
+    /// <inheritdoc />
     public event EventHandler<bool>? FocusChanged;
 
+    /// <summary>Resolves the system <see cref="AudioManager"/> for the app's context.</summary>
     public AudioFocusService()
     {
         _audioManager = AndroidApp.Context.GetSystemService(Context.AudioService) as AudioManager;
     }
 
+    /// <inheritdoc />
     public bool RequestFocus()
     {
         if (_audioManager is null)
@@ -54,6 +57,7 @@ public class AudioFocusService : Java.Lang.Object, IAudioFocusService, AudioMana
         return result == AudioFocusRequest.Granted;
     }
 
+    /// <inheritdoc />
     public void AbandonFocus()
     {
         if (_audioManager is null)
@@ -73,6 +77,7 @@ public class AudioFocusService : Java.Lang.Object, IAudioFocusService, AudioMana
         }
     }
 
+    /// <summary>Android's callback for focus gain/loss; raises <see cref="FocusChanged"/> for the rest of the app.</summary>
     public void OnAudioFocusChange(AudioFocus focusChange)
     {
         var haveFocus = focusChange == AudioFocus.Gain;

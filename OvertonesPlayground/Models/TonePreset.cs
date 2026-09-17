@@ -1,8 +1,14 @@
 namespace OvertonesPlayground.Models;
 
 /// <summary>A quick-select starting point for the Tone Generator's Wave/Frequency/Duration/Level knobs.</summary>
+/// <param name="Name">Display name shown on the preset button.</param>
+/// <param name="Waveform">Oscillator/noise type to generate.</param>
+/// <param name="FrequencyHz">Oscillator frequency in Hz (ignored for noise waveforms).</param>
+/// <param name="DurationSeconds">Length of the generated tone in seconds.</param>
+/// <param name="Amplitude">Output level from 0 (silent) to 1 (full scale).</param>
 public record TonePreset(string Name, WaveformType Waveform, double FrequencyHz, double DurationSeconds, double Amplitude)
 {
+    /// <summary>The full catalog of presets shown on the Tone Generator page.</summary>
     public static IReadOnlyList<TonePreset> All { get; } =
     [
         new("A4 Concert Pitch", WaveformType.Sine, 440, 1.5, 0.8),
