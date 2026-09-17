@@ -53,7 +53,7 @@ public partial class DrumSynthViewModel : BaseViewModel
         IsBusy = true;
         try
         {
-            _logger.LogDebug("Generating drum sample for {DrumType}.", SelectedDrumParams.DrumType);
+            Log_GeneratingDrumSample(SelectedDrumParams.DrumType);
             _pendingClip = await _synthesisService.GenerateDrumAsync(SelectedDrumParams.DrumType, SelectedDrumParams.DrumType.ToString(), SelectedDrumParams.ToParameters());
 
             WaveformPeaks = await _editorService.GetWaveformPeaksAsync(_pendingClip.FilePath, 300);
@@ -83,7 +83,7 @@ public partial class DrumSynthViewModel : BaseViewModel
         IsBusy = true;
         try
         {
-            _logger.LogDebug("Saving generated drum sample '{ClipName}'.", _pendingClip.Name);
+            Log_SavingDrumSample(_pendingClip.Name);
             AudioClip saved = await _libraryService.AddClipAsync(_pendingClip.FilePath, _pendingClip.Name, isUserRecording: true);
             StatusMessage = saved.PublicStorageLocation is { } location ? $"Saved '{saved.Name}' - also in {location}." : $"Saved '{saved.Name}' to your library.";
 
@@ -102,11 +102,22 @@ public partial class DrumSynthViewModel : BaseViewModel
     [RelayCommand]
     private void SelectDrum(DrumType drum)
     {
-        _logger.LogDebug("Selected drum type {DrumType}.", drum);
+        Log_SelectedDrumType(drum);
         SelectedDrumParams = new DrumSynthParametersViewModel(drum);
         CanSave = false;
         WaveformPeaks = [];
     }
+    #endregion
+
+    #region Logging
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Generating drum sample for {DrumType}.")]
+    private partial void Log_GeneratingDrumSample(DrumType drumType);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Saving generated drum sample '{ClipName}'.")]
+    private partial void Log_SavingDrumSample(string clipName);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Selected drum type {DrumType}.")]
+    private partial void Log_SelectedDrumType(DrumType drumType);
     #endregion
 
     #region Public properties

@@ -12,8 +12,13 @@ public partial class BaseViewModel : ObservableObject
     protected BaseViewModel(ILogger logger)
     {
         _logger = logger;
-        _logger.LogDebug("{ViewModel} created.", GetType().Name);
+        Log_ViewModelCreated(GetType().Name);
     }
+    #endregion
+
+    #region Logging
+    [LoggerMessage(Level = LogLevel.Debug, Message = "{ViewModel} created.")]
+    private partial void Log_ViewModelCreated(string viewModel);
     #endregion
 
     #region Protected properties

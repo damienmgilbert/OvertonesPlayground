@@ -27,13 +27,21 @@ public partial class MixerPage : ContentPage
     protected override void OnAppearing()
     {
         base.OnAppearing();
-        _logger.LogDebug("Page appeared.");
+        Log_PageAppeared();
     }
 
     protected override void OnDisappearing()
     {
         base.OnDisappearing();
-        _logger.LogDebug("Page disappeared.");
+        Log_PageDisappeared();
     }
+    #endregion
+
+    #region Logging
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Page appeared.")]
+    private partial void Log_PageAppeared();
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Page disappeared.")]
+    private partial void Log_PageDisappeared();
     #endregion
 }

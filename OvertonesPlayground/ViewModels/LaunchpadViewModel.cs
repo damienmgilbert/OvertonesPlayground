@@ -74,12 +74,12 @@ public partial class LaunchpadViewModel : BaseViewModel
             }
 
             string color = PadPalette[pad.Index % PadPalette.Length];
-            _logger.LogDebug("Assigned clip '{ClipName}' to pad {PadIndex}.", clip.Name, pad.Index);
+            Log_AssignedClip(clip.Name, pad.Index);
             pad.Assign(clip.FilePath, clip.Name, color);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to assign a sample to pad {PadIndex}.", pad.Index);
+            Log_AssignSampleFailed(ex, pad.Index);
             StatusMessage = "Couldn't import that sample.";
         }
     }
@@ -92,12 +92,12 @@ public partial class LaunchpadViewModel : BaseViewModel
     {
         try
         {
-            _logger.LogDebug("Stopping all pads.");
+            Log_StoppingAllPads();
             _playbackService.StopAllPads();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to stop all pads.");
+            Log_StopAllPadsFailed(ex);
         }
     }
     ///<summary>
@@ -113,12 +113,12 @@ public partial class LaunchpadViewModel : BaseViewModel
 
         try
         {
-            _logger.LogDebug("Stopping pad {PadIndex}.", pad.Index);
+            Log_StoppingPad(pad.Index);
             _playbackService.StopPad(pad.Index);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to stop pad {PadIndex}.", pad.Index);
+            Log_StopPadFailed(ex, pad.Index);
         }
     }
 
@@ -133,7 +133,7 @@ public partial class LaunchpadViewModel : BaseViewModel
             return;
         }
 
-        _logger.LogDebug("Pad {PadIndex} loop toggled.", pad.Index);
+        Log_PadLoopToggled(pad.Index);
         pad.ToggleLoop();
     }
     ///<summary>
@@ -149,15 +149,44 @@ public partial class LaunchpadViewModel : BaseViewModel
 
         try
         {
-            _logger.LogDebug("Triggering pad {PadIndex}.", pad.Index);
+            Log_TriggeringPad(pad.Index);
             _playbackService.TriggerPad(pad.Pad);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to trigger pad {PadIndex}.", pad.Index);
+            Log_TriggerPadFailed(ex, pad.Index);
             StatusMessage = "Couldn't play that pad.";
         }
     }
+    #endregion
+
+    #region Logging
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Assigned clip '{ClipName}' to pad {PadIndex}.")]
+    private partial void Log_AssignedClip(string clipName, int padIndex);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Failed to assign a sample to pad {PadIndex}.")]
+    private partial void Log_AssignSampleFailed(Exception exception, int padIndex);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Pad {PadIndex} loop toggled.")]
+    private partial void Log_PadLoopToggled(int padIndex);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Failed to stop all pads.")]
+    private partial void Log_StopAllPadsFailed(Exception exception);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Failed to stop pad {PadIndex}.")]
+    private partial void Log_StopPadFailed(Exception exception, int padIndex);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Stopping all pads.")]
+    private partial void Log_StoppingAllPads();
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Stopping pad {PadIndex}.")]
+    private partial void Log_StoppingPad(int padIndex);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Failed to trigger pad {PadIndex}.")]
+    private partial void Log_TriggerPadFailed(Exception exception, int padIndex);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Triggering pad {PadIndex}.")]
+    private partial void Log_TriggeringPad(int padIndex);
     #endregion
 
     #region Public properties

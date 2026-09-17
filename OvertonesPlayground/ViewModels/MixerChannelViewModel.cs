@@ -27,7 +27,7 @@ public partial class MixerChannelViewModel : ObservableObject
         Pan = channel.Pan;
         IsMuted = channel.IsMuted;
         IsSoloed = channel.IsSoloed;
-        _logger.LogDebug("Channel '{ChannelName}' created.", Name);
+        Log_ChannelCreated(Name);
     }
     #endregion
 
@@ -58,7 +58,7 @@ public partial class MixerChannelViewModel : ObservableObject
     private void ToggleMute()
     {
         IsMuted = !IsMuted;
-        _logger.LogDebug("Channel '{ChannelName}' mute set to {IsMuted}.", Name, IsMuted);
+        Log_ChannelMuteChanged(Name, IsMuted);
     }
     [RelayCommand]
     private void TogglePlayback()
@@ -73,7 +73,7 @@ public partial class MixerChannelViewModel : ObservableObject
             Stop();
         } else
         {
-            _logger.LogDebug("Channel '{ChannelName}' playback started.", Name);
+            Log_ChannelPlaybackStarted(Name);
             _playbackService.PlayChannel(Channel);
             IsPlaying = true;
         }
@@ -83,7 +83,7 @@ public partial class MixerChannelViewModel : ObservableObject
     private void ToggleSolo()
     {
         IsSoloed = !IsSoloed;
-        _logger.LogDebug("Channel '{ChannelName}' solo set to {IsSoloed}.", Name, IsSoloed);
+        Log_ChannelSoloChanged(Name, IsSoloed);
     }
     #endregion
 
@@ -103,10 +103,27 @@ public partial class MixerChannelViewModel : ObservableObject
 
     public void Stop()
     {
-        _logger.LogDebug("Channel '{ChannelName}' playback stopped.", Name);
+        Log_ChannelPlaybackStopped(Name);
         _playbackService.StopChannel(Channel.Id);
         IsPlaying = false;
     }
+    #endregion
+
+    #region Logging
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Channel '{ChannelName}' created.")]
+    private partial void Log_ChannelCreated(string channelName);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Channel '{ChannelName}' mute set to {IsMuted}.")]
+    private partial void Log_ChannelMuteChanged(string channelName, bool isMuted);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Channel '{ChannelName}' playback started.")]
+    private partial void Log_ChannelPlaybackStarted(string channelName);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Channel '{ChannelName}' playback stopped.")]
+    private partial void Log_ChannelPlaybackStopped(string channelName);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Channel '{ChannelName}' solo set to {IsSoloed}.")]
+    private partial void Log_ChannelSoloChanged(string channelName, bool isSoloed);
     #endregion
 
     #region Public properties

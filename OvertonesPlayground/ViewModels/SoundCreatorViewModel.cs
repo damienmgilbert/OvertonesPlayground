@@ -44,7 +44,7 @@ public partial class SoundCreatorViewModel : BaseViewModel
             return;
         }
 
-        _logger.LogDebug("Canceling recording.");
+        Log_CancelingRecording();
         await _recorderService.CancelAsync();
         IsRecording = false;
         StatusMessage = "Recording discarded.";
@@ -58,13 +58,13 @@ public partial class SoundCreatorViewModel : BaseViewModel
         bool granted = await _permissionsService.EnsureMicrophonePermissionAsync();
         if (!granted)
         {
-            _logger.LogDebug("Microphone permission denied.");
+            Log_MicrophonePermissionDenied();
             StatusMessage = "Microphone permission is required to record.";
             return;
         }
 
         NewClipName = $"Recording {DateTime.Now:HH:mm:ss}";
-        _logger.LogDebug("Starting recording '{ClipName}'.", NewClipName);
+        Log_StartingRecording(NewClipName);
         await _recorderService.StartAsync();
         IsRecording = true;
         StatusMessage = null;
@@ -81,7 +81,7 @@ public partial class SoundCreatorViewModel : BaseViewModel
         }
 
         string name = string.IsNullOrWhiteSpace(NewClipName) ? $"Recording {DateTime.Now:HHmmss}" : NewClipName;
-        _logger.LogDebug("Stopping recording, saving as '{ClipName}'.", name);
+        Log_StoppingRecording(name);
         AudioClip recorded = await _recorderService.StopAsync(name);
         IsRecording = false;
 
@@ -104,6 +104,20 @@ public partial class SoundCreatorViewModel : BaseViewModel
             await StartRecordingAsync();
         }
     }
+    #endregion
+
+    #region Logging
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Canceling recording.")]
+    private partial void Log_CancelingRecording();
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Microphone permission denied.")]
+    private partial void Log_MicrophonePermissionDenied();
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Starting recording '{ClipName}'.")]
+    private partial void Log_StartingRecording(string clipName);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Stopping recording, saving as '{ClipName}'.")]
+    private partial void Log_StoppingRecording(string clipName);
     #endregion
 
     #region Public properties

@@ -16,19 +16,13 @@ public partial class AppShell : Shell
         Routing.RegisterRoute("editor", typeof(AudioEditorPage));
 
 
-        Navigating += (_, e) =>
-        {
-            if (_logger.IsEnabled(LogLevel.Debug))
-            {
-                _logger.LogDebug("Navigating from '{Current}' to '{Target}'.", e.Current?.Location, e.Target?.Location);
-            }
-        };
-        Navigated += (_, e) =>
-        {
-            if (_logger.IsEnabled(LogLevel.Debug))
-            {
-                _logger.LogDebug("Navigated to '{Current}' ({Source}).", e.Current?.Location, e.Source);
-            }
-        };
+        Navigating += (_, e) => Log_Navigating(e.Current?.Location, e.Target?.Location);
+        Navigated += (_, e) => Log_Navigated(e.Current?.Location, e.Source);
     }
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Navigating from '{Current}' to '{Target}'.")]
+    private partial void Log_Navigating(Uri? current, Uri? target);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Navigated to '{Current}' ({Source}).")]
+    private partial void Log_Navigated(Uri? current, ShellNavigationSource source);
 }

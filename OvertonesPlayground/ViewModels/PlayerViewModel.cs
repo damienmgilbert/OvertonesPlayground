@@ -40,12 +40,12 @@ public partial class PlayerViewModel : BaseViewModel, IDisposable
     {
         if (_playbackService.IsPlaying)
         {
-            _logger.LogDebug("Pausing playback.");
+            Log_PausingPlayback();
             _playbackService.Pause();
         }
         else
         {
-            _logger.LogDebug("Starting playback.");
+            Log_StartingPlayback();
             _playbackService.Play();
         }
     }
@@ -69,7 +69,7 @@ public partial class PlayerViewModel : BaseViewModel, IDisposable
     [RelayCommand]
     private void Seek(double positionSeconds)
     {
-        _logger.LogDebug("Seeking to {PositionSeconds}s.", positionSeconds);
+        Log_Seeking(positionSeconds);
         _playbackService.Seek(TimeSpan.FromSeconds(positionSeconds));
     }
 
@@ -79,9 +79,26 @@ public partial class PlayerViewModel : BaseViewModel, IDisposable
     [RelayCommand]
     private void Stop()
     {
-        _logger.LogDebug("Stopping playback.");
+        Log_StoppingPlayback();
         _playbackService.Stop();
     }
+    #endregion
+
+    #region Logging
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Disposing.")]
+    private partial void Log_Disposing();
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Pausing playback.")]
+    private partial void Log_PausingPlayback();
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Seeking to {PositionSeconds}s.")]
+    private partial void Log_Seeking(double positionSeconds);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Starting playback.")]
+    private partial void Log_StartingPlayback();
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Stopping playback.")]
+    private partial void Log_StoppingPlayback();
     #endregion
 
     #region Public methods
@@ -90,7 +107,7 @@ public partial class PlayerViewModel : BaseViewModel, IDisposable
     ///</summary>
     public void Dispose()
     {
-        _logger.LogDebug("Disposing.");
+        Log_Disposing();
         _playbackService.PlaybackStateChanged -= OnPlaybackStateChanged;
         StopTicking();
     }

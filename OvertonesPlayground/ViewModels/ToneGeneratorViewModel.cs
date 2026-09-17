@@ -52,7 +52,7 @@ public partial class ToneGeneratorViewModel : BaseViewModel
         try
         {
             string name = $"{SelectedWaveform} {FrequencyHz:0}Hz";
-            _logger.LogDebug("Generating tone '{Name}' ({DurationSeconds}s, amplitude {Amplitude}).", name, DurationSeconds, Amplitude);
+            Log_GeneratingTone(name, DurationSeconds, Amplitude);
             _pendingClip = await _synthesisService.GenerateToneAsync(SelectedWaveform, FrequencyHz, DurationSeconds, Amplitude, name);
 
             WaveformPeaks = await _editorService.GetWaveformPeaksAsync(_pendingClip.FilePath, 300);
@@ -82,7 +82,7 @@ public partial class ToneGeneratorViewModel : BaseViewModel
         IsBusy = true;
         try
         {
-            _logger.LogDebug("Saving generated clip '{ClipName}'.", _pendingClip.Name);
+            Log_SavingClip(_pendingClip.Name);
             AudioClip saved = await _libraryService.AddClipAsync(_pendingClip.FilePath, _pendingClip.Name, isUserRecording: true);
             StatusMessage = saved.PublicStorageLocation is { } location ? $"Saved '{saved.Name}' - also in {location}." : $"Saved '{saved.Name}' to your library.";
 
@@ -101,12 +101,23 @@ public partial class ToneGeneratorViewModel : BaseViewModel
     [RelayCommand]
     private void SelectPreset(TonePreset preset)
     {
-        _logger.LogDebug("Selected preset '{PresetName}'.", preset.Name);
+        Log_SelectedPreset(preset.Name);
         SelectedWaveform = preset.Waveform;
         FrequencyHz = preset.FrequencyHz;
         DurationSeconds = preset.DurationSeconds;
         Amplitude = preset.Amplitude;
     }
+    #endregion
+
+    #region Logging
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Generating tone '{Name}' ({DurationSeconds}s, amplitude {Amplitude}).")]
+    private partial void Log_GeneratingTone(string name, double durationSeconds, double amplitude);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Saving generated clip '{ClipName}'.")]
+    private partial void Log_SavingClip(string clipName);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Selected preset '{PresetName}'.")]
+    private partial void Log_SelectedPreset(string presetName);
     #endregion
 
     #region Public properties

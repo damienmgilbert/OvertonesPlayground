@@ -57,7 +57,7 @@ public partial class MixerViewModel : BaseViewModel
         }
 
         bool anySoloed = Channels.Any(c => c.IsSoloed);
-        _logger.LogDebug("Solo state changed; {SoloedCount} channel(s) soloed.", Channels.Count(c => c.IsSoloed));
+        Log_SoloStateChanged(Channels.Count(c => c.IsSoloed));
         foreach (MixerChannelViewModel channel in Channels)
         {
             channel.IsDimmed = anySoloed && !channel.IsSoloed;
@@ -78,7 +78,7 @@ public partial class MixerViewModel : BaseViewModel
         AudioClip? clip = await _libraryService.ImportFromPickerAsync();
         if (clip is not null)
         {
-            _logger.LogDebug("Loaded sample '{ClipName}' into channel '{ChannelName}'.", clip.Name, channel.Name);
+            Log_LoadedSample(clip.Name, channel.Name);
             channel.AssignSource(clip.FilePath, clip.Name);
         }
     }
@@ -89,7 +89,7 @@ public partial class MixerViewModel : BaseViewModel
     [RelayCommand]
     private void StopAll()
     {
-        _logger.LogDebug("Stopping all channels.");
+        Log_StoppingAllChannels();
         foreach (MixerChannelViewModel channel in Channels)
         {
             channel.Stop();
@@ -101,6 +101,17 @@ public partial class MixerViewModel : BaseViewModel
     ///</summary>
     [RelayCommand]
     private void StopChannel(MixerChannelViewModel? channel) { channel?.Stop(); }
+    #endregion
+
+    #region Logging
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Loaded sample '{ClipName}' into channel '{ChannelName}'.")]
+    private partial void Log_LoadedSample(string clipName, string channelName);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Solo state changed; {SoloedCount} channel(s) soloed.")]
+    private partial void Log_SoloStateChanged(int soloedCount);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Stopping all channels.")]
+    private partial void Log_StoppingAllChannels();
     #endregion
 
     #region Public properties

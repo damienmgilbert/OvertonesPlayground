@@ -47,7 +47,7 @@ public partial class SettingsViewModel : BaseViewModel
     private async Task ClearLibraryAsync()
     {
         IReadOnlyList<AudioClip> clips = await _libraryService.GetClipsAsync();
-        _logger.LogDebug("Clearing library: {ClipCount} clips.", clips.Count);
+        Log_ClearingLibrary(clips.Count);
         foreach (AudioClip clip in clips)
         {
             await _libraryService.DeleteClipAsync(clip);
@@ -58,14 +58,14 @@ public partial class SettingsViewModel : BaseViewModel
 
     partial void OnKeepScreenOnChanged(bool value)
     {
-        _logger.LogDebug("Keep screen on changed to {Value}.", value);
+        Log_KeepScreenOnChanged(value);
         Preferences.Default.Set(KeepScreenOnKey, value);
         ApplyKeepScreenOn(value);
     }
 
     partial void OnSelectedThemeChanged(ThemePreference value)
     {
-        _logger.LogDebug("Theme preference changed to {Theme}.", value);
+        Log_ThemeChanged(value);
         Preferences.Default.Set(ThemePreferenceKey, value.ToString());
         ApplyTheme(value);
     }
@@ -76,9 +76,23 @@ public partial class SettingsViewModel : BaseViewModel
     [RelayCommand]
     private void StopAllAudio()
     {
-        _logger.LogDebug("Stopping all audio.");
+        Log_StoppingAllAudio();
         _playbackService.StopEverything();
     }
+    #endregion
+
+    #region Logging
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Clearing library: {ClipCount} clips.")]
+    private partial void Log_ClearingLibrary(int clipCount);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Keep screen on changed to {Value}.")]
+    private partial void Log_KeepScreenOnChanged(bool value);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Stopping all audio.")]
+    private partial void Log_StoppingAllAudio();
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Theme preference changed to {Theme}.")]
+    private partial void Log_ThemeChanged(ThemePreference theme);
     #endregion
 
     #region Public methods

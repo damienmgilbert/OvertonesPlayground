@@ -42,7 +42,7 @@ public partial class LibraryViewModel : BaseViewModel
             return;
         }
 
-        _logger.LogDebug("Deleting clip '{ClipName}' ({ClipId}).", clip.Name, clip.Id);
+        Log_DeletingClip(clip.Name, clip.Id);
         await _libraryService.DeleteClipAsync(clip);
         Clips.Remove(clip);
     }
@@ -55,23 +55,23 @@ public partial class LibraryViewModel : BaseViewModel
             return;
         }
 
-        _logger.LogDebug("Navigating to editor for clip '{ClipName}' ({ClipId}).", clip.Name, clip.Id);
+        Log_NavigatingToEditor(clip.Name, clip.Id);
         await Shell.Current.GoToAsync($"editor?clipId={clip.Id}");
     }
 
     [RelayCommand]
     private async Task ImportAsync()
     {
-        _logger.LogDebug("Importing a clip from the picker.");
+        Log_ImportingClip();
         AudioClip? clip = await _libraryService.ImportFromPickerAsync();
         if (clip is not null)
         {
-            _logger.LogDebug("Imported clip '{ClipName}'.", clip.Name);
+            Log_ImportedClip(clip.Name);
             Clips.Insert(0, clip);
         }
         else
         {
-            _logger.LogDebug("Import canceled.");
+            Log_ImportCanceled();
         }
     }
 
@@ -87,7 +87,7 @@ public partial class LibraryViewModel : BaseViewModel
         try
         {
             IReadOnlyList<AudioClip> clips = await _libraryService.GetClipsAsync();
-            _logger.LogDebug("Loaded {ClipCount} clips.", clips.Count);
+            Log_LoadedClips(clips.Count);
             Clips.Clear();
             foreach (AudioClip clip in clips)
             {
@@ -109,7 +109,7 @@ public partial class LibraryViewModel : BaseViewModel
             return;
         }
 
-        _logger.LogDebug("Playing clip '{ClipName}' ({ClipId}).", clip.Name, clip.Id);
+        Log_PlayingClip(clip.Name, clip.Id);
         await _playbackService.LoadAsync(clip);
         _playbackService.Play();
         await Shell.Current.GoToAsync("//player");
@@ -118,9 +118,35 @@ public partial class LibraryViewModel : BaseViewModel
     [RelayCommand]
     private void SetViewMode(LibraryViewMode mode)
     {
-        _logger.LogDebug("View mode changed to {ViewMode}.", mode);
+        Log_ViewModeChanged(mode);
         ViewMode = mode;
     }
+    #endregion
+
+    #region Logging
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Deleting clip '{ClipName}' ({ClipId}).")]
+    private partial void Log_DeletingClip(string clipName, string clipId);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Imported clip '{ClipName}'.")]
+    private partial void Log_ImportedClip(string clipName);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Import canceled.")]
+    private partial void Log_ImportCanceled();
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Importing a clip from the picker.")]
+    private partial void Log_ImportingClip();
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Loaded {ClipCount} clips.")]
+    private partial void Log_LoadedClips(int clipCount);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Navigating to editor for clip '{ClipName}' ({ClipId}).")]
+    private partial void Log_NavigatingToEditor(string clipName, string clipId);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Playing clip '{ClipName}' ({ClipId}).")]
+    private partial void Log_PlayingClip(string clipName, string clipId);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "View mode changed to {ViewMode}.")]
+    private partial void Log_ViewModeChanged(LibraryViewMode viewMode);
     #endregion
 
     #region Public properties

@@ -39,10 +39,7 @@ public partial class AudioEditorViewModel : BaseViewModel
         IsBusy = true;
         try
         {
-            if (_logger.IsEnabled(LogLevel.Debug))
-            {
-                _logger.LogDebug("Applying '{Operation}' to clip '{ClipName}'.", operationName, LoadedClip.Name);
-            }
+            Log_ApplyingEdit(operationName, LoadedClip.Name);
             string outputPath = await operation(LoadedClip);
             AudioClip newClip = await _libraryService.AddClipAsync(outputPath, $"{LoadedClip.Name} (edited)", isUserRecording: true);
             await SetLoadedClipAsync(newClip);
@@ -68,18 +65,12 @@ public partial class AudioEditorViewModel : BaseViewModel
             AudioClip? clip = clips.FirstOrDefault(c => c.Id == clipId);
             if (clip is null)
             {
-                if (_logger.IsEnabled(LogLevel.Debug))
-                {
-                    _logger.LogDebug("Clip {ClipId} not found.", clipId);
-                }
+                Log_ClipNotFound(clipId);
                 StatusMessage = "Could not find that clip.";
                 return;
             }
 
-            if (_logger.IsEnabled(LogLevel.Debug))
-            {
-                _logger.LogDebug("Loading clip '{ClipName}' ({ClipId}) into editor.", clip.Name, clipId);
-            }
+            Log_LoadingClip(clip.Name, clipId);
             await SetLoadedClipAsync(clip);
         }
         finally
@@ -107,10 +98,7 @@ public partial class AudioEditorViewModel : BaseViewModel
             return;
         }
 
-        if (_logger.IsEnabled(LogLevel.Debug))
-        {
-            _logger.LogDebug("Previewing clip '{ClipName}'.", LoadedClip.Name);
-        }
+        Log_PreviewingClip(LoadedClip.Name);
         await _playbackService.LoadAsync(LoadedClip);
         _playbackService.Play();
     }
@@ -129,6 +117,20 @@ public partial class AudioEditorViewModel : BaseViewModel
 
     [RelayCommand]
     private async Task TrimAsync() { await ApplyEditAsync("trim", clip => _editorService.TrimAsync(clip.FilePath, TimeSpan.FromSeconds(TrimStartSeconds), TimeSpan.FromSeconds(TrimEndSeconds), "trim")); }
+    #endregion
+
+    #region Logging
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Applying '{Operation}' to clip '{ClipName}'.")]
+    private partial void Log_ApplyingEdit(string operation, string clipName);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Clip {ClipId} not found.")]
+    private partial void Log_ClipNotFound(string clipId);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Loading clip '{ClipName}' ({ClipId}) into editor.")]
+    private partial void Log_LoadingClip(string clipName, string clipId);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Previewing clip '{ClipName}'.")]
+    private partial void Log_PreviewingClip(string clipName);
     #endregion
 
     #region Public properties
