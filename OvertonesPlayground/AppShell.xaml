@@ -27,6 +27,10 @@
         <ShellContent ContentTemplate="{DataTemplate views:SoundCreatorPage}" Route="soundcreator" />
     </FlyoutItem>
 
+    <FlyoutItem Title="Tone Generator" Route="tonegenerator">
+        <ShellContent ContentTemplate="{DataTemplate views:ToneGeneratorPage}" Route="tonegenerator" />
+    </FlyoutItem>
+
     <FlyoutItem Title="Settings" Route="settings">
         <ShellContent ContentTemplate="{DataTemplate views:SettingsPage}" Route="settings" />
     </FlyoutItem>

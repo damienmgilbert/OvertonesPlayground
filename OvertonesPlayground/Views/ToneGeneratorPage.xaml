@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:OvertonesPlayground.ViewModels"
+             xmlns:models="clr-namespace:OvertonesPlayground.Models"
+             x:Class="OvertonesPlayground.Views.ToneGeneratorPage"
+             x:DataType="vm:ToneGeneratorViewModel"
+             Title="{Binding Title}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="24" Spacing="18">
+
+            <Label Text="Synth Tone" FontSize="20" FontAttributes="Bold" />
+
+            <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="12" ColumnSpacing="14">
+                <Label Grid.Row="0" Grid.Column="0" Text="Wave" VerticalOptions="Center" />
+                <Picker Grid.Row="0" Grid.Column="1"
+                        ItemsSource="{Binding WaveformOptions}"
+                        SelectedItem="{Binding SelectedWaveform}" />
+
+                <Label Grid.Row="1" Grid.Column="0" Text="{Binding FrequencyHz, StringFormat='{0:0} Hz'}" VerticalOptions="Center" />
+                <Slider Grid.Row="1" Grid.Column="1" Minimum="20" Maximum="2000" Value="{Binding FrequencyHz}" />
+
+                <Label Grid.Row="2" Grid.Column="0" Text="{Binding DurationSeconds, StringFormat='{0:0.00} s'}" VerticalOptions="Center" />
+                <Slider Grid.Row="2" Grid.Column="1" Minimum="0.1" Maximum="3" Value="{Binding DurationSeconds}" />
+
+                <Label Grid.Row="3" Grid.Column="0" Text="Level" VerticalOptions="Center" />
+                <Slider Grid.Row="3" Grid.Column="1" Minimum="0" Maximum="1" Value="{Binding Amplitude}" />
+            </Grid>
+
+            <Button Text="Generate &amp; Play" Command="{Binding GenerateToneCommand}" />
+
+            <GraphicsView x:Name="WaveformView" HeightRequest="120" BackgroundColor="{StaticResource Gray950}" />
+
+            <BoxView HeightRequest="1" Color="{StaticResource Gray300}" />
+
+            <Label Text="Drum &amp; Bass Synth" FontSize="20" FontAttributes="Bold" />
+            <Label Text="Tap a pad to generate and play a one-shot; it's saved to your library for the Launchpad and Mixer." FontSize="12" TextColor="{StaticResource Gray500}" />
+
+            <CollectionView ItemsSource="{Binding DrumOptions}" HeightRequest="100">
+                <CollectionView.ItemsLayout>
+                    <GridItemsLayout Orientation="Vertical" Span="5" HorizontalItemSpacing="8" VerticalItemSpacing="8" />
+                </CollectionView.ItemsLayout>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="models:DrumType">
+                        <Button Text="{Binding .}"
+                                HeightRequest="80"
+                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ToneGeneratorViewModel}}, Path=GenerateDrumCommand}"
+                                CommandParameter="{Binding .}" />
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
+            <Label Text="{Binding StatusMessage}" TextColor="{StaticResource Gray500}" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

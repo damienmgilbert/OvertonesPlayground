@@ -43,6 +43,7 @@ public static class MauiProgram
         services.AddSingleton<IAudioRecorderService, AudioRecorderService>();
         services.AddSingleton<IAudioEditorService, AudioEditorService>();
         services.AddSingleton<IAudioFocusService, AudioFocusService>();
+        services.AddSingleton<ISoundSynthesisService, SoundSynthesisService>();
     }
 
     private static void RegisterViewModelsAndPages(IServiceCollection services)
@@ -63,6 +64,9 @@ public static class MauiProgram
 
         services.AddTransient<SoundCreatorViewModel>();
         services.AddTransient<SoundCreatorPage>();
+
+        services.AddTransient<ToneGeneratorViewModel>();
+        services.AddTransient<ToneGeneratorPage>();
 
         services.AddTransient<AudioEditorViewModel>();
         services.AddTransient<AudioEditorPage>();
