@@ -28,32 +28,32 @@ public class SoundSynthesisService : ISoundSynthesisService
         WaveformType waveform, double frequencyHz, double durationSeconds, double amplitude, string name)
     {
         var samples = WaveformGenerator.Generate(waveform, frequencyHz, durationSeconds, SampleRate, amplitude);
-        var path = await WriteAsync(samples, $"tone_{waveform}");
+        var path = await WriteAsync(samples, SampleRate, $"tone_{waveform}");
         return await _libraryService.AddClipAsync(path, name, isUserRecording: true);
     }
 
-    public async Task<AudioClip> GenerateDrumAsync(DrumType drum, string name)
+    public async Task<AudioClip> GenerateDrumAsync(DrumType drum, string name, DrumSynthParameters parameters)
     {
         var samples = drum switch
         {
-            DrumType.Kick => DrumSynthesizer.Kick(SampleRate),
-            DrumType.Snare => DrumSynthesizer.Snare(SampleRate),
-            DrumType.HiHat => DrumSynthesizer.HiHat(SampleRate),
-            DrumType.Clap => DrumSynthesizer.Clap(SampleRate),
-            DrumType.Bass => DrumSynthesizer.Bass(SampleRate),
+            DrumType.Kick => DrumSynthesizer.Kick(parameters),
+            DrumType.Snare => DrumSynthesizer.Snare(parameters),
+            DrumType.HiHat => DrumSynthesizer.HiHat(parameters),
+            DrumType.Clap => DrumSynthesizer.Clap(parameters),
+            DrumType.Bass => DrumSynthesizer.Bass(parameters),
             _ => throw new ArgumentOutOfRangeException(nameof(drum)),
         };
 
-        var path = await WriteAsync(samples, $"drum_{drum}");
+        var path = await WriteAsync(samples, parameters.SampleRate, $"drum_{drum}");
         return await _libraryService.AddClipAsync(path, name, isUserRecording: true);
     }
 
-    private static async Task<string> WriteAsync(short[] samples, string prefix)
+    private static async Task<string> WriteAsync(short[] samples, int sampleRate, string prefix)
     {
         var wav = new WavFile
         {
             Channels = 1,
-            SampleRate = SampleRate,
+            SampleRate = sampleRate,
             BitsPerSample = 16,
             Samples = samples,
         };

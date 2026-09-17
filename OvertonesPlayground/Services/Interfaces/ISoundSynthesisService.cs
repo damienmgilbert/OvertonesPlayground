@@ -12,5 +12,5 @@ public interface ISoundSynthesisService
     Task<AudioClip> GenerateToneAsync(
         WaveformType waveform, double frequencyHz, double durationSeconds, double amplitude, string name);
 
-    Task<AudioClip> GenerateDrumAsync(DrumType drum, string name);
+    Task<AudioClip> GenerateDrumAsync(DrumType drum, string name, DrumSynthParameters parameters);
 }

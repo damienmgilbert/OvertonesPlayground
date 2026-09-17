@@ -16,6 +16,7 @@
             <conv:BoolToAccentColorConverter x:Key="BoolToAccent" />
             <conv:InvertedBoolConverter x:Key="InvertedBool" />
             <conv:RecordButtonLabelConverter x:Key="RecordButtonLabel" />
+            <conv:StringToBoolConverter x:Key="StringToBool" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

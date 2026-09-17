@@ -21,10 +21,13 @@
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="models:AudioClip">
                     <Border StrokeShape="RoundRectangle 12" Padding="14" Margin="4">
-                        <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="8">
+                        <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="8">
                             <Label Grid.Row="0" Text="{Binding Name}" FontAttributes="Bold" FontSize="16" LineBreakMode="TailTruncation" />
                             <Label Grid.Row="1" Text="{Binding Duration, StringFormat='{0:mm\\:ss}'}" TextColor="{StaticResource Gray500}" />
-                            <HorizontalStackLayout Grid.Row="2" Spacing="10">
+                            <Label Grid.Row="2" Text="{Binding PublicStorageLocation}" FontSize="11" TextColor="{StaticResource Gray500}"
+                                   IsVisible="{Binding PublicStorageLocation, Converter={StaticResource StringToBool}}"
+                                   LineBreakMode="TailTruncation" />
+                            <HorizontalStackLayout Grid.Row="3" Spacing="10">
                                 <Button Text="Play"
                                         Padding="14,6"
                                         Command="{Binding Source={RelativeSource AncestorType={x:Type vm:LibraryViewModel}}, Path=PlayCommand}"

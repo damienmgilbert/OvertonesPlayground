@@ -44,6 +44,7 @@ public static class MauiProgram
         services.AddSingleton<IAudioEditorService, AudioEditorService>();
         services.AddSingleton<IAudioFocusService, AudioFocusService>();
         services.AddSingleton<ISoundSynthesisService, SoundSynthesisService>();
+        services.AddSingleton<IPublicStorageService, PublicStorageService>();
     }
 
     private static void RegisterViewModelsAndPages(IServiceCollection services)

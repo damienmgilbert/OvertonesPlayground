@@ -10,12 +10,14 @@ public class AudioLibraryService : IAudioLibraryService
     private const string LibraryFileName = "library.json";
 
     private readonly IAudioManager _audioManager;
+    private readonly IPublicStorageService _publicStorageService;
     private readonly SemaphoreSlim _lock = new(1, 1);
     private List<AudioClip>? _cache;
 
-    public AudioLibraryService(IAudioManager audioManager)
+    public AudioLibraryService(IAudioManager audioManager, IPublicStorageService publicStorageService)
     {
         _audioManager = audioManager;
+        _publicStorageService = publicStorageService;
     }
 
     private static string ClipsDirectory
@@ -75,6 +77,12 @@ public class AudioLibraryService : IAudioLibraryService
             Duration = duration,
             IsUserRecording = isUserRecording,
         };
+
+        if (isUserRecording)
+        {
+            // Best-effort: a failed export to shared storage should never block saving to the library.
+            clip.PublicStorageLocation = await _publicStorageService.ExportToMusicAsync(filePath, Path.GetFileName(filePath));
+        }
 
         await EnsureLoadedAsync();
         _cache!.Add(clip);

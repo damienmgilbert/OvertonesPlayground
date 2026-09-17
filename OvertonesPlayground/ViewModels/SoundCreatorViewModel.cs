@@ -75,7 +75,9 @@ public partial class SoundCreatorViewModel : BaseViewModel
         IsRecording = false;
 
         AudioClip clip = await _libraryService.AddClipAsync(recorded.FilePath, name, isUserRecording: true);
-        StatusMessage = $"Saved '{clip.Name}' to your library.";
+        StatusMessage = clip.PublicStorageLocation is { } location
+            ? $"Saved '{clip.Name}' - also in {location}."
+            : $"Saved '{clip.Name}' to your library.";
     }
 
     [RelayCommand]

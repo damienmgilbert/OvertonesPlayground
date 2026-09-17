@@ -26,6 +26,9 @@ public partial class ToneGeneratorViewModel : BaseViewModel
     [ObservableProperty]
     public partial float[] WaveformPeaks { get; set; } = [];
 
+    [ObservableProperty]
+    public partial DrumSynthParametersViewModel SelectedDrumParams { get; set; }
+
     public IReadOnlyList<WaveformType> WaveformOptions { get; } = Enum.GetValues<WaveformType>();
 
     public IReadOnlyList<DrumType> DrumOptions { get; } = Enum.GetValues<DrumType>();
@@ -39,6 +42,8 @@ public partial class ToneGeneratorViewModel : BaseViewModel
         _editorService = editorService;
         _playbackService = playbackService;
         Title = "Tone Generator";
+
+        SelectedDrumParams = new DrumSynthParametersViewModel(DrumType.Kick);
     }
 
     [RelayCommand]
@@ -57,7 +62,7 @@ public partial class ToneGeneratorViewModel : BaseViewModel
                 SelectedWaveform, FrequencyHz, DurationSeconds, Amplitude, name);
 
             await PreviewAsync(clip);
-            StatusMessage = $"Saved '{clip.Name}' to your library.";
+            StatusMessage = DescribeSaved(clip);
         }
         finally
         {
@@ -66,7 +71,10 @@ public partial class ToneGeneratorViewModel : BaseViewModel
     }
 
     [RelayCommand]
-    private async Task GenerateDrumAsync(DrumType drum)
+    private void SelectDrum(DrumType drum) => SelectedDrumParams = new DrumSynthParametersViewModel(drum);
+
+    [RelayCommand]
+    private async Task GenerateSelectedDrumAsync()
     {
         if (IsBusy)
         {
@@ -76,15 +84,22 @@ public partial class ToneGeneratorViewModel : BaseViewModel
         IsBusy = true;
         try
         {
-            var clip = await _synthesisService.GenerateDrumAsync(drum, drum.ToString());
+            var clip = await _synthesisService.GenerateDrumAsync(
+                SelectedDrumParams.DrumType, SelectedDrumParams.DrumType.ToString(), SelectedDrumParams.ToParameters());
+
             await PreviewAsync(clip);
-            StatusMessage = $"Saved '{clip.Name}' to your library.";
+            StatusMessage = DescribeSaved(clip);
         }
         finally
         {
             IsBusy = false;
         }
     }
+
+    private static string DescribeSaved(AudioClip clip) =>
+        clip.PublicStorageLocation is { } location
+            ? $"Saved '{clip.Name}' - also in {location}."
+            : $"Saved '{clip.Name}' to your library.";
 
     private async Task PreviewAsync(AudioClip clip)
     {

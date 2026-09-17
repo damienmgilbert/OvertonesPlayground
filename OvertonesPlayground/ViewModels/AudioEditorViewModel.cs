@@ -141,9 +141,11 @@ public partial class AudioEditorViewModel : BaseViewModel
         try
         {
             var outputPath = await operation(LoadedClip);
-            var newClip = await _libraryService.AddClipAsync(outputPath, $"{LoadedClip.Name} (edited)");
+            var newClip = await _libraryService.AddClipAsync(outputPath, $"{LoadedClip.Name} (edited)", isUserRecording: true);
             await SetLoadedClipAsync(newClip);
-            StatusMessage = $"Saved as '{newClip.Name}' in your library.";
+            StatusMessage = newClip.PublicStorageLocation is { } location
+                ? $"Saved as '{newClip.Name}' - also in {location}."
+                : $"Saved as '{newClip.Name}' in your library.";
         }
         finally
         {
