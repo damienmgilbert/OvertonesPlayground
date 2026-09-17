@@ -8,45 +8,115 @@
              Title="{Binding Title}">
 
     <ContentPage.ToolbarItems>
-        <ToolbarItem Text="Import" Command="{Binding ImportCommand}" />
+        <ToolbarItem Text="⬆ Import" Command="{Binding ImportCommand}" />
     </ContentPage.ToolbarItems>
 
-    <RefreshView IsRefreshing="{Binding IsBusy}" Command="{Binding LoadCommand}">
-        <CollectionView ItemsSource="{Binding Clips}"
-                         SelectionMode="None"
-                         EmptyView="No audio clips yet. Import a file or record one in Sound Creator.">
-            <CollectionView.ItemsLayout>
-                <GridItemsLayout Orientation="Vertical" Span="2" HorizontalItemSpacing="12" VerticalItemSpacing="12" />
-            </CollectionView.ItemsLayout>
-            <CollectionView.ItemTemplate>
-                <DataTemplate x:DataType="models:AudioClip">
-                    <Border StrokeShape="RoundRectangle 12" Padding="14" Margin="4">
-                        <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="8">
-                            <Label Grid.Row="0" Text="{Binding Name}" FontAttributes="Bold" FontSize="16" LineBreakMode="TailTruncation" />
-                            <Label Grid.Row="1" Text="{Binding Duration, StringFormat='{0:mm\\:ss}'}" TextColor="{StaticResource Gray500}" />
-                            <Label Grid.Row="2" Text="{Binding PublicStorageLocation}" FontSize="11" TextColor="{StaticResource Gray500}"
-                                   IsVisible="{Binding PublicStorageLocation, Converter={StaticResource StringToBool}}"
-                                   LineBreakMode="TailTruncation" />
-                            <HorizontalStackLayout Grid.Row="3" Spacing="10">
-                                <Button Text="Play"
-                                        Padding="14,6"
+    <Grid RowDefinitions="Auto,*">
+
+        <HorizontalStackLayout Grid.Row="0" Spacing="8" Padding="16,10">
+            <Button Text="☰ List" Padding="12,6" Command="{Binding SetViewModeCommand}" CommandParameter="{x:Static models:LibraryViewMode.List}" />
+            <Button Text="▤ Detail" Padding="12,6" Command="{Binding SetViewModeCommand}" CommandParameter="{x:Static models:LibraryViewMode.Detail}" />
+            <Button Text="▦ Tile" Padding="12,6" Command="{Binding SetViewModeCommand}" CommandParameter="{x:Static models:LibraryViewMode.Tile}" />
+        </HorizontalStackLayout>
+
+        <RefreshView Grid.Row="1" IsRefreshing="{Binding IsBusy}" Command="{Binding LoadCommand}">
+            <Grid>
+
+                <!-- List: compact single-column rows -->
+                <CollectionView ItemsSource="{Binding Clips}"
+                                 SelectionMode="None"
+                                 IsVisible="{Binding ViewMode, Converter={StaticResource EnumEquals}, ConverterParameter=List}"
+                                 EmptyView="No audio clips yet. Import a file or record one in Audio Recorder.">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="models:AudioClip">
+                            <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="8" Padding="16,10">
+                                <VerticalStackLayout Grid.Column="0" VerticalOptions="Center">
+                                    <Label Text="{Binding Name}" FontAttributes="Bold" LineBreakMode="TailTruncation" />
+                                    <Label Text="{Binding Duration, StringFormat='{0:mm\\:ss}'}" FontSize="11" TextColor="{StaticResource Gray500}" />
+                                </VerticalStackLayout>
+                                <Button Grid.Column="1" Text="▶" Padding="10,6"
                                         Command="{Binding Source={RelativeSource AncestorType={x:Type vm:LibraryViewModel}}, Path=PlayCommand}"
                                         CommandParameter="{Binding .}" />
-                                <Button Text="Edit"
-                                        Padding="14,6"
+                                <Button Grid.Column="2" Text="✎" Padding="10,6"
                                         Command="{Binding Source={RelativeSource AncestorType={x:Type vm:LibraryViewModel}}, Path=EditCommand}"
                                         CommandParameter="{Binding .}" />
-                                <Button Text="Delete"
-                                        Padding="14,6"
-                                        BackgroundColor="{StaticResource Gray600}"
+                                <Button Grid.Column="3" Text="🗑" Padding="10,6" BackgroundColor="{StaticResource Gray600}"
                                         Command="{Binding Source={RelativeSource AncestorType={x:Type vm:LibraryViewModel}}, Path=DeleteCommand}"
                                         CommandParameter="{Binding .}" />
-                            </HorizontalStackLayout>
-                        </Grid>
-                    </Border>
-                </DataTemplate>
-            </CollectionView.ItemTemplate>
-        </CollectionView>
-    </RefreshView>
+                            </Grid>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
+                <!-- Detail: full-information cards -->
+                <CollectionView ItemsSource="{Binding Clips}"
+                                 SelectionMode="None"
+                                 IsVisible="{Binding ViewMode, Converter={StaticResource EnumEquals}, ConverterParameter=Detail}"
+                                 EmptyView="No audio clips yet. Import a file or record one in Audio Recorder.">
+                    <CollectionView.ItemsLayout>
+                        <GridItemsLayout Orientation="Vertical" Span="2" HorizontalItemSpacing="12" VerticalItemSpacing="12" />
+                    </CollectionView.ItemsLayout>
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="models:AudioClip">
+                            <Border StrokeShape="RoundRectangle 12" Padding="14" Margin="4">
+                                <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="8">
+                                    <Label Grid.Row="0" Text="{Binding Name}" FontAttributes="Bold" FontSize="16" LineBreakMode="TailTruncation" />
+                                    <Label Grid.Row="1" Text="{Binding Duration, StringFormat='{0:mm\\:ss}'}" TextColor="{StaticResource Gray500}" />
+                                    <Label Grid.Row="2" Text="{Binding PublicStorageLocation}" FontSize="11" TextColor="{StaticResource Gray500}"
+                                           IsVisible="{Binding PublicStorageLocation, Converter={StaticResource StringToBool}}"
+                                           LineBreakMode="TailTruncation" />
+                                    <HorizontalStackLayout Grid.Row="3" Spacing="10">
+                                        <Button Text="▶ Play"
+                                                Padding="14,6"
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:LibraryViewModel}}, Path=PlayCommand}"
+                                                CommandParameter="{Binding .}" />
+                                        <Button Text="✎ Edit"
+                                                Padding="14,6"
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:LibraryViewModel}}, Path=EditCommand}"
+                                                CommandParameter="{Binding .}" />
+                                        <Button Text="🗑 Delete"
+                                                Padding="14,6"
+                                                BackgroundColor="{StaticResource Gray600}"
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:LibraryViewModel}}, Path=DeleteCommand}"
+                                                CommandParameter="{Binding .}" />
+                                    </HorizontalStackLayout>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
+                <!-- Tile: compact grid, tap to play -->
+                <CollectionView ItemsSource="{Binding Clips}"
+                                 SelectionMode="None"
+                                 IsVisible="{Binding ViewMode, Converter={StaticResource EnumEquals}, ConverterParameter=Tile}"
+                                 EmptyView="No audio clips yet. Import a file or record one in Audio Recorder.">
+                    <CollectionView.ItemsLayout>
+                        <GridItemsLayout Orientation="Vertical" Span="5" HorizontalItemSpacing="10" VerticalItemSpacing="10" />
+                    </CollectionView.ItemsLayout>
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="models:AudioClip">
+                            <Border StrokeShape="RoundRectangle 12" Padding="8" HeightRequest="120">
+                                <Grid RowDefinitions="*,Auto" RowSpacing="4">
+                                    <Grid.GestureRecognizers>
+                                        <TapGestureRecognizer
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:LibraryViewModel}}, Path=PlayCommand}"
+                                            CommandParameter="{Binding .}" />
+                                        <TapGestureRecognizer NumberOfTapsRequired="2"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:LibraryViewModel}}, Path=EditCommand}"
+                                            CommandParameter="{Binding .}" />
+                                    </Grid.GestureRecognizers>
+                                    <Label Grid.Row="0" Text="🎵" FontSize="28" HorizontalOptions="Center" VerticalOptions="Center" />
+                                    <Label Grid.Row="1" Text="{Binding Name}" FontSize="11" HorizontalTextAlignment="Center"
+                                           LineBreakMode="TailTruncation" MaxLines="2" />
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
+            </Grid>
+        </RefreshView>
+    </Grid>
 
 </ContentPage>

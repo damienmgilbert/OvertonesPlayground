@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using OvertonesPlayground.Models;
 using OvertonesPlayground.Services.Interfaces;
@@ -11,6 +12,8 @@ namespace OvertonesPlayground.ViewModels;
 /// </summary>
 public partial class LibraryViewModel : BaseViewModel
 {
+    private const string ViewModeKey = "library_view_mode";
+
     private readonly IAudioLibraryService _libraryService;
     private readonly IAudioPlaybackService _playbackService;
 
@@ -19,10 +22,23 @@ public partial class LibraryViewModel : BaseViewModel
         _libraryService = libraryService;
         _playbackService = playbackService;
         Title = "Library";
+
+        var savedMode = Preferences.Default.Get(ViewModeKey, nameof(LibraryViewMode.Detail));
+        ViewMode = Enum.TryParse<LibraryViewMode>(savedMode, out var mode) ? mode : LibraryViewMode.Detail;
     }
 
     /// <summary>Observable collection of audio clips shown in the library UI.</summary>
     public ObservableCollection<AudioClip> Clips { get; } = [];
+
+    /// <summary>How the library is currently laid out: list, detail cards, or tiles.</summary>
+    [ObservableProperty]
+    public partial LibraryViewMode ViewMode { get; set; }
+
+    partial void OnViewModeChanged(LibraryViewMode value) =>
+        Preferences.Default.Set(ViewModeKey, value.ToString());
+
+    [RelayCommand]
+    private void SetViewMode(LibraryViewMode mode) => ViewMode = mode;
 
     [RelayCommand]
     private async Task LoadAsync()

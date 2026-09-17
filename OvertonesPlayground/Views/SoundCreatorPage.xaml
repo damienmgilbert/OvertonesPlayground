@@ -8,7 +8,7 @@
 
     <VerticalStackLayout Padding="40" Spacing="20" VerticalOptions="Center" MaximumWidthRequest="600" HorizontalOptions="Center">
 
-        <Label Text="Sound Creator" FontSize="24" FontAttributes="Bold" HorizontalTextAlignment="Center" />
+        <Label Text="🎙 Audio Recorder" FontSize="24" FontAttributes="Bold" HorizontalTextAlignment="Center" />
         <Label Text="Record a new sample to use in the Launchpad, Mixer, or Editor." HorizontalTextAlignment="Center" TextColor="{StaticResource Gray500}" />
 
         <Entry Placeholder="Recording name" Text="{Binding NewClipName}" IsEnabled="{Binding IsRecording, Converter={StaticResource InvertedBool}}" />
@@ -20,7 +20,7 @@
                 HeightRequest="70"
                 Command="{Binding ToggleRecordingCommand}" />
 
-        <Button Text="Cancel Recording"
+        <Button Text="✕ Cancel Recording"
                 IsVisible="{Binding IsRecording}"
                 Command="{Binding CancelRecordingCommand}" />
 

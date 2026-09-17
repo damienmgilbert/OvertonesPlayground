@@ -8,7 +8,7 @@
              Title="{Binding Title}">
 
     <ContentPage.ToolbarItems>
-        <ToolbarItem Text="Stop All" Command="{Binding StopAllCommand}" />
+        <ToolbarItem Text="⏹ Stop All" Command="{Binding StopAllCommand}" />
     </ContentPage.ToolbarItems>
 
     <CollectionView ItemsSource="{Binding Channels}" Margin="12">
@@ -42,7 +42,7 @@
                         </HorizontalStackLayout>
 
                         <HorizontalStackLayout Grid.Row="5" Spacing="8" HorizontalOptions="Center">
-                            <Button Text="Load"
+                            <Button Text="📂 Load"
                                     Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MixerViewModel}}, Path=LoadSampleCommand}"
                                     CommandParameter="{Binding .}" />
                             <Button Text="{Binding IsPlaying, Converter={StaticResource PlayPauseIcon}}"

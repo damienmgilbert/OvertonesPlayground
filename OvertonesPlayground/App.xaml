@@ -17,6 +17,7 @@
             <conv:InvertedBoolConverter x:Key="InvertedBool" />
             <conv:RecordButtonLabelConverter x:Key="RecordButtonLabel" />
             <conv:StringToBoolConverter x:Key="StringToBool" />
+            <conv:EnumEqualsConverter x:Key="EnumEquals" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

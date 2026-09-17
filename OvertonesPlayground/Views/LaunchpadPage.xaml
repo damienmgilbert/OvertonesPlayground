@@ -7,7 +7,7 @@
              Title="{Binding Title}">
 
     <ContentPage.ToolbarItems>
-        <ToolbarItem Text="Stop All" Command="{Binding StopAllCommand}" />
+        <ToolbarItem Text="⏹ Stop All" Command="{Binding StopAllCommand}" />
     </ContentPage.ToolbarItems>
 
     <Grid RowDefinitions="Auto,*" Margin="12" RowSpacing="8">

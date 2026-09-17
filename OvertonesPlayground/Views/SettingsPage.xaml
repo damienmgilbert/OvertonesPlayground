@@ -13,9 +13,9 @@
             <Switch Grid.Column="1" IsToggled="{Binding KeepScreenOn}" />
         </Grid>
 
-        <Button Text="Stop All Audio" Command="{Binding StopAllAudioCommand}" />
+        <Button Text="⏹ Stop All Audio" Command="{Binding StopAllAudioCommand}" />
 
-        <Button Text="Clear Library" BackgroundColor="{StaticResource Gray600}" Command="{Binding ClearLibraryCommand}" />
+        <Button Text="🗑 Clear Library" BackgroundColor="{StaticResource Gray600}" Command="{Binding ClearLibraryCommand}" />
 
         <Label Text="{Binding StatusMessage}" TextColor="{StaticResource Gray500}" />
 

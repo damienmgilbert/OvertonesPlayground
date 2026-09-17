@@ -2,6 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:OvertonesPlayground.ViewModels"
+             xmlns:models="clr-namespace:OvertonesPlayground.Models"
              xmlns:controls="clr-namespace:OvertonesPlayground.Controls"
              x:Class="OvertonesPlayground.Views.ToneGeneratorPage"
              x:DataType="vm:ToneGeneratorViewModel"
@@ -10,9 +11,23 @@
     <ScrollView>
         <VerticalStackLayout Padding="24" Spacing="18">
 
-            <Label Text="Synth Tone" FontSize="20" FontAttributes="Bold" />
+            <Label Text="🎼 Synth Tone" FontSize="20" FontAttributes="Bold" />
             <Label Text="Tune it, Generate &amp; Play to preview, then Save to keep it in your library (and your device's Music folder)."
                    FontSize="12" TextColor="{StaticResource Gray500}" />
+
+            <Label Text="Presets" FontAttributes="Bold" FontSize="14" />
+            <CollectionView ItemsSource="{Binding Presets}" HeightRequest="56">
+                <CollectionView.ItemsLayout>
+                    <LinearItemsLayout Orientation="Horizontal" ItemSpacing="8" />
+                </CollectionView.ItemsLayout>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="models:TonePreset">
+                        <Button Text="{Binding Name}"
+                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ToneGeneratorViewModel}}, Path=SelectPresetCommand}"
+                                CommandParameter="{Binding .}" />
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
 
             <Grid ColumnDefinitions="Auto,*" RowSpacing="14">
                 <Label Grid.Row="0" Grid.Column="0" Text="Wave" VerticalOptions="Center" />
@@ -26,8 +41,8 @@
             <controls:LabeledSlider LabelText="Level" Minimum="0" Maximum="1" Digits="2" Value="{Binding Amplitude}" />
 
             <HorizontalStackLayout Spacing="12">
-                <Button Text="Generate &amp; Play" Command="{Binding GenerateCommand}" />
-                <Button Text="Save" Command="{Binding SaveCommand}" IsEnabled="{Binding CanSave}" BackgroundColor="{StaticResource Tertiary}" />
+                <Button Text="▶ Generate &amp; Play" Command="{Binding GenerateCommand}" />
+                <Button Text="💾 Save" Command="{Binding SaveCommand}" IsEnabled="{Binding CanSave}" BackgroundColor="{StaticResource Tertiary}" />
             </HorizontalStackLayout>
 
             <GraphicsView x:Name="WaveformView" HeightRequest="120" BackgroundColor="{StaticResource Gray950}" />
