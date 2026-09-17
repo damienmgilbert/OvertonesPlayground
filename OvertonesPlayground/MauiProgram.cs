@@ -8,38 +8,15 @@ using Plugin.Maui.Audio;
 
 namespace OvertonesPlayground;
 
-/// <summary>Configures and builds the MAUI app: fonts, audio plugin, dependency injection, and logging.</summary>
+///<summary>
+///Configures and builds the MAUI app: fonts, audio plugin, dependency injection, and logging.
+///</summary>
 public static class MauiProgram
 {
-
-    /// <summary>Builds the fully-configured <see cref="MauiApp"/> used as the app's host.</summary>
-    public static MauiApp CreateMauiApp()
-    {
-        var builder = MauiApp.CreateBuilder();
-        builder
-            .UseMauiApp<App>()
-            .UseMauiCommunityToolkit()
-            .ConfigureFonts(fonts =>
-            {
-                fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
-                fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
-            });
-
-        builder.AddAudio();
-
-        RegisterServices(builder.Services);
-        RegisterViewModelsAndPages(builder.Services);
-
-#if DEBUG
-        builder.Logging.AddDebug();
-        builder.Logging.AddConsole();
-        builder.Logging.SetMinimumLevel(LogLevel.Debug);
-#endif
-
-        return builder.Build();
-    }
-
-    /// <summary>Registers every app service, all as singletons so state (playback, library) is shared across the app.</summary>
+    #region Private methods
+    ///<summary>
+    ///Registers every app service, all as singletons so state (playback, library) is shared across the app.
+    ///</summary>
     private static void RegisterServices(IServiceCollection services)
     {
         services.AddSingleton<IPermissionsService, PermissionsService>();
@@ -93,7 +70,37 @@ public static class MauiProgram
         // Resolved once in App.CreateWindow so it can receive a logger, rather than being constructed with `new`.
         services.AddTransient<AppShell>();
     }
+    #endregion
 
+    #region Public methods
+    ///<summary>
+    ///Builds the fully-configured <see cref="MauiApp"/> used as the app's host.
+    ///</summary>
+    public static MauiApp CreateMauiApp()
+    {
+        MauiAppBuilder builder = MauiApp.CreateBuilder();
+        builder
+            .UseMauiApp<App>()
+            .UseMauiCommunityToolkit()
+            .ConfigureFonts(
+        fonts =>
+        {
+            fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
+            fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+        });
 
+        builder.AddAudio();
 
+        RegisterServices(builder.Services);
+        RegisterViewModelsAndPages(builder.Services);
+
+#if DEBUG
+        builder.Logging.AddDebug();
+        builder.Logging.AddConsole();
+        builder.Logging.SetMinimumLevel(LogLevel.Debug);
+#endif
+
+        return builder.Build();
+    }
+    #endregion
 }

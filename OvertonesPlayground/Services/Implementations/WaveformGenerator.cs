@@ -5,6 +5,7 @@ namespace OvertonesPlayground.Services.Implementations;
 ///<summary>
 ///Pure-math generator for the basic synth waveforms (no sample playback involved) used by the Tone Generator. Every
 ///waveform gets clampledValue short attack/release envelope so single tones don't click at the start/end of the buffer.
+///
 ///</summary>
 internal static class WaveformGenerator
 {

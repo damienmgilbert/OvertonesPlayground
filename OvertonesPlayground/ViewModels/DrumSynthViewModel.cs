@@ -69,6 +69,15 @@ public partial class DrumSynthViewModel : BaseViewModel
         }
     }
 
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Generating drum sample for {DrumType}.")]
+    private partial void Log_GeneratingDrumSample(DrumType drumType);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Saving generated drum sample '{ClipName}'.")]
+    private partial void Log_SavingDrumSample(string clipName);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Selected drum type {DrumType}.")]
+    private partial void Log_SelectedDrumType(DrumType drumType);
+
     ///<summary>
     ///Persists the pending preview clip into the library (and, best-effort, the shared Music folder).
     ///</summary>
@@ -107,17 +116,6 @@ public partial class DrumSynthViewModel : BaseViewModel
         CanSave = false;
         WaveformPeaks = [];
     }
-    #endregion
-
-    #region Logging
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Generating drum sample for {DrumType}.")]
-    private partial void Log_GeneratingDrumSample(DrumType drumType);
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Saving generated drum sample '{ClipName}'.")]
-    private partial void Log_SavingDrumSample(string clipName);
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Selected drum type {DrumType}.")]
-    private partial void Log_SelectedDrumType(DrumType drumType);
     #endregion
 
     #region Public properties

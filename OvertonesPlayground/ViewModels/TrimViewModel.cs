@@ -13,6 +13,7 @@ namespace OvertonesPlayground.ViewModels;
 public partial class TrimViewModel : BaseViewModel
 {
     #region Constants
+
     ///<summary>
     ///How far each tap of a start/end stepper button moves that handle.
     ///</summary>
@@ -39,31 +40,12 @@ public partial class TrimViewModel : BaseViewModel
     #endregion
 
     #region Private methods
-    ///<summary>
-    ///Chooses a "nice" ruler tick spacing (in seconds) that yields roughly 6-10 ticks across the clip.
-    ///</summary>
-    private static double PickRulerStep(double durationSeconds)
-    {
-        double[] niceSteps = [1, 2, 5, 10, 15, 30, 60, 120, 300, 600, 900, 1800];
-        foreach (double step in niceSteps)
-        {
-            bool fitsWell = durationSeconds / step <= 10;
-            if (fitsWell)
-            {
-                return step;
-            }
-        }
+    private bool CanRedo() => _redoStack.Count > 0;
 
-        return niceSteps[^1];
-    }
-
-    private bool CanRedo() { return _redoStack.Count > 0; }
-
-    private bool CanUndo() { return _undoStack.Count > 0; }
+    private bool CanUndo() => _undoStack.Count > 0;
 
     [RelayCommand]
     private void DecreaseEnd() { TrimEndSeconds = Math.Clamp(TrimEndSeconds - NudgeStepSeconds, TrimStartSeconds, DurationSeconds); }
-
     [RelayCommand]
     private void DecreaseStart() { TrimStartSeconds = Math.Clamp(TrimStartSeconds - NudgeStepSeconds, 0, TrimEndSeconds); }
 
@@ -80,7 +62,6 @@ public partial class TrimViewModel : BaseViewModel
 
     [RelayCommand]
     private void IncreaseEnd() { TrimEndSeconds = Math.Clamp(TrimEndSeconds + NudgeStepSeconds, TrimStartSeconds, DurationSeconds); }
-
     [RelayCommand]
     private void IncreaseStart() { TrimStartSeconds = Math.Clamp(TrimStartSeconds + NudgeStepSeconds, 0, TrimEndSeconds); }
 
@@ -118,6 +99,15 @@ public partial class TrimViewModel : BaseViewModel
         }
     }
 
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Clip {ClipId} not found.")]
+    private partial void Log_ClipNotFound(string clipId);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Loading clip '{ClipName}' ({ClipId}) into the trim editor.")]
+    private partial void Log_LoadingClip(string clipName, string clipId);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Saved trimmed clip '{ClipName}'.")]
+    private partial void Log_SavedTrim(string clipName);
+
     partial void OnClipIdChanged(string? value)
     {
         if (!string.IsNullOrEmpty(value))
@@ -126,7 +116,7 @@ public partial class TrimViewModel : BaseViewModel
         }
     }
 
-    partial void OnDurationSecondsChanged(double value) { RaiseGeometryChanged(); }
+    partial void OnDurationSecondsChanged(double value) => RaiseGeometryChanged();
 
     partial void OnTrimEndSecondsChanged(double value)
     {
@@ -140,30 +130,25 @@ public partial class TrimViewModel : BaseViewModel
         OnPropertyChanged(nameof(StartTimeText));
     }
 
-    [RelayCommand]
-    private void ToggleTool(TrimTool tool) { ActiveTool = ActiveTool == tool ? TrimTool.None : tool; }
-
-    partial void OnViewportWidthChanged(double value) { RaiseGeometryChanged(); }
+    partial void OnViewportWidthChanged(double value) => RaiseGeometryChanged();
 
     ///<summary>
-    ///Re-raises every property derived from <see cref="ViewportWidth"/>/<see cref="DurationSeconds"/>.
+    ///Chooses a "nice" ruler tick spacing (in seconds) that yields roughly 6-10 ticks across the clip.
     ///</summary>
-    private void RaiseGeometryChanged()
+    private static double PickRulerStep(double durationSeconds)
     {
-        OnPropertyChanged(nameof(PixelsPerSecond));
-        OnPropertyChanged(nameof(StartHandleX));
-        OnPropertyChanged(nameof(EndHandleX));
-        OnPropertyChanged(nameof(TotalTimeText));
+        double[] niceSteps = [1, 2, 5, 10, 15, 30, 60, 120, 300, 600, 900, 1800];
+        foreach (double step in niceSteps)
+        {
+            bool fitsWell = durationSeconds / step <= 10;
+            if (fitsWell)
+            {
+                return step;
+            }
+        }
+
+        return niceSteps[^1];
     }
-
-    [RelayCommand]
-    private void SetMode(TrimMode mode) { Mode = mode; }
-
-    [RelayCommand]
-    private void SkipToEnd() { _playbackService.Seek(TimeSpan.FromSeconds(TrimEndSeconds)); }
-
-    [RelayCommand]
-    private void SkipToStart() { _playbackService.Seek(TimeSpan.FromSeconds(TrimStartSeconds)); }
 
     [RelayCommand]
     private void PlayPause()
@@ -178,20 +163,15 @@ public partial class TrimViewModel : BaseViewModel
         }
     }
 
-    [RelayCommand(CanExecute = nameof(CanUndo))]
-    private void Undo()
+    ///<summary>
+    ///Re-raises every property derived from <see cref="ViewportWidth"/>/<see cref="DurationSeconds"/>.
+    ///</summary>
+    private void RaiseGeometryChanged()
     {
-        if (_undoStack.Count == 0)
-        {
-            return;
-        }
-
-        _redoStack.Push((TrimStartSeconds, TrimEndSeconds));
-        (double start, double end) = _undoStack.Pop();
-        TrimStartSeconds = start;
-        TrimEndSeconds = end;
-        UndoCommand.NotifyCanExecuteChanged();
-        RedoCommand.NotifyCanExecuteChanged();
+        OnPropertyChanged(nameof(PixelsPerSecond));
+        OnPropertyChanged(nameof(StartHandleX));
+        OnPropertyChanged(nameof(EndHandleX));
+        OnPropertyChanged(nameof(TotalTimeText));
     }
 
     [RelayCommand(CanExecute = nameof(CanRedo))]
@@ -225,9 +205,7 @@ public partial class TrimViewModel : BaseViewModel
             TimeSpan end = TimeSpan.FromSeconds(TrimEndSeconds);
             string baseName = $"{LoadedClip.Name} (trimmed)";
 
-            string outputPath = Mode == TrimMode.TrimMiddle
-                ? await _editorService.CutAsync(LoadedClip.FilePath, start, end, baseName)
-                : await _editorService.TrimAsync(LoadedClip.FilePath, start, end, baseName);
+            string outputPath = Mode == TrimMode.TrimMiddle ? await _editorService.CutAsync(LoadedClip.FilePath, start, end, baseName) : await _editorService.TrimAsync(LoadedClip.FilePath, start, end, baseName);
 
             bool hasFade = FadeInSeconds > 0 || FadeOutSeconds > 0;
             if (hasFade)
@@ -249,6 +227,54 @@ public partial class TrimViewModel : BaseViewModel
         {
             IsBusy = false;
         }
+    }
+
+    [RelayCommand]
+    private void SetMode(TrimMode mode) { Mode = mode; }
+    [RelayCommand]
+    private void SkipToEnd() { _playbackService.Seek(TimeSpan.FromSeconds(TrimEndSeconds)); }
+    [RelayCommand]
+    private void SkipToStart() { _playbackService.Seek(TimeSpan.FromSeconds(TrimStartSeconds)); }
+    [RelayCommand]
+    private void ToggleTool(TrimTool tool) { ActiveTool = ActiveTool == tool ? TrimTool.None : tool; }
+    [RelayCommand(CanExecute = nameof(CanUndo))]
+    private void Undo()
+    {
+        if (_undoStack.Count == 0)
+        {
+            return;
+        }
+
+        _redoStack.Push((TrimStartSeconds, TrimEndSeconds));
+        (double start, double end) = _undoStack.Pop();
+        TrimStartSeconds = start;
+        TrimEndSeconds = end;
+        UndoCommand.NotifyCanExecuteChanged();
+        RedoCommand.NotifyCanExecuteChanged();
+    }
+    #endregion
+
+    #region Public methods
+    ///<summary>
+    ///Snapshots the current selection onto the undo stack and clears redo history. Called once at the start of a handle
+    ///drag, so the whole drag undoes as a single step.
+    ///</summary>
+    public void BeginHandleDrag()
+    {
+        _undoStack.Push((TrimStartSeconds, TrimEndSeconds));
+        _redoStack.Clear();
+        UndoCommand.NotifyCanExecuteChanged();
+        RedoCommand.NotifyCanExecuteChanged();
+    }
+
+    ///<summary>
+    ///Moves the preview playhead to the given position, in seconds.
+    ///</summary>
+    public void SeekToPosition(double seconds)
+    {
+        double clamped = Math.Clamp(seconds, 0, DurationSeconds);
+        _playbackService.Seek(TimeSpan.FromSeconds(clamped));
+        PositionSeconds = clamped;
     }
 
     ///<summary>
@@ -274,32 +300,7 @@ public partial class TrimViewModel : BaseViewModel
     ///<summary>
     ///Stops the position-refresh timer, e.g. when the page is no longer visible.
     ///</summary>
-    public void StopTicking() { _positionTimer?.Stop(); }
-    #endregion
-
-    #region Public methods
-    ///<summary>
-    ///Snapshots the current selection onto the undo stack and clears redo history. Called once at the start of a
-    ///handle drag, so the whole drag undoes as a single step.
-    ///</summary>
-    public void BeginHandleDrag()
-    {
-        _undoStack.Push((TrimStartSeconds, TrimEndSeconds));
-        _redoStack.Clear();
-        UndoCommand.NotifyCanExecuteChanged();
-        RedoCommand.NotifyCanExecuteChanged();
-    }
-
-    ///<summary>
-    ///Moves the preview playhead to the given position, in seconds.
-    ///</summary>
-    public void SeekToPosition(double seconds)
-    {
-        double clamped = Math.Clamp(seconds, 0, DurationSeconds);
-        _playbackService.Seek(TimeSpan.FromSeconds(clamped));
-        PositionSeconds = clamped;
-    }
-
+    public void StopTicking() => _positionTimer?.Stop();
     #endregion
 
     #region Public properties
@@ -332,12 +333,6 @@ public partial class TrimViewModel : BaseViewModel
     public string EndTimeText => FormatTime(TrimEndSeconds);
 
     ///<summary>
-    ///Gain to apply at Save time, in decibels. Zero leaves volume unchanged.
-    ///</summary>
-    [ObservableProperty]
-    public partial double GainDb { get; set; }
-
-    ///<summary>
     ///Fade-in duration to apply at Save time, in seconds. Zero applies no fade-in.
     ///</summary>
     [ObservableProperty]
@@ -348,6 +343,12 @@ public partial class TrimViewModel : BaseViewModel
     ///</summary>
     [ObservableProperty]
     public partial double FadeOutSeconds { get; set; }
+
+    ///<summary>
+    ///Gain to apply at Save time, in decibels. Zero leaves volume unchanged.
+    ///</summary>
+    [ObservableProperty]
+    public partial double GainDb { get; set; }
 
     ///<summary>
     ///Whether the shared transport is currently previewing this clip.
@@ -423,16 +424,5 @@ public partial class TrimViewModel : BaseViewModel
     ///</summary>
     [ObservableProperty]
     public partial float[] WaveformPeaks { get; set; } = [];
-    #endregion
-
-    #region Logging
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Clip {ClipId} not found.")]
-    private partial void Log_ClipNotFound(string clipId);
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Loading clip '{ClipName}' ({ClipId}) into the trim editor.")]
-    private partial void Log_LoadingClip(string clipName, string clipId);
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Saved trimmed clip '{ClipName}'.")]
-    private partial void Log_SavedTrim(string clipName);
     #endregion
 }

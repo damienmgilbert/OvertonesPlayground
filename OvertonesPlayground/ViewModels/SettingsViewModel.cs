@@ -39,7 +39,8 @@ public partial class SettingsViewModel : BaseViewModel
     #endregion
 
     #region Private methods
-    private static void ApplyKeepScreenOn(bool keepOn) { DeviceDisplay.Current.KeepScreenOn = keepOn; }
+    private static void ApplyKeepScreenOn(bool keepOn) => DeviceDisplay.Current.KeepScreenOn = keepOn;
+
     ///<summary>
     ///Deletes every clip in the library, including their files on disk.
     ///</summary>
@@ -55,6 +56,18 @@ public partial class SettingsViewModel : BaseViewModel
 
         StatusMessage = "Library cleared.";
     }
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Clearing library: {ClipCount} clips.")]
+    private partial void Log_ClearingLibrary(int clipCount);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Keep screen on changed to {Value}.")]
+    private partial void Log_KeepScreenOnChanged(bool value);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Stopping all audio.")]
+    private partial void Log_StoppingAllAudio();
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Theme preference changed to {Theme}.")]
+    private partial void Log_ThemeChanged(ThemePreference theme);
 
     partial void OnKeepScreenOnChanged(bool value)
     {
@@ -79,20 +92,6 @@ public partial class SettingsViewModel : BaseViewModel
         Log_StoppingAllAudio();
         _playbackService.StopEverything();
     }
-    #endregion
-
-    #region Logging
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Clearing library: {ClipCount} clips.")]
-    private partial void Log_ClearingLibrary(int clipCount);
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Keep screen on changed to {Value}.")]
-    private partial void Log_KeepScreenOnChanged(bool value);
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Stopping all audio.")]
-    private partial void Log_StoppingAllAudio();
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Theme preference changed to {Theme}.")]
-    private partial void Log_ThemeChanged(ThemePreference theme);
     #endregion
 
     #region Public methods

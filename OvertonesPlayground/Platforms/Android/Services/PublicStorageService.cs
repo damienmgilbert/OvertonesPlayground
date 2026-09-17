@@ -37,37 +37,37 @@ public class PublicStorageService : IPublicStorageService
     [SupportedOSPlatform("android29.0")]
     private static async Task<string?> ExportViaMediaStoreAsync(string sourceFilePath, string displayFileName)
     {
-        var resolver = AndroidApp.Context.ContentResolver;
+        ContentResolver? resolver = AndroidApp.Context.ContentResolver;
         if (resolver is null)
         {
             return null;
         }
 
-        var values = new ContentValues();
+        ContentValues values = new();
         values.Put(MediaStore.IMediaColumns.DisplayName, displayFileName);
         values.Put(MediaStore.IMediaColumns.MimeType, "audio/wav");
         values.Put(MediaStore.IMediaColumns.RelativePath, $"{AndroidEnvironment.DirectoryMusic}/{SubFolder}");
         values.Put(MediaStore.IMediaColumns.IsPending, 1);
 
-        var collection = MediaStore.Audio.Media.GetContentUri(MediaStore.VolumeExternalPrimary);
-        var itemUri = resolver.Insert(collection!, values);
+        global::Android.Net.Uri? collection = MediaStore.Audio.Media.GetContentUri(MediaStore.VolumeExternalPrimary);
+        global::Android.Net.Uri? itemUri = resolver.Insert(collection!, values);
         if (itemUri is null)
         {
             return null;
         }
 
-        await using (var output = resolver.OpenOutputStream(itemUri))
+        await using (System.IO.Stream? output = resolver.OpenOutputStream(itemUri))
         {
             if (output is null)
             {
                 return null;
             }
 
-            await using var input = File.OpenRead(sourceFilePath);
+            await using FileStream input = File.OpenRead(sourceFilePath);
             await input.CopyToAsync(output);
         }
 
-        var pendingValues = new ContentValues();
+        ContentValues pendingValues = new();
         pendingValues.Put(MediaStore.IMediaColumns.IsPending, 0);
         resolver.Update(itemUri, pendingValues, null, null);
 
@@ -77,7 +77,7 @@ public class PublicStorageService : IPublicStorageService
     /// <summary>Pre-Android-10 fallback: writes directly into the public Music directory and asks the media scanner to index it.</summary>
     private static async Task<string?> ExportLegacyAsync(string sourceFilePath, string displayFileName)
     {
-        var musicDir = AndroidEnvironment.GetExternalStoragePublicDirectory(AndroidEnvironment.DirectoryMusic);
+        Java.IO.File? musicDir = AndroidEnvironment.GetExternalStoragePublicDirectory(AndroidEnvironment.DirectoryMusic);
         if (musicDir is null)
         {
             return null;
@@ -87,8 +87,8 @@ public class PublicStorageService : IPublicStorageService
         Directory.CreateDirectory(targetDir);
         var targetPath = Path.Combine(targetDir, displayFileName);
 
-        await using (var input = File.OpenRead(sourceFilePath))
-        await using (var output = File.Create(targetPath))
+        await using (FileStream input = File.OpenRead(sourceFilePath))
+        await using (FileStream output = File.Create(targetPath))
         {
             await input.CopyToAsync(output);
         }

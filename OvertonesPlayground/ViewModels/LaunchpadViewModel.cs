@@ -1,7 +1,7 @@
+using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.Input;
 using OvertonesPlayground.Models;
 using OvertonesPlayground.Services.Interfaces;
-using System.Collections.ObjectModel;
 
 namespace OvertonesPlayground.ViewModels;
 
@@ -27,7 +27,7 @@ public partial class LaunchpadViewModel : BaseViewModel
     ///<summary>
     ///Colors assigned round-robin to pads as they're given a sample.
     ///</summary>
-    private static readonly string[] PadPalette = ["#512BD4", "#D600AA", "#2B9348", "#F77F00", "#0077B6", "#9D4EDD", "#E5383B", "#FFB703",];
+    private static readonly string[] PadPalette = ["#512BD4", "#D600AA", "#2B9348", "#F77F00", "#0077B6", "#9D4EDD", "#E5383B", "#FFB703", ];
     private readonly IAudioLibraryService _libraryService;
     private readonly IAudioPlaybackService _playbackService;
     #endregion
@@ -49,9 +49,6 @@ public partial class LaunchpadViewModel : BaseViewModel
         }
     }
     #endregion
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Creating LaunchpadViewModel with {Rows} rows and {Columns} columns.")]
-    partial void ConstructorLog(int Rows, int Columns);
 
     #region Private methods
     ///<summary>
@@ -84,6 +81,36 @@ public partial class LaunchpadViewModel : BaseViewModel
         }
     }
 
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Creating LaunchpadViewModel with {Rows} rows and {Columns} columns.")]
+    partial void ConstructorLog(int Rows, int Columns);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Assigned clip '{ClipName}' to pad {PadIndex}.")]
+    private partial void Log_AssignedClip(string clipName, int padIndex);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Failed to assign a sample to pad {PadIndex}.")]
+    private partial void Log_AssignSampleFailed(Exception exception, int padIndex);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Pad {PadIndex} loop toggled.")]
+    private partial void Log_PadLoopToggled(int padIndex);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Failed to stop all pads.")]
+    private partial void Log_StopAllPadsFailed(Exception exception);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Failed to stop pad {PadIndex}.")]
+    private partial void Log_StopPadFailed(Exception exception, int padIndex);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Stopping all pads.")]
+    private partial void Log_StoppingAllPads();
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Stopping pad {PadIndex}.")]
+    private partial void Log_StoppingPad(int padIndex);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Triggering pad {PadIndex}.")]
+    private partial void Log_TriggeringPad(int padIndex);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Failed to trigger pad {PadIndex}.")]
+    private partial void Log_TriggerPadFailed(Exception exception, int padIndex);
+
     ///<summary>
     ///Stops every currently-sounding pad voice.
     ///</summary>
@@ -100,6 +127,7 @@ public partial class LaunchpadViewModel : BaseViewModel
             Log_StopAllPadsFailed(ex);
         }
     }
+
     ///<summary>
     ///Stops every currently-sounding voice for a single pad.
     ///</summary>
@@ -136,6 +164,7 @@ public partial class LaunchpadViewModel : BaseViewModel
         Log_PadLoopToggled(pad.Index);
         pad.ToggleLoop();
     }
+
     ///<summary>
     ///Fires a new voice for the tapped pad, if it has a sample assigned.
     ///</summary>
@@ -158,35 +187,6 @@ public partial class LaunchpadViewModel : BaseViewModel
             StatusMessage = "Couldn't play that pad.";
         }
     }
-    #endregion
-
-    #region Logging
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Assigned clip '{ClipName}' to pad {PadIndex}.")]
-    private partial void Log_AssignedClip(string clipName, int padIndex);
-
-    [LoggerMessage(Level = LogLevel.Error, Message = "Failed to assign a sample to pad {PadIndex}.")]
-    private partial void Log_AssignSampleFailed(Exception exception, int padIndex);
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Pad {PadIndex} loop toggled.")]
-    private partial void Log_PadLoopToggled(int padIndex);
-
-    [LoggerMessage(Level = LogLevel.Error, Message = "Failed to stop all pads.")]
-    private partial void Log_StopAllPadsFailed(Exception exception);
-
-    [LoggerMessage(Level = LogLevel.Error, Message = "Failed to stop pad {PadIndex}.")]
-    private partial void Log_StopPadFailed(Exception exception, int padIndex);
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Stopping all pads.")]
-    private partial void Log_StoppingAllPads();
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Stopping pad {PadIndex}.")]
-    private partial void Log_StoppingPad(int padIndex);
-
-    [LoggerMessage(Level = LogLevel.Error, Message = "Failed to trigger pad {PadIndex}.")]
-    private partial void Log_TriggerPadFailed(Exception exception, int padIndex);
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Triggering pad {PadIndex}.")]
-    private partial void Log_TriggeringPad(int padIndex);
     #endregion
 
     #region Public properties

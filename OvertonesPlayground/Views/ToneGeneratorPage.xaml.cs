@@ -30,12 +30,18 @@ public partial class ToneGeneratorPage : ContentPage
     #endregion
 
     #region Private methods
-    ///<summary>
-    ///Redraws the waveform whenever the view model generates a new preview.
-    ///</summary>
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Page appeared.")]
+    private partial void Log_PageAppeared();
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Page disappeared.")]
+    private partial void Log_PageDisappeared();
+
+        ///<summary>
+///Redraws the waveform whenever the view model generates a new preview.
+///</summary>
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if(e.PropertyName == nameof(ToneGeneratorViewModel.WaveformPeaks))
+        if (e.PropertyName == nameof(ToneGeneratorViewModel.WaveformPeaks))
         {
             _drawable.Peaks = _viewModel.WaveformPeaks;
             WaveformView.Invalidate();
@@ -55,13 +61,5 @@ public partial class ToneGeneratorPage : ContentPage
         base.OnDisappearing();
         Log_PageDisappeared();
     }
-    #endregion
-
-    #region Logging
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Page appeared.")]
-    private partial void Log_PageAppeared();
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Page disappeared.")]
-    private partial void Log_PageDisappeared();
     #endregion
 }

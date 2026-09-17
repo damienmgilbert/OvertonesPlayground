@@ -7,15 +7,15 @@ public class MixerChannelStrip
 {
     #region Public properties
     ///<summary>
+    ///Hex color assigned to the channel strip for at-a-glance identification, matching the round-robin palette used by
+    ///the Launchpad.
+    ///</summary>
+    public string ColorHex { get; set; } = "#512BD4";
+
+    ///<summary>
     ///Unique identifier for the channel.
     ///</summary>
     public string Id { get; init; } = Guid.NewGuid().ToString("N");
-
-    ///<summary>
-    ///Hex color assigned to the channel strip for at-a-glance identification, matching the round-robin palette used
-    ///by the Launchpad.
-    ///</summary>
-    public string ColorHex { get; set; } = "#512BD4";
 
     ///<summary>
     ///Whether the channel is muted.

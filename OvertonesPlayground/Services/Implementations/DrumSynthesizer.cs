@@ -5,12 +5,10 @@ namespace OvertonesPlayground.Services.Implementations;
 ///<summary>
 ///Small library of classic drum-machine one-shots, synthesized from scratch (sine sweeps and shaped noise) rather than
 ///sampled - so the Tone Generator can produce a full kit with no bundled audio assets. Every parameter is driven by
-///<see cref="DrumSynthParameters"/> so the user has full control; a post-processing <see cref="BiquadFilter"/> pass is
-///applied last.
-///</summary>
 internal static class DrumSynthesizer
 {
     #region Private methods
+
     ///<summary>
     ///Shared generator for HiHat/OpenHiHat/Crash/Shaker: white noise under an exponential decay envelope.
     ///</summary>
@@ -100,7 +98,7 @@ internal static class DrumSynthesizer
     ///<summary>
     ///Pitch-swept sustained low tone.
     ///</summary>
-    public static short[] Bass(DrumSynthParameters p) { return PitchSweep(p); }
+    public static short[] Bass(DrumSynthParameters p) => PitchSweep(p);
 
     ///<summary>
     ///Several overlapping decaying noise bursts, spaced <see cref="DrumSynthParameters.BurstSpacingSeconds"/> apart.
@@ -128,34 +126,41 @@ internal static class DrumSynthesizer
     ///<summary>
     ///Long, slow-decaying filtered noise.
     ///</summary>
-    public static short[] Crash(DrumSynthParameters p) { return DecayingNoise(p); }
+    public static short[] Crash(DrumSynthParameters p) => DecayingNoise(p);
+
     ///<summary>
     ///Short decaying filtered noise.
     ///</summary>
-    public static short[] HiHat(DrumSynthParameters p) { return DecayingNoise(p); }
+    public static short[] HiHat(DrumSynthParameters p) => DecayingNoise(p);
+
     ///<summary>
     ///Pitch-swept low thump.
     ///</summary>
-    public static short[] Kick(DrumSynthParameters p) { return PitchSweep(p); }
+    public static short[] Kick(DrumSynthParameters p) => PitchSweep(p);
+
     ///<summary>
     ///Longer-decaying filtered noise.
     ///</summary>
-    public static short[] OpenHiHat(DrumSynthParameters p) { return DecayingNoise(p); }
+    public static short[] OpenHiHat(DrumSynthParameters p) => DecayingNoise(p);
+
     ///<summary>
     ///Short, high-pitched tone-and-noise hit.
     ///</summary>
-    public static short[] Rimshot(DrumSynthParameters p) { return ToneAndNoise(p); }
+    public static short[] Rimshot(DrumSynthParameters p) => ToneAndNoise(p);
+
     ///<summary>
     ///Very short decaying filtered noise.
     ///</summary>
-    public static short[] Shaker(DrumSynthParameters p) { return DecayingNoise(p); }
+    public static short[] Shaker(DrumSynthParameters p) => DecayingNoise(p);
+
     ///<summary>
     ///Layered tone-and-noise snare body.
     ///</summary>
-    public static short[] Snare(DrumSynthParameters p) { return ToneAndNoise(p); }
+    public static short[] Snare(DrumSynthParameters p) => ToneAndNoise(p);
+
     ///<summary>
     ///Pitch-swept mid-range drum.
     ///</summary>
-    public static short[] Tom(DrumSynthParameters p) { return PitchSweep(p); }
+    public static short[] Tom(DrumSynthParameters p) => PitchSweep(p);
     #endregion
 }

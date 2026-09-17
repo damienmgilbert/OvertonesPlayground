@@ -6,6 +6,7 @@ namespace OvertonesPlayground.Models;
 public class LaunchpadPad
 {
     #region Public properties
+
     ///<summary>
     ///Path to the audio clip assigned to this pad, if any.
     ///</summary>

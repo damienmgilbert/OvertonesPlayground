@@ -24,6 +24,14 @@ public partial class LibraryPage : ContentPage
     }
     #endregion
 
+    #region Private methods
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Page appeared.")]
+    private partial void Log_PageAppeared();
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Page disappeared.")]
+    private partial void Log_PageDisappeared();
+    #endregion
+
     #region Protected methods
     ///<summary>
     ///Refreshes the clip list every time the page becomes visible.
@@ -43,13 +51,5 @@ public partial class LibraryPage : ContentPage
         base.OnDisappearing();
         Log_PageDisappeared();
     }
-    #endregion
-
-    #region Logging
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Page appeared.")]
-    private partial void Log_PageAppeared();
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Page disappeared.")]
-    private partial void Log_PageDisappeared();
     #endregion
 }

@@ -79,6 +79,21 @@ public partial class AudioEditorViewModel : BaseViewModel
         }
     }
 
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Applying '{Operation}' to clip '{ClipName}'.")]
+    private partial void Log_ApplyingEdit(string operation, string clipName);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Clip {ClipId} not found.")]
+    private partial void Log_ClipNotFound(string clipId);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Loading clip '{ClipName}' ({ClipId}) into editor.")]
+    private partial void Log_LoadingClip(string clipName, string clipId);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Opening the trim editor for clip '{ClipName}'.")]
+    private partial void Log_OpeningTrimEditor(string clipName);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Previewing clip '{ClipName}'.")]
+    private partial void Log_PreviewingClip(string clipName);
+
     [RelayCommand]
     private async Task NormalizeAsync() { await ApplyEditAsync("normalize", clip => _editorService.NormalizeAsync(clip.FilePath, "normalize")); }
 
@@ -129,23 +144,6 @@ public partial class AudioEditorViewModel : BaseViewModel
 
     [RelayCommand]
     private async Task TrimAsync() { await ApplyEditAsync("trim", clip => _editorService.TrimAsync(clip.FilePath, TimeSpan.FromSeconds(TrimStartSeconds), TimeSpan.FromSeconds(TrimEndSeconds), "trim")); }
-    #endregion
-
-    #region Logging
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Applying '{Operation}' to clip '{ClipName}'.")]
-    private partial void Log_ApplyingEdit(string operation, string clipName);
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Clip {ClipId} not found.")]
-    private partial void Log_ClipNotFound(string clipId);
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Loading clip '{ClipName}' ({ClipId}) into editor.")]
-    private partial void Log_LoadingClip(string clipName, string clipId);
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Opening the trim editor for clip '{ClipName}'.")]
-    private partial void Log_OpeningTrimEditor(string clipName);
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Previewing clip '{ClipName}'.")]
-    private partial void Log_PreviewingClip(string clipName);
     #endregion
 
     #region Public properties

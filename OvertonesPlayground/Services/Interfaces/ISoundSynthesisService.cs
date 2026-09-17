@@ -10,6 +10,7 @@ namespace OvertonesPlayground.Services.Interfaces;
 public interface ISoundSynthesisService
 {
     #region Public methods
+
     ///<summary>
     ///Synthesizes a drum-machine one-shot using the given type and tunable parameters.
     ///</summary>

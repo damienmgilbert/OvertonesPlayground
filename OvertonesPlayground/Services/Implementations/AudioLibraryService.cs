@@ -1,7 +1,7 @@
+using System.Text.Json;
 using OvertonesPlayground.Models;
 using OvertonesPlayground.Services.Interfaces;
 using Plugin.Maui.Audio;
-using System.Text.Json;
 
 namespace OvertonesPlayground.Services.Implementations;
 
@@ -13,6 +13,7 @@ public class AudioLibraryService : IAudioLibraryService
     #endregion
 
     #region Fields
+    private static readonly string[] value = ["audio/*"];
     private readonly IAudioManager _audioManager;
     private List<AudioClip>? _cache;
     private readonly SemaphoreSlim _lock = new(1, 1);
@@ -112,8 +113,6 @@ public class AudioLibraryService : IAudioLibraryService
     ///Path to the JSON file backing the persisted library catalog.
     ///</summary>
     private static string LibraryFilePath => Path.Combine(FileSystem.AppDataDirectory, LibraryFileName);
-
-    private static readonly string[] value = ["audio/*"];
     #endregion
 
     #region Public methods

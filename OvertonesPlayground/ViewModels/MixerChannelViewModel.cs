@@ -32,15 +32,30 @@ public partial class MixerChannelViewModel : ObservableObject
     #endregion
 
     #region Private methods
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Channel '{ChannelName}' created.")]
+    private partial void Log_ChannelCreated(string channelName);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Channel '{ChannelName}' mute set to {IsMuted}.")]
+    private partial void Log_ChannelMuteChanged(string channelName, bool isMuted);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Channel '{ChannelName}' playback started.")]
+    private partial void Log_ChannelPlaybackStarted(string channelName);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Channel '{ChannelName}' playback stopped.")]
+    private partial void Log_ChannelPlaybackStopped(string channelName);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Channel '{ChannelName}' solo set to {IsSoloed}.")]
+    private partial void Log_ChannelSoloChanged(string channelName, bool isSoloed);
+
     partial void OnIsMutedChanged(bool value)
     {
         Channel.IsMuted = value;
         _playbackService.UpdateChannel(Channel);
     }
 
-    partial void OnIsSoloedChanged(bool value) { Channel.IsSoloed = value; }
+    partial void OnIsSoloedChanged(bool value) => Channel.IsSoloed = value;
 
-    partial void OnNameChanged(string value) { Channel.Name = value; }
+    partial void OnNameChanged(string value) => Channel.Name = value;
 
     partial void OnPanChanged(double value)
     {
@@ -60,18 +75,20 @@ public partial class MixerChannelViewModel : ObservableObject
         IsMuted = !IsMuted;
         Log_ChannelMuteChanged(Name, IsMuted);
     }
+
     [RelayCommand]
     private void TogglePlayback()
     {
-        if(!HasSource)
+        if (!HasSource)
         {
             return;
         }
 
-        if(IsPlaying)
+        if (IsPlaying)
         {
             Stop();
-        } else
+        }
+        else
         {
             Log_ChannelPlaybackStarted(Name);
             _playbackService.PlayChannel(Channel);
@@ -91,7 +108,7 @@ public partial class MixerChannelViewModel : ObservableObject
     public void AssignSource(string filePath, string label)
     {
         // Loading a new sample shouldn't start it blaring - the user starts it with the toggle.
-        if(IsPlaying)
+        if (IsPlaying)
         {
             Stop();
         }
@@ -107,23 +124,6 @@ public partial class MixerChannelViewModel : ObservableObject
         _playbackService.StopChannel(Channel.Id);
         IsPlaying = false;
     }
-    #endregion
-
-    #region Logging
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Channel '{ChannelName}' created.")]
-    private partial void Log_ChannelCreated(string channelName);
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Channel '{ChannelName}' mute set to {IsMuted}.")]
-    private partial void Log_ChannelMuteChanged(string channelName, bool isMuted);
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Channel '{ChannelName}' playback started.")]
-    private partial void Log_ChannelPlaybackStarted(string channelName);
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Channel '{ChannelName}' playback stopped.")]
-    private partial void Log_ChannelPlaybackStopped(string channelName);
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Channel '{ChannelName}' solo set to {IsSoloed}.")]
-    private partial void Log_ChannelSoloChanged(string channelName, bool isSoloed);
     #endregion
 
     #region Public properties

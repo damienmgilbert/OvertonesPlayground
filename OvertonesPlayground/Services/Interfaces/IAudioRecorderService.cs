@@ -8,6 +8,7 @@ namespace OvertonesPlayground.Services.Interfaces;
 public interface IAudioRecorderService
 {
     #region Events
+
     ///<summary>
     ///Raised periodically while recording, reporting the updated <see cref="Elapsed"/> time.
     ///</summary>

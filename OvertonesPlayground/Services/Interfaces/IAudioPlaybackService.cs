@@ -9,6 +9,7 @@ namespace OvertonesPlayground.Services.Interfaces;
 public interface IAudioPlaybackService
 {
     #region Events
+
     ///<summary>
     ///Raised when the main transport's clip finishes playing on its own.
     ///</summary>

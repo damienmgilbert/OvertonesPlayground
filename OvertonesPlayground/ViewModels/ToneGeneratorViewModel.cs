@@ -68,6 +68,15 @@ public partial class ToneGeneratorViewModel : BaseViewModel
         }
     }
 
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Generating tone '{Name}' ({DurationSeconds}s, amplitude {Amplitude}).")]
+    private partial void Log_GeneratingTone(string name, double durationSeconds, double amplitude);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Saving generated clip '{ClipName}'.")]
+    private partial void Log_SavingClip(string clipName);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Selected preset '{PresetName}'.")]
+    private partial void Log_SelectedPreset(string presetName);
+
     ///<summary>
     ///Persists the pending preview clip into the library (and, best-effort, the shared Music folder).
     ///</summary>
@@ -107,17 +116,6 @@ public partial class ToneGeneratorViewModel : BaseViewModel
         DurationSeconds = preset.DurationSeconds;
         Amplitude = preset.Amplitude;
     }
-    #endregion
-
-    #region Logging
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Generating tone '{Name}' ({DurationSeconds}s, amplitude {Amplitude}).")]
-    private partial void Log_GeneratingTone(string name, double durationSeconds, double amplitude);
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Saving generated clip '{ClipName}'.")]
-    private partial void Log_SavingClip(string clipName);
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Selected preset '{PresetName}'.")]
-    private partial void Log_SelectedPreset(string presetName);
     #endregion
 
     #region Public properties

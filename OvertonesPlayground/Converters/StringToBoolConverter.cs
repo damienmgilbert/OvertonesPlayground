@@ -9,7 +9,8 @@ namespace OvertonesPlayground.Converters;
 public class StringToBoolConverter : IValueConverter
 {
     #region Public methods
-    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture) { return !string.IsNullOrEmpty(value as string); }
-    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) { throw new NotSupportedException(); }
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture) => !string.IsNullOrEmpty(value as string);
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
     #endregion
 }

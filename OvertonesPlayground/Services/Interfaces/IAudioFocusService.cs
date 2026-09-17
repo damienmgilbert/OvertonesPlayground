@@ -7,6 +7,7 @@ namespace OvertonesPlayground.Services.Interfaces;
 public interface IAudioFocusService
 {
     #region Events
+
     ///<summary>
     ///Raised when focus is gained or lost; <c>true</c> means the app currently holds focus.
     ///</summary>

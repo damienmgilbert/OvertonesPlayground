@@ -35,12 +35,12 @@ public class AudioFocusService : Java.Lang.Object, IAudioFocusService, AudioMana
 
         if (OperatingSystem.IsAndroidVersionAtLeast(26))
         {
-            using var attributesBuilder = new AudioAttributes.Builder();
+            using AudioAttributes.Builder attributesBuilder = new();
             attributesBuilder.SetUsage(AudioUsageKind.Media);
             attributesBuilder.SetContentType(AudioContentType.Music);
-            var attributes = attributesBuilder.Build();
+            AudioAttributes? attributes = attributesBuilder.Build();
 
-            using var focusRequestBuilder = new AudioFocusRequestClass.Builder(AudioFocus.Gain);
+            using AudioFocusRequestClass.Builder focusRequestBuilder = new(AudioFocus.Gain);
             focusRequestBuilder.SetAudioAttributes(attributes!);
             focusRequestBuilder.SetOnAudioFocusChangeListener(this);
             _focusRequest = focusRequestBuilder.Build();

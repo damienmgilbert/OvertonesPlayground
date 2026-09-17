@@ -1,8 +1,8 @@
+using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using OvertonesPlayground.Models;
 using OvertonesPlayground.Services.Interfaces;
-using System.Collections.ObjectModel;
 
 namespace OvertonesPlayground.ViewModels;
 
@@ -100,7 +100,32 @@ public partial class LibraryViewModel : BaseViewModel
         }
     }
 
-    partial void OnViewModeChanged(LibraryViewMode value) { Preferences.Default.Set(ViewModeKey, value.ToString()); }
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Deleting clip '{ClipName}' ({ClipId}).")]
+    private partial void Log_DeletingClip(string clipName, string clipId);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Import canceled.")]
+    private partial void Log_ImportCanceled();
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Imported clip '{ClipName}'.")]
+    private partial void Log_ImportedClip(string clipName);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Importing a clip from the picker.")]
+    private partial void Log_ImportingClip();
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Loaded {ClipCount} clips.")]
+    private partial void Log_LoadedClips(int clipCount);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Navigating to editor for clip '{ClipName}' ({ClipId}).")]
+    private partial void Log_NavigatingToEditor(string clipName, string clipId);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Playing clip '{ClipName}' ({ClipId}).")]
+    private partial void Log_PlayingClip(string clipName, string clipId);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "View mode changed to {ViewMode}.")]
+    private partial void Log_ViewModeChanged(LibraryViewMode viewMode);
+
+    partial void OnViewModeChanged(LibraryViewMode value) => Preferences.Default.Set(ViewModeKey, value.ToString());
+
     [RelayCommand]
     private async Task PlayAsync(AudioClip? clip)
     {
@@ -121,32 +146,6 @@ public partial class LibraryViewModel : BaseViewModel
         Log_ViewModeChanged(mode);
         ViewMode = mode;
     }
-    #endregion
-
-    #region Logging
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Deleting clip '{ClipName}' ({ClipId}).")]
-    private partial void Log_DeletingClip(string clipName, string clipId);
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Imported clip '{ClipName}'.")]
-    private partial void Log_ImportedClip(string clipName);
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Import canceled.")]
-    private partial void Log_ImportCanceled();
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Importing a clip from the picker.")]
-    private partial void Log_ImportingClip();
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Loaded {ClipCount} clips.")]
-    private partial void Log_LoadedClips(int clipCount);
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Navigating to editor for clip '{ClipName}' ({ClipId}).")]
-    private partial void Log_NavigatingToEditor(string clipName, string clipId);
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Playing clip '{ClipName}' ({ClipId}).")]
-    private partial void Log_PlayingClip(string clipName, string clipId);
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "View mode changed to {ViewMode}.")]
-    private partial void Log_ViewModeChanged(LibraryViewMode viewMode);
     #endregion
 
     #region Public properties

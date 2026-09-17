@@ -30,8 +30,25 @@ public partial class PlayerViewModel : BaseViewModel, IDisposable
     #endregion
 
     #region Private methods
-    private void OnPlaybackStateChanged(object? sender, EventArgs e) { RefreshFromService(); }
-    partial void OnVolumeChanged(double value) { _playbackService.Volume = value; }
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Disposing.")]
+    private partial void Log_Disposing();
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Pausing playback.")]
+    private partial void Log_PausingPlayback();
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Seeking to {PositionSeconds}s.")]
+    private partial void Log_Seeking(double positionSeconds);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Starting playback.")]
+    private partial void Log_StartingPlayback();
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Stopping playback.")]
+    private partial void Log_StoppingPlayback();
+
+    private void OnPlaybackStateChanged(object? sender, EventArgs e) => RefreshFromService();
+
+    partial void OnVolumeChanged(double value) => _playbackService.Volume = value;
+
     ///<summary>
     ///Pauses if currently playing, otherwise resumes/starts playback.
     ///</summary>
@@ -84,23 +101,6 @@ public partial class PlayerViewModel : BaseViewModel, IDisposable
     }
     #endregion
 
-    #region Logging
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Disposing.")]
-    private partial void Log_Disposing();
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Pausing playback.")]
-    private partial void Log_PausingPlayback();
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Seeking to {PositionSeconds}s.")]
-    private partial void Log_Seeking(double positionSeconds);
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Starting playback.")]
-    private partial void Log_StartingPlayback();
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Stopping playback.")]
-    private partial void Log_StoppingPlayback();
-    #endregion
-
     #region Public methods
     ///<summary>
     ///Unsubscribes from the playback service and stops the position timer.
@@ -131,7 +131,7 @@ public partial class PlayerViewModel : BaseViewModel, IDisposable
     ///<summary>
     ///Stops the position-refresh timer, e.g. when the page is no longer visible.
     ///</summary>
-    public void StopTicking() { _positionTimer?.Stop(); }
+    public void StopTicking() => _positionTimer?.Stop();
     #endregion
 
     #region Public properties

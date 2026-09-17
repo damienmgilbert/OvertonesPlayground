@@ -113,7 +113,7 @@ public class AudioPlaybackService : IAudioPlaybackService
     }
 
     ///<inheritdoc/>
-    public void Seek(TimeSpan position) { _mainPlayer?.Seek(position.TotalSeconds); }
+    public void Seek(TimeSpan position) => _mainPlayer?.Seek(position.TotalSeconds);
 
     ///<inheritdoc/>
     public void Stop()

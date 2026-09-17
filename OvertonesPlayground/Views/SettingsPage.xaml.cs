@@ -23,6 +23,14 @@ public partial class SettingsPage : ContentPage
     }
     #endregion
 
+    #region Private methods
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Page appeared.")]
+    private partial void Log_PageAppeared();
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Page disappeared.")]
+    private partial void Log_PageDisappeared();
+    #endregion
+
     #region Protected methods
     protected override void OnAppearing()
     {
@@ -35,13 +43,5 @@ public partial class SettingsPage : ContentPage
         base.OnDisappearing();
         Log_PageDisappeared();
     }
-    #endregion
-
-    #region Logging
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Page appeared.")]
-    private partial void Log_PageAppeared();
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Page disappeared.")]
-    private partial void Log_PageDisappeared();
     #endregion
 }

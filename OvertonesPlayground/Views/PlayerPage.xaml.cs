@@ -25,10 +25,16 @@ public partial class PlayerPage : ContentPage
     #endregion
 
     #region Private methods
-    ///<summary>
-    ///Applies the seek slider's dropped position to the playback service.
-    ///</summary>
-    private void OnSeekCompleted(object? sender, EventArgs e) { _viewModel.SeekCommand.Execute(PositionSlider.Value); }
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Page appeared.")]
+    private partial void Log_PageAppeared();
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Page disappeared.")]
+    private partial void Log_PageDisappeared();
+
+        ///<summary>
+///Applies the seek slider's dropped position to the playback service.
+///</summary>
+    private void OnSeekCompleted(object? sender, EventArgs e) => _viewModel.SeekCommand.Execute(PositionSlider.Value);
     #endregion
 
     #region Protected methods
@@ -51,13 +57,5 @@ public partial class PlayerPage : ContentPage
         Log_PageDisappeared();
         _viewModel.StopTicking();
     }
-    #endregion
-
-    #region Logging
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Page appeared.")]
-    private partial void Log_PageAppeared();
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Page disappeared.")]
-    private partial void Log_PageDisappeared();
     #endregion
 }

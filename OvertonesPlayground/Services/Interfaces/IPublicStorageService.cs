@@ -7,6 +7,7 @@ namespace OvertonesPlayground.Services.Interfaces;
 public interface IPublicStorageService
 {
     #region Public methods
+
     ///<summary>
     ///Exports <paramref name="sourceFilePath"/> into Music/OvertonesPlayground. Returns a short, human-readable location
     ///(e.g. "Music/OvertonesPlayground/kick.wav") on success, or null if the export could not be completed.

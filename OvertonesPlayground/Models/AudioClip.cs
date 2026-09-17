@@ -7,6 +7,7 @@ namespace OvertonesPlayground.Models;
 public class AudioClip
 {
     #region Public properties
+
     ///<summary>
     ///Playback duration of the clip.
     ///</summary>

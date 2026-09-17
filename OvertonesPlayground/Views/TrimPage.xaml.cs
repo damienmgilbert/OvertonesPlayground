@@ -4,9 +4,7 @@ using OvertonesPlayground.ViewModels;
 namespace OvertonesPlayground.Views;
 
 ///<summary>
-///Code-behind for the visual Trim page: keeps the waveform drawable in sync with the view model, and turns handle
-///drags / waveform taps into <see cref="TrimViewModel"/> updates.
-///</summary>
+///Code-behind for the visual Trim page: keeps the waveform drawable in sync with the view model, and turns handle drags
 public partial class TrimPage : ContentPage
 {
     #region Fields
@@ -32,9 +30,15 @@ public partial class TrimPage : ContentPage
     #endregion
 
     #region Private methods
-    ///<summary>
-    ///Applies a completed (or in-progress) end-handle drag to the view model, clamped against the start handle.
-    ///</summary>
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Page appeared.")]
+    private partial void Log_PageAppeared();
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Page disappeared.")]
+    private partial void Log_PageDisappeared();
+
+        ///<summary>
+///Applies a completed (or in-progress) end-handle drag to the view model, clamped against the start handle.
+///</summary>
     private void OnEndHandlePanUpdated(object? sender, PanUpdatedEventArgs e)
     {
         switch (e.StatusType)
@@ -157,13 +161,5 @@ public partial class TrimPage : ContentPage
         Log_PageDisappeared();
         _viewModel.StopTicking();
     }
-    #endregion
-
-    #region Logging
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Page appeared.")]
-    private partial void Log_PageAppeared();
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Page disappeared.")]
-    private partial void Log_PageDisappeared();
     #endregion
 }

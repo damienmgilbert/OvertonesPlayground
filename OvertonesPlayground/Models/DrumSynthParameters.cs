@@ -7,6 +7,7 @@ namespace OvertonesPlayground.Models;
 public class DrumSynthParameters
 {
     #region Public methods
+
     ///<summary>
     ///Creates sensible defaults for a given drum type.
     ///</summary>

@@ -6,8 +6,6 @@ namespace OvertonesPlayground.ViewModels;
 ///<summary>
 ///Editable, bindable wrapper around <see cref="DrumSynthParameters"/> for one selected <see cref="Models.DrumType"/>.
 ///Which sliders are relevant depends on the type - see <see cref="ShowPitchSweep"/>, <see cref="ShowSnareControls"/>,
-///<see cref="ShowClapControls"/>.
-///</summary>
 public partial class DrumSynthParametersViewModel : ObservableObject
 {
     #region Constructors

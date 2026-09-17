@@ -7,6 +7,7 @@ namespace OvertonesPlayground.Services.Interfaces;
 public interface IAudioEditorService
 {
     #region Public methods
+
     ///<summary>
     ///Ramps the amplitude up at the start and down at the end over the given durations.
     ///</summary>

@@ -8,6 +8,7 @@ namespace OvertonesPlayground.Services.Interfaces;
 public interface IAudioLibraryService
 {
     #region Public methods
+
     ///<summary>
     ///Registers an already-saved audio file (e.g. a fresh recording or an exported edit) in the library.
     ///</summary>

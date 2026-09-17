@@ -39,7 +39,7 @@ public class AudioRecorderService : IAudioRecorderService, IDisposable
     ///<inheritdoc/>
     public async Task CancelAsync()
     {
-        if(_recorder.IsRecording)
+        if (_recorder.IsRecording)
         {
             await _recorder.StopAsync();
         }
@@ -47,7 +47,7 @@ public class AudioRecorderService : IAudioRecorderService, IDisposable
         _stopwatch.Reset();
         _tickTimer.Stop();
 
-        if(_currentFilePath is not null && File.Exists(_currentFilePath))
+        if (_currentFilePath is not null && File.Exists(_currentFilePath))
         {
             File.Delete(_currentFilePath);
         }

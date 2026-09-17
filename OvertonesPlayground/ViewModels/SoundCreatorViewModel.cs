@@ -50,6 +50,18 @@ public partial class SoundCreatorViewModel : BaseViewModel
         StatusMessage = "Recording discarded.";
     }
 
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Canceling recording.")]
+    private partial void Log_CancelingRecording();
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Microphone permission denied.")]
+    private partial void Log_MicrophonePermissionDenied();
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Starting recording '{ClipName}'.")]
+    private partial void Log_StartingRecording(string clipName);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Stopping recording, saving as '{ClipName}'.")]
+    private partial void Log_StoppingRecording(string clipName);
+
     ///<summary>
     ///Requests microphone permission if needed, then starts recording.
     ///</summary>
@@ -104,20 +116,6 @@ public partial class SoundCreatorViewModel : BaseViewModel
             await StartRecordingAsync();
         }
     }
-    #endregion
-
-    #region Logging
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Canceling recording.")]
-    private partial void Log_CancelingRecording();
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Microphone permission denied.")]
-    private partial void Log_MicrophonePermissionDenied();
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Starting recording '{ClipName}'.")]
-    private partial void Log_StartingRecording(string clipName);
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Stopping recording, saving as '{ClipName}'.")]
-    private partial void Log_StoppingRecording(string clipName);
     #endregion
 
     #region Public properties

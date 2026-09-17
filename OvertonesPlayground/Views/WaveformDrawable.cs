@@ -6,6 +6,7 @@ namespace OvertonesPlayground.Views;
 public class WaveformDrawable : IDrawable
 {
     #region Public methods
+
     ///<summary>
     ///Draws the waveform, or nothing if <see cref="Peaks"/> is empty.
     ///</summary>
@@ -14,7 +15,7 @@ public class WaveformDrawable : IDrawable
         canvas.FillColor = Colors.Transparent;
         canvas.FillRectangle(dirtyRect);
 
-        if(Peaks.Length == 0)
+        if (Peaks.Length == 0)
         {
             return;
         }
@@ -25,7 +26,7 @@ public class WaveformDrawable : IDrawable
         float midY = dirtyRect.Height / 2;
         float stepX = dirtyRect.Width / Peaks.Length;
 
-        for(int i = 0; i < Peaks.Length; i++)
+        for (int i = 0; i < Peaks.Length; i++)
         {
             float x = i * stepX;
             float barHeight = Peaks[i] * midY;

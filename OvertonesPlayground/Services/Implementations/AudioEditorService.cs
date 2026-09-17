@@ -6,10 +6,11 @@ namespace OvertonesPlayground.Services.Implementations;
 public class AudioEditorService : IAudioEditorService
 {
     #region Private methods
+
     ///<summary>
     ///Rounds and clamps a sample value into the valid 16-bit PCM range.
     ///</summary>
-    private static short ClampToShort(double value) { return (short)Math.Clamp(value, short.MinValue, short.MaxValue); }
+    private static short ClampToShort(double value) => (short)Math.Clamp(value, short.MinValue, short.MaxValue);
 
     ///<summary>
     ///Writes <paramref name="samples"/> as a new WAV file alongside <paramref name="source"/>'s format and returns its

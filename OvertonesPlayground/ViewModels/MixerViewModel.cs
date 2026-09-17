@@ -1,7 +1,7 @@
+using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.Input;
 using OvertonesPlayground.Models;
 using OvertonesPlayground.Services.Interfaces;
-using System.Collections.ObjectModel;
 
 namespace OvertonesPlayground.ViewModels;
 
@@ -11,15 +11,13 @@ namespace OvertonesPlayground.ViewModels;
 ///</summary>
 public partial class MixerViewModel : BaseViewModel
 {
-    #region Constants
+    #region Fields
+
     ///<summary>
     ///Colors assigned round-robin to channel strips, matching the palette used by the Launchpad so track colors read
     ///consistently across the app.
     ///</summary>
-    private static readonly string[] ChannelPalette = ["#512BD4", "#D600AA", "#2B9348", "#F77F00", "#0077B6", "#9D4EDD", "#E5383B", "#FFB703",];
-    #endregion
-
-    #region Fields
+    private static readonly string[] ChannelPalette = ["#512BD4", "#D600AA", "#2B9348", "#F77F00", "#0077B6", "#9D4EDD", "#E5383B", "#FFB703", ];
     private readonly IAudioLibraryService _libraryService;
     private readonly IAudioPlaybackService _playbackService;
     #endregion
@@ -46,25 +44,6 @@ public partial class MixerViewModel : BaseViewModel
 
     #region Private methods
     ///<summary>
-    ///Re-evaluates solo dimming whenever any channel's solo state changes, so soloing one channel visually dims the
-    ///others - matching Ableton/Audacity mixer behavior.
-    ///</summary>
-    private void OnChannelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
-    {
-        if (e.PropertyName != nameof(MixerChannelViewModel.IsSoloed))
-        {
-            return;
-        }
-
-        bool anySoloed = Channels.Any(c => c.IsSoloed);
-        Log_SoloStateChanged(Channels.Count(c => c.IsSoloed));
-        foreach (MixerChannelViewModel channel in Channels)
-        {
-            channel.IsDimmed = anySoloed && !channel.IsSoloed;
-        }
-    }
-
-    ///<summary>
     ///Opens the file picker and assigns the chosen sample to a channel (without starting playback).
     ///</summary>
     [RelayCommand]
@@ -80,6 +59,34 @@ public partial class MixerViewModel : BaseViewModel
         {
             Log_LoadedSample(clip.Name, channel.Name);
             channel.AssignSource(clip.FilePath, clip.Name);
+        }
+    }
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Loaded sample '{ClipName}' into channel '{ChannelName}'.")]
+    private partial void Log_LoadedSample(string clipName, string channelName);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Solo state changed; {SoloedCount} channel(s) soloed.")]
+    private partial void Log_SoloStateChanged(int soloedCount);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Stopping all channels.")]
+    private partial void Log_StoppingAllChannels();
+
+        ///<summary>
+///Re-evaluates solo dimming whenever any channel's solo state changes, so soloing one channel visually dims the
+///others - matching Ableton/Audacity mixer behavior.
+///</summary>
+    private void OnChannelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(MixerChannelViewModel.IsSoloed))
+        {
+            return;
+        }
+
+        bool anySoloed = Channels.Any(c => c.IsSoloed);
+        Log_SoloStateChanged(Channels.Count(c => c.IsSoloed));
+        foreach (MixerChannelViewModel channel in Channels)
+        {
+            channel.IsDimmed = anySoloed && !channel.IsSoloed;
         }
     }
 
@@ -101,17 +108,6 @@ public partial class MixerViewModel : BaseViewModel
     ///</summary>
     [RelayCommand]
     private void StopChannel(MixerChannelViewModel? channel) { channel?.Stop(); }
-    #endregion
-
-    #region Logging
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Loaded sample '{ClipName}' into channel '{ChannelName}'.")]
-    private partial void Log_LoadedSample(string clipName, string channelName);
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Solo state changed; {SoloedCount} channel(s) soloed.")]
-    private partial void Log_SoloStateChanged(int soloedCount);
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Stopping all channels.")]
-    private partial void Log_StoppingAllChannels();
     #endregion
 
     #region Public properties

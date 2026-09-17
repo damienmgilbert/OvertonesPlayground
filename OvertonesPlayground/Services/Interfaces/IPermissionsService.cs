@@ -6,6 +6,7 @@ namespace OvertonesPlayground.Services.Interfaces;
 public interface IPermissionsService
 {
     #region Public methods
+
     ///<summary>
     ///Ensures access to the device's audio media library is granted, prompting the user if needed.
     ///</summary>
