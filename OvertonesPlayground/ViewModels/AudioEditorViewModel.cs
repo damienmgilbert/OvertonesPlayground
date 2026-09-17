@@ -32,7 +32,7 @@ public partial class AudioEditorViewModel : BaseViewModel
     #region Private methods
     private async Task ApplyEditAsync(string operationName, Func<AudioClip, Task<string>> operation)
     {
-        if(LoadedClip is null || IsBusy)
+        if (LoadedClip is null || IsBusy)
         {
             return;
         }
@@ -40,12 +40,13 @@ public partial class AudioEditorViewModel : BaseViewModel
         IsBusy = true;
         try
         {
-            Logger.LogDebug("Applying '{Operation}' to clip '{ClipName}'.", operationName, LoadedClip.Name);
+            _logger.LogDebug("Applying '{Operation}' to clip '{ClipName}'.", operationName, LoadedClip.Name);
             string outputPath = await operation(LoadedClip);
             AudioClip newClip = await _libraryService.AddClipAsync(outputPath, $"{LoadedClip.Name} (edited)", isUserRecording: true);
             await SetLoadedClipAsync(newClip);
             StatusMessage = newClip.PublicStorageLocation is { } location ? $"Saved as '{newClip.Name}' - also in {location}." : $"Saved as '{newClip.Name}' in your library.";
-        } finally
+        }
+        finally
         {
             IsBusy = false;
         }
@@ -63,16 +64,17 @@ public partial class AudioEditorViewModel : BaseViewModel
         {
             IReadOnlyList<AudioClip> clips = await _libraryService.GetClipsAsync();
             AudioClip? clip = clips.FirstOrDefault(c => c.Id == clipId);
-            if(clip is null)
+            if (clip is null)
             {
-                Logger.LogDebug("Clip {ClipId} not found.", clipId);
+                _logger.LogDebug("Clip {ClipId} not found.", clipId);
                 StatusMessage = "Could not find that clip.";
                 return;
             }
 
-            Logger.LogDebug("Loading clip '{ClipName}' ({ClipId}) into editor.", clip.Name, clipId);
+            _logger.LogDebug("Loading clip '{ClipName}' ({ClipId}) into editor.", clip.Name, clipId);
             await SetLoadedClipAsync(clip);
-        } finally
+        }
+        finally
         {
             IsBusy = false;
         }
@@ -83,7 +85,7 @@ public partial class AudioEditorViewModel : BaseViewModel
 
     partial void OnClipIdChanged(string? value)
     {
-        if(!string.IsNullOrEmpty(value))
+        if (!string.IsNullOrEmpty(value))
         {
             _ = LoadClipAsync(value);
         }
@@ -92,12 +94,12 @@ public partial class AudioEditorViewModel : BaseViewModel
     [RelayCommand]
     private async Task PreviewAsync()
     {
-        if(LoadedClip is null)
+        if (LoadedClip is null)
         {
             return;
         }
 
-        Logger.LogDebug("Previewing clip '{ClipName}'.", LoadedClip.Name);
+        _logger.LogDebug("Previewing clip '{ClipName}'.", LoadedClip.Name);
         await _playbackService.LoadAsync(LoadedClip);
         _playbackService.Play();
     }

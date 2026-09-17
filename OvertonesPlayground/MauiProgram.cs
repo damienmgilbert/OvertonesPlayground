@@ -86,4 +86,9 @@ public static class MauiProgram
         // Resolved once in App.CreateWindow so it can receive a logger, rather than being constructed with `new`.
         services.AddTransient<AppShell>();
     }
+
+    private static void AddSystemDiagnosticLogger()
+    {
+
+    }
 }

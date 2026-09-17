@@ -48,8 +48,8 @@ public partial class SettingsViewModel : BaseViewModel
     private async Task ClearLibraryAsync()
     {
         IReadOnlyList<AudioClip> clips = await _libraryService.GetClipsAsync();
-        Logger.LogDebug("Clearing library: {ClipCount} clips.", clips.Count);
-        foreach(AudioClip clip in clips)
+        _logger.LogDebug("Clearing library: {ClipCount} clips.", clips.Count);
+        foreach (AudioClip clip in clips)
         {
             await _libraryService.DeleteClipAsync(clip);
         }
@@ -59,14 +59,14 @@ public partial class SettingsViewModel : BaseViewModel
 
     partial void OnKeepScreenOnChanged(bool value)
     {
-        Logger.LogDebug("Keep screen on changed to {Value}.", value);
+        _logger.LogDebug("Keep screen on changed to {Value}.", value);
         Preferences.Default.Set(KeepScreenOnKey, value);
         ApplyKeepScreenOn(value);
     }
 
     partial void OnSelectedThemeChanged(ThemePreference value)
     {
-        Logger.LogDebug("Theme preference changed to {Theme}.", value);
+        _logger.LogDebug("Theme preference changed to {Theme}.", value);
         Preferences.Default.Set(ThemePreferenceKey, value.ToString());
         ApplyTheme(value);
     }
@@ -77,7 +77,7 @@ public partial class SettingsViewModel : BaseViewModel
     [RelayCommand]
     private void StopAllAudio()
     {
-        Logger.LogDebug("Stopping all audio.");
+        _logger.LogDebug("Stopping all audio.");
         _playbackService.StopEverything();
     }
     #endregion
@@ -88,7 +88,7 @@ public partial class SettingsViewModel : BaseViewModel
     ///</summary>
     public static void ApplyTheme(ThemePreference preference)
     {
-        if(Application.Current is null)
+        if (Application.Current is null)
         {
             return;
         }

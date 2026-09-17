@@ -40,12 +40,12 @@ public partial class SoundCreatorViewModel : BaseViewModel
     [RelayCommand]
     private async Task CancelRecordingAsync()
     {
-        if(!IsRecording)
+        if (!IsRecording)
         {
             return;
         }
 
-        Logger.LogDebug("Canceling recording.");
+        _logger.LogDebug("Canceling recording.");
         await _recorderService.CancelAsync();
         IsRecording = false;
         StatusMessage = "Recording discarded.";
@@ -57,15 +57,15 @@ public partial class SoundCreatorViewModel : BaseViewModel
     private async Task StartRecordingAsync()
     {
         bool granted = await _permissionsService.EnsureMicrophonePermissionAsync();
-        if(!granted)
+        if (!granted)
         {
-            Logger.LogDebug("Microphone permission denied.");
+            _logger.LogDebug("Microphone permission denied.");
             StatusMessage = "Microphone permission is required to record.";
             return;
         }
 
         NewClipName = $"Recording {DateTime.Now:HH:mm:ss}";
-        Logger.LogDebug("Starting recording '{ClipName}'.", NewClipName);
+        _logger.LogDebug("Starting recording '{ClipName}'.", NewClipName);
         await _recorderService.StartAsync();
         IsRecording = true;
         StatusMessage = null;
@@ -76,13 +76,13 @@ public partial class SoundCreatorViewModel : BaseViewModel
     ///</summary>
     private async Task StopRecordingAsync()
     {
-        if(!IsRecording)
+        if (!IsRecording)
         {
             return;
         }
 
         string name = string.IsNullOrWhiteSpace(NewClipName) ? $"Recording {DateTime.Now:HHmmss}" : NewClipName;
-        Logger.LogDebug("Stopping recording, saving as '{ClipName}'.", name);
+        _logger.LogDebug("Stopping recording, saving as '{ClipName}'.", name);
         AudioClip recorded = await _recorderService.StopAsync(name);
         IsRecording = false;
 
@@ -96,10 +96,11 @@ public partial class SoundCreatorViewModel : BaseViewModel
     [RelayCommand]
     private async Task ToggleRecordingAsync()
     {
-        if(IsRecording)
+        if (IsRecording)
         {
             await StopRecordingAsync();
-        } else
+        }
+        else
         {
             await StartRecordingAsync();
         }

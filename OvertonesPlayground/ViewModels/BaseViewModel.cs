@@ -12,8 +12,8 @@ public partial class BaseViewModel : ObservableObject
     #region Constructors
     protected BaseViewModel(ILogger logger)
     {
-        Logger = logger;
-        Logger.LogDebug("{ViewModel} created.", GetType().Name);
+        _logger = logger;
+        _logger.LogDebug("{ViewModel} created.", GetType().Name);
     }
     #endregion
 
@@ -21,11 +21,10 @@ public partial class BaseViewModel : ObservableObject
     ///<summary>
     ///Logger scoped to the concrete view model type, used to trace command execution during debugging.
     ///</summary>
-    protected ILogger Logger { get; }
+    protected ILogger _logger;
     #endregion
 
     #region Public properties
-
     ///<summary>
     ///Indicates whether the view model is performing work.
     ///</summary>

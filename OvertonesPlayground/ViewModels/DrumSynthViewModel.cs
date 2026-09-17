@@ -46,7 +46,7 @@ public partial class DrumSynthViewModel : BaseViewModel
     [RelayCommand]
     private async Task GenerateAsync()
     {
-        if(IsBusy)
+        if (IsBusy)
         {
             return;
         }
@@ -54,7 +54,7 @@ public partial class DrumSynthViewModel : BaseViewModel
         IsBusy = true;
         try
         {
-            Logger.LogDebug("Generating drum sample for {DrumType}.", SelectedDrumParams.DrumType);
+            _logger.LogDebug("Generating drum sample for {DrumType}.", SelectedDrumParams.DrumType);
             _pendingClip = await _synthesisService.GenerateDrumAsync(SelectedDrumParams.DrumType, SelectedDrumParams.DrumType.ToString(), SelectedDrumParams.ToParameters());
 
             WaveformPeaks = await _editorService.GetWaveformPeaksAsync(_pendingClip.FilePath, 300);
@@ -63,7 +63,8 @@ public partial class DrumSynthViewModel : BaseViewModel
 
             CanSave = true;
             StatusMessage = "Previewing - tap Save to keep it in your library.";
-        } finally
+        }
+        finally
         {
             IsBusy = false;
         }
@@ -75,7 +76,7 @@ public partial class DrumSynthViewModel : BaseViewModel
     [RelayCommand]
     private async Task SaveAsync()
     {
-        if(_pendingClip is null || IsBusy)
+        if (_pendingClip is null || IsBusy)
         {
             return;
         }
@@ -83,13 +84,14 @@ public partial class DrumSynthViewModel : BaseViewModel
         IsBusy = true;
         try
         {
-            Logger.LogDebug("Saving generated drum sample '{ClipName}'.", _pendingClip.Name);
+            _logger.LogDebug("Saving generated drum sample '{ClipName}'.", _pendingClip.Name);
             AudioClip saved = await _libraryService.AddClipAsync(_pendingClip.FilePath, _pendingClip.Name, isUserRecording: true);
             StatusMessage = saved.PublicStorageLocation is { } location ? $"Saved '{saved.Name}' - also in {location}." : $"Saved '{saved.Name}' to your library.";
 
             _pendingClip = null;
             CanSave = false;
-        } finally
+        }
+        finally
         {
             IsBusy = false;
         }
@@ -101,7 +103,7 @@ public partial class DrumSynthViewModel : BaseViewModel
     [RelayCommand]
     private void SelectDrum(DrumType drum)
     {
-        Logger.LogDebug("Selected drum type {DrumType}.", drum);
+        _logger.LogDebug("Selected drum type {DrumType}.", drum);
         SelectedDrumParams = new DrumSynthParametersViewModel(drum);
         CanSave = false;
         WaveformPeaks = [];

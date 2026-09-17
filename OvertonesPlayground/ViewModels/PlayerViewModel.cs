@@ -39,13 +39,14 @@ public partial class PlayerViewModel : BaseViewModel, IDisposable
     [RelayCommand]
     private void PlayPause()
     {
-        if(_playbackService.IsPlaying)
+        if (_playbackService.IsPlaying)
         {
-            Logger.LogDebug("Pausing playback.");
+            _logger.LogDebug("Pausing playback.");
             _playbackService.Pause();
-        } else
+        }
+        else
         {
-            Logger.LogDebug("Starting playback.");
+            _logger.LogDebug("Starting playback.");
             _playbackService.Play();
         }
     }
@@ -69,7 +70,7 @@ public partial class PlayerViewModel : BaseViewModel, IDisposable
     [RelayCommand]
     private void Seek(double positionSeconds)
     {
-        Logger.LogDebug("Seeking to {PositionSeconds}s.", positionSeconds);
+        _logger.LogDebug("Seeking to {PositionSeconds}s.", positionSeconds);
         _playbackService.Seek(TimeSpan.FromSeconds(positionSeconds));
     }
     ///<summary>
@@ -78,7 +79,7 @@ public partial class PlayerViewModel : BaseViewModel, IDisposable
     [RelayCommand]
     private void Stop()
     {
-        Logger.LogDebug("Stopping playback.");
+        _logger.LogDebug("Stopping playback.");
         _playbackService.Stop();
     }
     #endregion
@@ -89,7 +90,7 @@ public partial class PlayerViewModel : BaseViewModel, IDisposable
     ///</summary>
     public void Dispose()
     {
-        Logger.LogDebug("Disposing.");
+        _logger.LogDebug("Disposing.");
         _playbackService.PlaybackStateChanged -= OnPlaybackStateChanged;
         StopTicking();
     }
@@ -99,7 +100,7 @@ public partial class PlayerViewModel : BaseViewModel, IDisposable
     ///</summary>
     public void StartTicking(IDispatcher dispatcher)
     {
-        if(_positionTimer is not null)
+        if (_positionTimer is not null)
         {
             return;
         }

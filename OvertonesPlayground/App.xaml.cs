@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using OvertonesPlayground.ViewModels;
 
 namespace OvertonesPlayground;
@@ -18,6 +17,16 @@ public partial class App : Application
         _logger = logger;
         _logger.LogDebug("App constructed.");
         SettingsViewModel.ApplyTheme(SettingsViewModel.LoadSavedThemePreference());
+
+
+        AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
+
+
+    }
+
+    private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
+    {
+        _logger.LogError(e.ExceptionObject as Exception, "Unhandled exception occurred.");
     }
 
     /// <summary>Creates the app's single window, hosting the Shell-based navigation, and logs its cross-platform

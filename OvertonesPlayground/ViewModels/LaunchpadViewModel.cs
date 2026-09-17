@@ -1,8 +1,8 @@
-using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
 using OvertonesPlayground.Models;
 using OvertonesPlayground.Services.Interfaces;
+using System.Collections.ObjectModel;
 
 namespace OvertonesPlayground.ViewModels;
 
@@ -28,7 +28,7 @@ public partial class LaunchpadViewModel : BaseViewModel
     ///<summary>
     ///Colors assigned round-robin to pads as they're given a sample.
     ///</summary>
-    private static readonly string[] PadPalette = [ "#512BD4", "#D600AA", "#2B9348", "#F77F00", "#0077B6", "#9D4EDD", "#E5383B", "#FFB703", ];
+    private static readonly string[] PadPalette = ["#512BD4", "#D600AA", "#2B9348", "#F77F00", "#0077B6", "#9D4EDD", "#E5383B", "#FFB703",];
     private readonly IAudioLibraryService _libraryService;
     private readonly IAudioPlaybackService _playbackService;
     #endregion
@@ -39,16 +39,20 @@ public partial class LaunchpadViewModel : BaseViewModel
     ///</summary>
     public LaunchpadViewModel(IAudioPlaybackService playbackService, IAudioLibraryService libraryService, ILogger<LaunchpadViewModel> logger) : base(logger)
     {
+        ConstructorLog(Rows, Columns);
         _playbackService = playbackService;
         _libraryService = libraryService;
         Title = "Launchpad";
 
-        for(int i = 0; i < Rows * Columns; i++)
+        for (int i = 0; i < Rows * Columns; i++)
         {
             Pads.Add(new LaunchpadPadViewModel(new LaunchpadPad { Index = i }));
         }
     }
     #endregion
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Creating LaunchpadViewModel with {Rows} rows and {Columns} columns.")]
+    partial void ConstructorLog(int Rows, int Columns);
 
     #region Private methods
     ///<summary>
@@ -57,7 +61,7 @@ public partial class LaunchpadViewModel : BaseViewModel
     [RelayCommand]
     private async Task AssignAsync(LaunchpadPadViewModel? pad)
     {
-        if(pad is null)
+        if (pad is null)
         {
             return;
         }
@@ -65,17 +69,18 @@ public partial class LaunchpadViewModel : BaseViewModel
         try
         {
             AudioClip? clip = await _libraryService.ImportFromPickerAsync();
-            if(clip is null)
+            if (clip is null)
             {
                 return;
             }
 
             string color = PadPalette[pad.Index % PadPalette.Length];
-            Logger.LogDebug("Assigned clip '{ClipName}' to pad {PadIndex}.", clip.Name, pad.Index);
+            _logger.LogDebug("Assigned clip '{ClipName}' to pad {PadIndex}.", clip.Name, pad.Index);
             pad.Assign(clip.FilePath, clip.Name, color);
-        } catch(Exception ex)
+        }
+        catch (Exception ex)
         {
-            Logger.LogError(ex, "Failed to assign a sample to pad {PadIndex}.", pad.Index);
+            _logger.LogError(ex, "Failed to assign a sample to pad {PadIndex}.", pad.Index);
             StatusMessage = "Couldn't import that sample.";
         }
     }
@@ -88,11 +93,12 @@ public partial class LaunchpadViewModel : BaseViewModel
     {
         try
         {
-            Logger.LogDebug("Stopping all pads.");
+            _logger.LogDebug("Stopping all pads.");
             _playbackService.StopAllPads();
-        } catch(Exception ex)
+        }
+        catch (Exception ex)
         {
-            Logger.LogError(ex, "Failed to stop all pads.");
+            _logger.LogError(ex, "Failed to stop all pads.");
         }
     }
     ///<summary>
@@ -101,18 +107,19 @@ public partial class LaunchpadViewModel : BaseViewModel
     [RelayCommand]
     private void StopPad(LaunchpadPadViewModel? pad)
     {
-        if(pad is null)
+        if (pad is null)
         {
             return;
         }
 
         try
         {
-            Logger.LogDebug("Stopping pad {PadIndex}.", pad.Index);
+            _logger.LogDebug("Stopping pad {PadIndex}.", pad.Index);
             _playbackService.StopPad(pad.Index);
-        } catch(Exception ex)
+        }
+        catch (Exception ex)
         {
-            Logger.LogError(ex, "Failed to stop pad {PadIndex}.", pad.Index);
+            _logger.LogError(ex, "Failed to stop pad {PadIndex}.", pad.Index);
         }
     }
 
@@ -122,12 +129,12 @@ public partial class LaunchpadViewModel : BaseViewModel
     [RelayCommand]
     private void ToggleLoop(LaunchpadPadViewModel? pad)
     {
-        if(pad is null)
+        if (pad is null)
         {
             return;
         }
 
-        Logger.LogDebug("Pad {PadIndex} loop toggled.", pad.Index);
+        _logger.LogDebug("Pad {PadIndex} loop toggled.", pad.Index);
         pad.ToggleLoop();
     }
     ///<summary>
@@ -136,18 +143,19 @@ public partial class LaunchpadViewModel : BaseViewModel
     [RelayCommand]
     private void Trigger(LaunchpadPadViewModel? pad)
     {
-        if(pad is null || !pad.HasClip)
+        if (pad is null || !pad.HasClip)
         {
             return;
         }
 
         try
         {
-            Logger.LogDebug("Triggering pad {PadIndex}.", pad.Index);
+            _logger.LogDebug("Triggering pad {PadIndex}.", pad.Index);
             _playbackService.TriggerPad(pad.Pad);
-        } catch(Exception ex)
+        }
+        catch (Exception ex)
         {
-            Logger.LogError(ex, "Failed to trigger pad {PadIndex}.", pad.Index);
+            _logger.LogError(ex, "Failed to trigger pad {PadIndex}.", pad.Index);
             StatusMessage = "Couldn't play that pad.";
         }
     }

@@ -1,8 +1,8 @@
-using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
 using OvertonesPlayground.Models;
 using OvertonesPlayground.Services.Interfaces;
+using System.Collections.ObjectModel;
 
 namespace OvertonesPlayground.ViewModels;
 
@@ -17,7 +17,7 @@ public partial class MixerViewModel : BaseViewModel
     ///Colors assigned round-robin to channel strips, matching the palette used by the Launchpad so track colors read
     ///consistently across the app.
     ///</summary>
-    private static readonly string[] ChannelPalette = [ "#512BD4", "#D600AA", "#2B9348", "#F77F00", "#0077B6", "#9D4EDD", "#E5383B", "#FFB703", ];
+    private static readonly string[] ChannelPalette = ["#512BD4", "#D600AA", "#2B9348", "#F77F00", "#0077B6", "#9D4EDD", "#E5383B", "#FFB703",];
     #endregion
 
     #region Fields
@@ -35,7 +35,7 @@ public partial class MixerViewModel : BaseViewModel
         _libraryService = libraryService;
         Title = "Mixer";
 
-        for(int i = 1; i <= 4; i++)
+        for (int i = 1; i <= 4; i++)
         {
             MixerChannelStrip strip = new() { Name = $"Track {i}", ColorHex = ChannelPalette[(i - 1) % ChannelPalette.Length] };
             MixerChannelViewModel channel = new(strip, _playbackService, loggerFactory.CreateLogger<MixerChannelViewModel>());
@@ -52,14 +52,14 @@ public partial class MixerViewModel : BaseViewModel
     ///</summary>
     private void OnChannelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        if(e.PropertyName != nameof(MixerChannelViewModel.IsSoloed))
+        if (e.PropertyName != nameof(MixerChannelViewModel.IsSoloed))
         {
             return;
         }
 
         bool anySoloed = Channels.Any(c => c.IsSoloed);
-        Logger.LogDebug("Solo state changed; {SoloedCount} channel(s) soloed.", Channels.Count(c => c.IsSoloed));
-        foreach(MixerChannelViewModel channel in Channels)
+        _logger.LogDebug("Solo state changed; {SoloedCount} channel(s) soloed.", Channels.Count(c => c.IsSoloed));
+        foreach (MixerChannelViewModel channel in Channels)
         {
             channel.IsDimmed = anySoloed && !channel.IsSoloed;
         }
@@ -71,15 +71,15 @@ public partial class MixerViewModel : BaseViewModel
     [RelayCommand]
     private async Task LoadSampleAsync(MixerChannelViewModel? channel)
     {
-        if(channel is null)
+        if (channel is null)
         {
             return;
         }
 
         AudioClip? clip = await _libraryService.ImportFromPickerAsync();
-        if(clip is not null)
+        if (clip is not null)
         {
-            Logger.LogDebug("Loaded sample '{ClipName}' into channel '{ChannelName}'.", clip.Name, channel.Name);
+            _logger.LogDebug("Loaded sample '{ClipName}' into channel '{ChannelName}'.", clip.Name, channel.Name);
             channel.AssignSource(clip.FilePath, clip.Name);
         }
     }
@@ -90,8 +90,8 @@ public partial class MixerViewModel : BaseViewModel
     [RelayCommand]
     private void StopAll()
     {
-        Logger.LogDebug("Stopping all channels.");
-        foreach(MixerChannelViewModel channel in Channels)
+        _logger.LogDebug("Stopping all channels.");
+        foreach (MixerChannelViewModel channel in Channels)
         {
             channel.Stop();
         }

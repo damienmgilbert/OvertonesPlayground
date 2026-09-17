@@ -1,9 +1,9 @@
-using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
 using OvertonesPlayground.Models;
 using OvertonesPlayground.Services.Interfaces;
+using System.Collections.ObjectModel;
 
 namespace OvertonesPlayground.ViewModels;
 
@@ -38,12 +38,12 @@ public partial class LibraryViewModel : BaseViewModel
     [RelayCommand]
     private async Task DeleteAsync(AudioClip? clip)
     {
-        if(clip is null)
+        if (clip is null)
         {
             return;
         }
 
-        Logger.LogDebug("Deleting clip '{ClipName}' ({ClipId}).", clip.Name, clip.Id);
+        _logger.LogDebug("Deleting clip '{ClipName}' ({ClipId}).", clip.Name, clip.Id);
         await _libraryService.DeleteClipAsync(clip);
         Clips.Remove(clip);
     }
@@ -51,34 +51,35 @@ public partial class LibraryViewModel : BaseViewModel
     [RelayCommand]
     private async Task EditAsync(AudioClip? clip)
     {
-        if(clip is null)
+        if (clip is null)
         {
             return;
         }
 
-        Logger.LogDebug("Navigating to editor for clip '{ClipName}' ({ClipId}).", clip.Name, clip.Id);
+        _logger.LogDebug("Navigating to editor for clip '{ClipName}' ({ClipId}).", clip.Name, clip.Id);
         await Shell.Current.GoToAsync($"editor?clipId={clip.Id}");
     }
 
     [RelayCommand]
     private async Task ImportAsync()
     {
-        Logger.LogDebug("Importing a clip from the picker.");
+        _logger.LogDebug("Importing a clip from the picker.");
         AudioClip? clip = await _libraryService.ImportFromPickerAsync();
-        if(clip is not null)
+        if (clip is not null)
         {
-            Logger.LogDebug("Imported clip '{ClipName}'.", clip.Name);
+            _logger.LogDebug("Imported clip '{ClipName}'.", clip.Name);
             Clips.Insert(0, clip);
-        } else
+        }
+        else
         {
-            Logger.LogDebug("Import canceled.");
+            _logger.LogDebug("Import canceled.");
         }
     }
 
     [RelayCommand]
     private async Task LoadAsync()
     {
-        if(IsBusy)
+        if (IsBusy)
         {
             return;
         }
@@ -87,13 +88,14 @@ public partial class LibraryViewModel : BaseViewModel
         try
         {
             IReadOnlyList<AudioClip> clips = await _libraryService.GetClipsAsync();
-            Logger.LogDebug("Loaded {ClipCount} clips.", clips.Count);
+            _logger.LogDebug("Loaded {ClipCount} clips.", clips.Count);
             Clips.Clear();
-            foreach(AudioClip clip in clips)
+            foreach (AudioClip clip in clips)
             {
                 Clips.Add(clip);
             }
-        } finally
+        }
+        finally
         {
             IsBusy = false;
         }
@@ -103,12 +105,12 @@ public partial class LibraryViewModel : BaseViewModel
     [RelayCommand]
     private async Task PlayAsync(AudioClip? clip)
     {
-        if(clip is null)
+        if (clip is null)
         {
             return;
         }
 
-        Logger.LogDebug("Playing clip '{ClipName}' ({ClipId}).", clip.Name, clip.Id);
+        _logger.LogDebug("Playing clip '{ClipName}' ({ClipId}).", clip.Name, clip.Id);
         await _playbackService.LoadAsync(clip);
         _playbackService.Play();
         await Shell.Current.GoToAsync("//player");
@@ -117,7 +119,7 @@ public partial class LibraryViewModel : BaseViewModel
     [RelayCommand]
     private void SetViewMode(LibraryViewMode mode)
     {
-        Logger.LogDebug("View mode changed to {ViewMode}.", mode);
+        _logger.LogDebug("View mode changed to {ViewMode}.", mode);
         ViewMode = mode;
     }
     #endregion

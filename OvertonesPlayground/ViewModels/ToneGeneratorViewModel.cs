@@ -44,7 +44,7 @@ public partial class ToneGeneratorViewModel : BaseViewModel
     [RelayCommand]
     private async Task GenerateAsync()
     {
-        if(IsBusy)
+        if (IsBusy)
         {
             return;
         }
@@ -53,7 +53,7 @@ public partial class ToneGeneratorViewModel : BaseViewModel
         try
         {
             string name = $"{SelectedWaveform} {FrequencyHz:0}Hz";
-            Logger.LogDebug("Generating tone '{Name}' ({DurationSeconds}s, amplitude {Amplitude}).", name, DurationSeconds, Amplitude);
+            _logger.LogDebug("Generating tone '{Name}' ({DurationSeconds}s, amplitude {Amplitude}).", name, DurationSeconds, Amplitude);
             _pendingClip = await _synthesisService.GenerateToneAsync(SelectedWaveform, FrequencyHz, DurationSeconds, Amplitude, name);
 
             WaveformPeaks = await _editorService.GetWaveformPeaksAsync(_pendingClip.FilePath, 300);
@@ -62,7 +62,8 @@ public partial class ToneGeneratorViewModel : BaseViewModel
 
             CanSave = true;
             StatusMessage = "Previewing - tap Save to keep it in your library.";
-        } finally
+        }
+        finally
         {
             IsBusy = false;
         }
@@ -74,7 +75,7 @@ public partial class ToneGeneratorViewModel : BaseViewModel
     [RelayCommand]
     private async Task SaveAsync()
     {
-        if(_pendingClip is null || IsBusy)
+        if (_pendingClip is null || IsBusy)
         {
             return;
         }
@@ -82,13 +83,14 @@ public partial class ToneGeneratorViewModel : BaseViewModel
         IsBusy = true;
         try
         {
-            Logger.LogDebug("Saving generated clip '{ClipName}'.", _pendingClip.Name);
+            _logger.LogDebug("Saving generated clip '{ClipName}'.", _pendingClip.Name);
             AudioClip saved = await _libraryService.AddClipAsync(_pendingClip.FilePath, _pendingClip.Name, isUserRecording: true);
             StatusMessage = saved.PublicStorageLocation is { } location ? $"Saved '{saved.Name}' - also in {location}." : $"Saved '{saved.Name}' to your library.";
 
             _pendingClip = null;
             CanSave = false;
-        } finally
+        }
+        finally
         {
             IsBusy = false;
         }
@@ -100,7 +102,7 @@ public partial class ToneGeneratorViewModel : BaseViewModel
     [RelayCommand]
     private void SelectPreset(TonePreset preset)
     {
-        Logger.LogDebug("Selected preset '{PresetName}'.", preset.Name);
+        _logger.LogDebug("Selected preset '{PresetName}'.", preset.Name);
         SelectedWaveform = preset.Waveform;
         FrequencyHz = preset.FrequencyHz;
         DurationSeconds = preset.DurationSeconds;

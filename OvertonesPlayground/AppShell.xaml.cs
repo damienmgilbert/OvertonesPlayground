@@ -18,5 +18,6 @@ public partial class AppShell : Shell
 
         Navigating += (_, e) => _logger.LogDebug("Navigating from '{Current}' to '{Target}'.", e.Current?.Location, e.Target?.Location);
         Navigated += (_, e) => _logger.LogDebug("Navigated to '{Current}' ({Source}).", e.Current?.Location, e.Source);
+
     }
 }
