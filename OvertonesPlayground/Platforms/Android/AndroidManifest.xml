@@ -3,4 +3,17 @@
 	<application android:allowBackup="true" android:icon="@mipmap/appicon" android:supportsRtl="true" android:label="OvertonesPlayground"></application>
 	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 	<uses-permission android:name="android.permission.INTERNET" />
+
+	<!-- Sound Creator: recording new samples with the microphone -->
+	<uses-permission android:name="android.permission.RECORD_AUDIO" />
+	<uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+
+	<!-- Reading audio the user already has on-device (Android 13+ scoped media permission) -->
+	<uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+
+	<!-- Legacy storage access for importing/exporting clips on Android 12 (API 32) and below -->
+	<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
+
+	<uses-feature android:name="android.hardware.microphone" android:required="true" />
 </manifest>

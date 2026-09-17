@@ -1,0 +1,27 @@
+﻿// This file is used by Code Analysis to maintain SuppressMessage
+// attributes that are applied to this project.
+// Project-level suppressions either have no target or are given
+// a specific target and scoped to a namespace, type, member, etc.
+
+using System.Diagnostics.CodeAnalysis;
+
+[assembly: SuppressMessage("Style", "IDE0058:Expression value is never used", Justification = "<Pending>", Scope = "member", Target = "~M:OvertonesPlayground.MauiProgram.RegisterServices(Microsoft.Extensions.DependencyInjection.IServiceCollection)")]
+[assembly: SuppressMessage("Style", "IDE0058:Expression value is never used", Justification = "<Pending>", Scope = "member", Target = "~M:OvertonesPlayground.MauiProgram.RegisterViewModelsAndPages(Microsoft.Extensions.DependencyInjection.IServiceCollection)")]
+[assembly: SuppressMessage("Style", "IDE0058:Expression value is never used", Justification = "<Pending>", Scope = "member", Target = "~M:OvertonesPlayground.Platforms.Android.Services.AudioFocusService.AbandonFocus")]
+[assembly: SuppressMessage("Style", "IDE0058:Expression value is never used", Justification = "<Pending>", Scope = "member", Target = "~M:OvertonesPlayground.Platforms.Android.Services.AudioFocusService.RequestFocus~System.Boolean")]
+[assembly: SuppressMessage("Style", "IDE0058:Expression value is never used", Justification = "<Pending>", Scope = "member", Target = "~M:OvertonesPlayground.Services.Implementations.AudioLibraryService.DeleteClipAsync(OvertonesPlayground.Models.AudioClip)~System.Threading.Tasks.Task")]
+[assembly: SuppressMessage("Style", "IDE0058:Expression value is never used", Justification = "<Pending>", Scope = "member", Target = "~M:OvertonesPlayground.Services.Implementations.AudioLibraryService.EnsureLoadedAsync~System.Threading.Tasks.Task")]
+[assembly: SuppressMessage("Style", "IDE0058:Expression value is never used", Justification = "<Pending>", Scope = "member", Target = "~M:OvertonesPlayground.Services.Implementations.AudioPlaybackService.Play")]
+[assembly: SuppressMessage("Style", "IDE0058:Expression value is never used", Justification = "<Pending>", Scope = "member", Target = "~M:OvertonesPlayground.Services.Implementations.AudioPlaybackService.PlayChannel(OvertonesPlayground.Models.MixerChannelStrip)")]
+[assembly: SuppressMessage("Style", "IDE0058:Expression value is never used", Justification = "<Pending>", Scope = "member", Target = "~M:OvertonesPlayground.Services.Implementations.AudioPlaybackService.TriggerPad(OvertonesPlayground.Models.LaunchpadPad)")]
+[assembly: SuppressMessage("Style", "IDE0058:Expression value is never used", Justification = "<Pending>", Scope = "member", Target = "~M:OvertonesPlayground.Services.Implementations.AudioRecorderService.CancelAsync~System.Threading.Tasks.Task")]
+[assembly: SuppressMessage("Style", "IDE0058:Expression value is never used", Justification = "<Pending>", Scope = "member", Target = "~M:OvertonesPlayground.Services.Implementations.AudioRecorderService.StartAsync~System.Threading.Tasks.Task")]
+[assembly: SuppressMessage("Style", "IDE0058:Expression value is never used", Justification = "<Pending>", Scope = "member", Target = "~M:OvertonesPlayground.Services.Implementations.WavFile.ReadAsync(System.String)~System.Threading.Tasks.Task{OvertonesPlayground.Services.Implementations.WavFile}")]
+[assembly: SuppressMessage("Style", "IDE0058:Expression value is never used", Justification = "<Pending>", Scope = "member", Target = "~M:OvertonesPlayground.ViewModels.LibraryViewModel.DeleteAsync(OvertonesPlayground.Models.AudioClip)~System.Threading.Tasks.Task")]
+[assembly: SuppressMessage("Style", "IDE0058:Expression value is never used", Justification = "<Pending>", Scope = "member", Target = "~P:OvertonesPlayground.Services.Implementations.AudioEditorService.ExportsDirectory")]
+[assembly: SuppressMessage("Style", "IDE0058:Expression value is never used", Justification = "<Pending>", Scope = "member", Target = "~P:OvertonesPlayground.Services.Implementations.AudioLibraryService.ClipsDirectory")]
+[assembly: SuppressMessage("Style", "IDE0130:Namespace does not match folder structure", Justification = "<Pending>", Scope = "namespace", Target = "~N:OvertonesPlayground")]
+[assembly: SuppressMessage("Style", "IDE0290:Use primary constructor", Justification = "<Pending>", Scope = "member", Target = "~M:OvertonesPlayground.MainApplication.#ctor(System.IntPtr,Android.Runtime.JniHandleOwnership)")]
+[assembly: SuppressMessage("Style", "IDE0290:Use primary constructor", Justification = "<Pending>", Scope = "member", Target = "~M:OvertonesPlayground.Services.Implementations.AudioLibraryService.#ctor(Plugin.Maui.Audio.IAudioManager)")]
+[assembly: SuppressMessage("Style", "IDE0290:Use primary constructor", Justification = "<Pending>", Scope = "member", Target = "~M:OvertonesPlayground.ViewModels.LaunchpadPadViewModel.#ctor(OvertonesPlayground.Models.LaunchpadPad)")]
+[assembly: SuppressMessage("Style", "IDE0290:Use primary constructor", Justification = "<Pending>", Scope = "member", Target = "~M:OvertonesPlayground.ViewModels.MixerChannelViewModel.#ctor(OvertonesPlayground.Models.MixerChannelStrip,OvertonesPlayground.Services.Interfaces.IAudioPlaybackService)")]

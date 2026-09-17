@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:OvertonesPlayground.ViewModels"
+             x:Class="OvertonesPlayground.Views.LaunchpadPage"
+             x:DataType="vm:LaunchpadViewModel"
+             Title="{Binding Title}">
+
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Stop All" Command="{Binding StopAllCommand}" />
+    </ContentPage.ToolbarItems>
+
+    <Grid RowDefinitions="Auto,*" Margin="12" RowSpacing="8">
+    <Label Grid.Row="0" FontSize="12" TextColor="{StaticResource Gray500}"
+           Text="Tap a pad to trigger it • Double-tap to assign a sample • Triple-tap to toggle looping" />
+    <CollectionView Grid.Row="1" ItemsSource="{Binding Pads}">
+        <CollectionView.ItemsLayout>
+            <GridItemsLayout Orientation="Vertical" Span="8" HorizontalItemSpacing="6" VerticalItemSpacing="6" />
+        </CollectionView.ItemsLayout>
+        <CollectionView.ItemTemplate>
+            <DataTemplate x:DataType="vm:LaunchpadPadViewModel">
+                <Border StrokeShape="RoundRectangle 10"
+                        BackgroundColor="{Binding ColorHex, Converter={StaticResource HexColor}}"
+                        HeightRequest="90">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer
+                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:LaunchpadViewModel}}, Path=TriggerCommand}"
+                            CommandParameter="{Binding .}" />
+                        <TapGestureRecognizer NumberOfTapsRequired="2"
+                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:LaunchpadViewModel}}, Path=AssignCommand}"
+                            CommandParameter="{Binding .}" />
+                        <TapGestureRecognizer NumberOfTapsRequired="3"
+                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:LaunchpadViewModel}}, Path=ToggleLoopCommand}"
+                            CommandParameter="{Binding .}" />
+                    </Border.GestureRecognizers>
+                    <Grid RowDefinitions="*,Auto" Padding="6">
+                        <Label Grid.Row="0"
+                               Text="{Binding Label}"
+                               TextColor="White"
+                               FontSize="12"
+                               VerticalOptions="Center"
+                               HorizontalOptions="Center"
+                               LineBreakMode="TailTruncation" />
+                        <Label Grid.Row="1"
+                               Text="loop"
+                               FontSize="10"
+                               TextColor="White"
+                               HorizontalOptions="Center"
+                               IsVisible="{Binding IsLooping}" />
+                    </Grid>
+                </Border>
+            </DataTemplate>
+        </CollectionView.ItemTemplate>
+    </CollectionView>
+    </Grid>
+
+</ContentPage>

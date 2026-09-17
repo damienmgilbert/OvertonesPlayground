@@ -2,6 +2,7 @@
 <Application xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:local="clr-namespace:OvertonesPlayground"
+             xmlns:conv="clr-namespace:OvertonesPlayground.Converters"
              x:Class="OvertonesPlayground.App">
     <Application.Resources>
         <ResourceDictionary>
@@ -9,6 +10,12 @@
                 <ResourceDictionary Source="Resources/Styles/Colors.xaml" />
                 <ResourceDictionary Source="Resources/Styles/Styles.xaml" />
             </ResourceDictionary.MergedDictionaries>
+
+            <conv:HexColorConverter x:Key="HexColor" />
+            <conv:BoolToPlayPauseIconConverter x:Key="PlayPauseIcon" />
+            <conv:BoolToAccentColorConverter x:Key="BoolToAccent" />
+            <conv:InvertedBoolConverter x:Key="InvertedBool" />
+            <conv:RecordButtonLabelConverter x:Key="RecordButtonLabel" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:OvertonesPlayground.ViewModels"
+             x:Class="OvertonesPlayground.Views.MixerPage"
+             x:DataType="vm:MixerViewModel"
+             Title="{Binding Title}">
+
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Stop All" Command="{Binding StopAllCommand}" />
+    </ContentPage.ToolbarItems>
+
+    <ScrollView Orientation="Horizontal">
+        <HorizontalStackLayout Padding="20" Spacing="18" BindableLayout.ItemsSource="{Binding Channels}">
+            <BindableLayout.ItemTemplate>
+                <DataTemplate x:DataType="vm:MixerChannelViewModel">
+                    <Border StrokeShape="RoundRectangle 14" Padding="14" WidthRequest="160">
+                        <Grid RowDefinitions="Auto,Auto,220,Auto,Auto,Auto,Auto" RowSpacing="10">
+                            <Label Grid.Row="0" Text="{Binding Name}" FontAttributes="Bold" HorizontalTextAlignment="Center" />
+                            <Label Grid.Row="1" Text="{Binding SourceLabel}" FontSize="11"
+                                   TextColor="{StaticResource Gray500}" HorizontalTextAlignment="Center"
+                                   LineBreakMode="TailTruncation" />
+
+                            <Slider Grid.Row="2"
+                                    Rotation="270"
+                                    WidthRequest="220"
+                                    HorizontalOptions="Center"
+                                    Minimum="0" Maximum="1"
+                                    Value="{Binding Volume}" />
+
+                            <Label Grid.Row="3" Text="Pan" FontSize="11" HorizontalTextAlignment="Center" />
+                            <Slider Grid.Row="4" Minimum="-1" Maximum="1" Value="{Binding Pan}" />
+
+                            <HorizontalStackLayout Grid.Row="5" Spacing="8" HorizontalOptions="Center">
+                                <Button Text="M" WidthRequest="42" Padding="0"
+                                        BackgroundColor="{Binding IsMuted, Converter={StaticResource BoolToAccent}}"
+                                        Command="{Binding ToggleMuteCommand}" />
+                                <Button Text="S" WidthRequest="42" Padding="0"
+                                        Command="{Binding ToggleSoloCommand}" />
+                            </HorizontalStackLayout>
+
+                            <HorizontalStackLayout Grid.Row="6" Spacing="8" HorizontalOptions="Center">
+                                <Button Text="Load"
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MixerViewModel}}, Path=LoadSampleCommand}"
+                                        CommandParameter="{Binding .}" />
+                                <Button Text="Stop"
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MixerViewModel}}, Path=StopChannelCommand}"
+                                        CommandParameter="{Binding .}" />
+                            </HorizontalStackLayout>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </BindableLayout.ItemTemplate>
+        </HorizontalStackLayout>
+    </ScrollView>
+
+</ContentPage>

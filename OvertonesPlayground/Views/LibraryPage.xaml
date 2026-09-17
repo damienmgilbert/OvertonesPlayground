@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:OvertonesPlayground.ViewModels"
+             xmlns:models="clr-namespace:OvertonesPlayground.Models"
+             x:Class="OvertonesPlayground.Views.LibraryPage"
+             x:DataType="vm:LibraryViewModel"
+             Title="{Binding Title}">
+
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Import" Command="{Binding ImportCommand}" />
+    </ContentPage.ToolbarItems>
+
+    <RefreshView IsRefreshing="{Binding IsBusy}" Command="{Binding LoadCommand}">
+        <CollectionView ItemsSource="{Binding Clips}"
+                         SelectionMode="None"
+                         EmptyView="No audio clips yet. Import a file or record one in Sound Creator.">
+            <CollectionView.ItemsLayout>
+                <GridItemsLayout Orientation="Vertical" Span="2" HorizontalItemSpacing="12" VerticalItemSpacing="12" />
+            </CollectionView.ItemsLayout>
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="models:AudioClip">
+                    <Border StrokeShape="RoundRectangle 12" Padding="14" Margin="4">
+                        <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="8">
+                            <Label Grid.Row="0" Text="{Binding Name}" FontAttributes="Bold" FontSize="16" LineBreakMode="TailTruncation" />
+                            <Label Grid.Row="1" Text="{Binding Duration, StringFormat='{0:mm\\:ss}'}" TextColor="{StaticResource Gray500}" />
+                            <HorizontalStackLayout Grid.Row="2" Spacing="10">
+                                <Button Text="Play"
+                                        Padding="14,6"
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:LibraryViewModel}}, Path=PlayCommand}"
+                                        CommandParameter="{Binding .}" />
+                                <Button Text="Edit"
+                                        Padding="14,6"
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:LibraryViewModel}}, Path=EditCommand}"
+                                        CommandParameter="{Binding .}" />
+                                <Button Text="Delete"
+                                        Padding="14,6"
+                                        BackgroundColor="{StaticResource Gray600}"
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:LibraryViewModel}}, Path=DeleteCommand}"
+                                        CommandParameter="{Binding .}" />
+                            </HorizontalStackLayout>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </RefreshView>
+
+</ContentPage>
