@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:OvertonesPlayground.ViewModels"
+             xmlns:models="clr-namespace:OvertonesPlayground.Models"
+             xmlns:controls="clr-namespace:OvertonesPlayground.Controls"
+             x:Class="OvertonesPlayground.Views.DrumSynthPage"
+             x:DataType="vm:DrumSynthViewModel"
+             Title="{Binding Title}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="24" Spacing="18">
+
+            <Label Text="Drum &amp; Bass Synth" FontSize="20" FontAttributes="Bold" />
+            <Label Text="Pick a type to load its defaults, tune every knob, Generate &amp; Play to preview, then Save to keep it in your library (and your device's Music folder) for the Launchpad and Mixer."
+                   FontSize="12" TextColor="{StaticResource Gray500}" />
+
+            <CollectionView ItemsSource="{Binding DrumOptions}" HeightRequest="70">
+                <CollectionView.ItemsLayout>
+                    <GridItemsLayout Orientation="Vertical" Span="5" HorizontalItemSpacing="8" VerticalItemSpacing="8" />
+                </CollectionView.ItemsLayout>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="models:DrumType">
+                        <Button Text="{Binding .}"
+                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:DrumSynthViewModel}}, Path=SelectDrumCommand}"
+                                CommandParameter="{Binding .}" />
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+            <GraphicsView x:Name="WaveformView" HeightRequest="120" BackgroundColor="{StaticResource Gray950}" />
+
+            <VerticalStackLayout BindingContext="{Binding SelectedDrumParams}"
+                                  x:DataType="vm:DrumSynthParametersViewModel"
+                                  Spacing="12">
+
+                <Label Text="{Binding DrumType, StringFormat='Editing: {0}'}" FontAttributes="Bold" TextColor="{StaticResource Secondary}" />
+
+                <Grid ColumnDefinitions="Auto,*" RowSpacing="12">
+                    <Label Grid.Row="0" Grid.Column="0" Text="Sample rate" VerticalOptions="Center" />
+                    <Picker Grid.Row="0" Grid.Column="1"
+                            ItemsSource="{x:Static vm:DrumSynthParametersViewModel.SampleRateOptions}"
+                            SelectedItem="{Binding SampleRate}" />
+                </Grid>
+
+                <controls:LabeledSlider LabelText="Duration" Minimum="0.02" Maximum="2" Digits="3" Value="{Binding DurationSeconds}" />
+                <controls:LabeledSlider LabelText="Level" Minimum="0" Maximum="1" Digits="2" Value="{Binding Amplitude}" />
+                <controls:LabeledSlider LabelText="Decay" Minimum="0.5" Maximum="60" Digits="1" Value="{Binding DecayRate}" />
+
+                <VerticalStackLayout IsVisible="{Binding ShowPitchSweep}" Spacing="12">
+                    <Label Text="Pitch Sweep" FontAttributes="Bold" FontSize="14" />
+                    <controls:LabeledSlider LabelText="Start" Minimum="20" Maximum="2000" Digits="0" Value="{Binding StartFrequencyHz}" />
+                    <controls:LabeledSlider LabelText="End" Minimum="20" Maximum="2000" Digits="0" Value="{Binding EndFrequencyHz}" />
+                    <controls:LabeledSlider LabelText="Sweep" Minimum="1" Maximum="60" Digits="1" Value="{Binding SweepRate}" />
+                </VerticalStackLayout>
+
+                <VerticalStackLayout IsVisible="{Binding ShowSnareControls}" Spacing="12">
+                    <Label Text="Snare Body" FontAttributes="Bold" FontSize="14" />
+                    <controls:LabeledSlider LabelText="Tone" Minimum="50" Maximum="1000" Digits="0" Value="{Binding ToneFrequencyHz}" />
+                    <controls:LabeledSlider LabelText="Tone decay" Minimum="0.5" Maximum="80" Digits="1" Value="{Binding ToneDecayRate}" />
+                    <controls:LabeledSlider LabelText="Tone level" Minimum="0" Maximum="1" Digits="2" Value="{Binding ToneLevel}" />
+                    <controls:LabeledSlider LabelText="Noise level" Minimum="0" Maximum="1" Digits="2" Value="{Binding NoiseLevel}" />
+                </VerticalStackLayout>
+
+                <VerticalStackLayout IsVisible="{Binding ShowClapControls}" Spacing="12">
+                    <Label Text="Clap Bursts" FontAttributes="Bold" FontSize="14" />
+                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
+                        <Label Grid.Column="0" Text="Burst count" VerticalOptions="Center" />
+                        <Stepper Grid.Column="1" Minimum="1" Maximum="8" Increment="1" Value="{Binding BurstCount}" HorizontalOptions="Start" />
+                        <Label Grid.Column="2" Text="{Binding BurstCount}" VerticalOptions="Center" />
+                    </Grid>
+                    <controls:LabeledSlider LabelText="Spacing" Minimum="0" Maximum="0.05" Digits="3" Value="{Binding BurstSpacingSeconds}" />
+                </VerticalStackLayout>
+
+                <Label Text="Filter" FontAttributes="Bold" FontSize="14" />
+                <Grid ColumnDefinitions="Auto,*" RowSpacing="12">
+                    <Label Grid.Row="0" Grid.Column="0" Text="Type" VerticalOptions="Center" />
+                    <Picker Grid.Row="0" Grid.Column="1"
+                            ItemsSource="{x:Static vm:DrumSynthParametersViewModel.FilterOptions}"
+                            SelectedItem="{Binding FilterType}" />
+                </Grid>
+                <controls:LabeledSlider LabelText="Cutoff" Minimum="100" Maximum="15000" Digits="0" Value="{Binding FilterCutoffHz}" />
+                <controls:LabeledSlider LabelText="Resonance" Minimum="0.1" Maximum="5" Digits="2" Value="{Binding FilterResonance}" />
+            </VerticalStackLayout>
+
+            <HorizontalStackLayout Spacing="12">
+                <Button Text="Generate &amp; Play" Command="{Binding GenerateCommand}" />
+                <Button Text="Save" Command="{Binding SaveCommand}" IsEnabled="{Binding CanSave}" BackgroundColor="{StaticResource Tertiary}" />
+            </HorizontalStackLayout>
+
+            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
+            <Label Text="{Binding StatusMessage}" TextColor="{StaticResource Gray500}" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

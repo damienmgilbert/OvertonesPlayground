@@ -49,5 +49,11 @@ public partial class MixerViewModel : BaseViewModel
     private void StopChannel(MixerChannelViewModel? channel) => channel?.Stop();
 
     [RelayCommand]
-    private void StopAll() => _playbackService.StopAllChannels();
+    private void StopAll()
+    {
+        foreach (var channel in Channels)
+        {
+            channel.Stop();
+        }
+    }
 }

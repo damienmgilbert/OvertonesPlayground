@@ -4,8 +4,9 @@ namespace OvertonesPlayground.Services.Interfaces;
 
 /// <summary>
 /// Generates audio from scratch - tones and drum-machine one-shots - rather than editing or
-/// recording existing files. Every generated sound is written to a WAV file and registered in
-/// the library so it's immediately usable in the Launchpad and Mixer.
+/// recording existing files. The returned clip points at a WAV file in app-private scratch
+/// storage and is NOT added to the library; callers decide whether to keep it via
+/// <see cref="IAudioLibraryService.AddClipAsync"/>.
 /// </summary>
 public interface ISoundSynthesisService
 {

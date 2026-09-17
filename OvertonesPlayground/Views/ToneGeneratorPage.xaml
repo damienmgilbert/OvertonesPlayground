@@ -2,7 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:OvertonesPlayground.ViewModels"
-             xmlns:models="clr-namespace:OvertonesPlayground.Models"
+             xmlns:controls="clr-namespace:OvertonesPlayground.Controls"
              x:Class="OvertonesPlayground.Views.ToneGeneratorPage"
              x:DataType="vm:ToneGeneratorViewModel"
              Title="{Binding Title}">
@@ -11,126 +11,26 @@
         <VerticalStackLayout Padding="24" Spacing="18">
 
             <Label Text="Synth Tone" FontSize="20" FontAttributes="Bold" />
+            <Label Text="Tune it, Generate &amp; Play to preview, then Save to keep it in your library (and your device's Music folder)."
+                   FontSize="12" TextColor="{StaticResource Gray500}" />
 
-            <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="12" ColumnSpacing="14">
+            <Grid ColumnDefinitions="Auto,*" RowSpacing="14">
                 <Label Grid.Row="0" Grid.Column="0" Text="Wave" VerticalOptions="Center" />
                 <Picker Grid.Row="0" Grid.Column="1"
                         ItemsSource="{Binding WaveformOptions}"
                         SelectedItem="{Binding SelectedWaveform}" />
-
-                <Label Grid.Row="1" Grid.Column="0" Text="{Binding FrequencyHz, StringFormat='{0:0} Hz'}" VerticalOptions="Center" />
-                <Slider Grid.Row="1" Grid.Column="1" Minimum="20" Maximum="2000" Value="{Binding FrequencyHz}" />
-
-                <Label Grid.Row="2" Grid.Column="0" Text="{Binding DurationSeconds, StringFormat='{0:0.00} s'}" VerticalOptions="Center" />
-                <Slider Grid.Row="2" Grid.Column="1" Minimum="0.1" Maximum="3" Value="{Binding DurationSeconds}" />
-
-                <Label Grid.Row="3" Grid.Column="0" Text="Level" VerticalOptions="Center" />
-                <Slider Grid.Row="3" Grid.Column="1" Minimum="0" Maximum="1" Value="{Binding Amplitude}" />
             </Grid>
 
-            <Button Text="Generate &amp; Play" Command="{Binding GenerateToneCommand}" />
+            <controls:LabeledSlider LabelText="Frequency" Minimum="20" Maximum="2000" Digits="0" Value="{Binding FrequencyHz}" />
+            <controls:LabeledSlider LabelText="Duration" Minimum="0.1" Maximum="3" Digits="2" Value="{Binding DurationSeconds}" />
+            <controls:LabeledSlider LabelText="Level" Minimum="0" Maximum="1" Digits="2" Value="{Binding Amplitude}" />
+
+            <HorizontalStackLayout Spacing="12">
+                <Button Text="Generate &amp; Play" Command="{Binding GenerateCommand}" />
+                <Button Text="Save" Command="{Binding SaveCommand}" IsEnabled="{Binding CanSave}" BackgroundColor="{StaticResource Tertiary}" />
+            </HorizontalStackLayout>
 
             <GraphicsView x:Name="WaveformView" HeightRequest="120" BackgroundColor="{StaticResource Gray950}" />
-
-            <BoxView HeightRequest="1" Color="{StaticResource Gray300}" />
-
-            <Label Text="Drum &amp; Bass Synth" FontSize="20" FontAttributes="Bold" />
-            <Label Text="Pick a type to load its defaults, tune every knob, then Generate &amp; Play. It's saved to your library (and your device's Music folder) for the Launchpad and Mixer." FontSize="12" TextColor="{StaticResource Gray500}" />
-
-            <CollectionView ItemsSource="{Binding DrumOptions}" HeightRequest="70">
-                <CollectionView.ItemsLayout>
-                    <GridItemsLayout Orientation="Vertical" Span="5" HorizontalItemSpacing="8" VerticalItemSpacing="8" />
-                </CollectionView.ItemsLayout>
-                <CollectionView.ItemTemplate>
-                    <DataTemplate x:DataType="models:DrumType">
-                        <Button Text="{Binding .}"
-                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ToneGeneratorViewModel}}, Path=SelectDrumCommand}"
-                                CommandParameter="{Binding .}" />
-                    </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
-
-            <VerticalStackLayout BindingContext="{Binding SelectedDrumParams}"
-                                  x:DataType="vm:DrumSynthParametersViewModel"
-                                  Spacing="12">
-
-                <Label Text="{Binding DrumType, StringFormat='Editing: {0}'}" FontAttributes="Bold" TextColor="{StaticResource Secondary}" />
-
-                <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="12" ColumnSpacing="14">
-                    <Label Grid.Row="0" Grid.Column="0" Text="Sample rate" VerticalOptions="Center" />
-                    <Picker Grid.Row="0" Grid.Column="1"
-                            ItemsSource="{x:Static vm:DrumSynthParametersViewModel.SampleRateOptions}"
-                            SelectedItem="{Binding SampleRate}" />
-
-                    <Label Grid.Row="1" Grid.Column="0" Text="{Binding DurationSeconds, StringFormat='{0:0.000} s'}" VerticalOptions="Center" />
-                    <Slider Grid.Row="1" Grid.Column="1" Minimum="0.02" Maximum="2" Value="{Binding DurationSeconds}" />
-
-                    <Label Grid.Row="2" Grid.Column="0" Text="Level" VerticalOptions="Center" />
-                    <Slider Grid.Row="2" Grid.Column="1" Minimum="0" Maximum="1" Value="{Binding Amplitude}" />
-
-                    <Label Grid.Row="3" Grid.Column="0" Text="{Binding DecayRate, StringFormat='Decay {0:0.0}'}" VerticalOptions="Center" />
-                    <Slider Grid.Row="3" Grid.Column="1" Minimum="0.5" Maximum="60" Value="{Binding DecayRate}" />
-                </Grid>
-
-                <VerticalStackLayout IsVisible="{Binding ShowPitchSweep}" Spacing="12">
-                    <Label Text="Pitch Sweep" FontAttributes="Bold" FontSize="14" />
-                    <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto" RowSpacing="12" ColumnSpacing="14">
-                        <Label Grid.Row="0" Grid.Column="0" Text="{Binding StartFrequencyHz, StringFormat='Start {0:0} Hz'}" VerticalOptions="Center" />
-                        <Slider Grid.Row="0" Grid.Column="1" Minimum="20" Maximum="2000" Value="{Binding StartFrequencyHz}" />
-
-                        <Label Grid.Row="1" Grid.Column="0" Text="{Binding EndFrequencyHz, StringFormat='End {0:0} Hz'}" VerticalOptions="Center" />
-                        <Slider Grid.Row="1" Grid.Column="1" Minimum="20" Maximum="2000" Value="{Binding EndFrequencyHz}" />
-
-                        <Label Grid.Row="2" Grid.Column="0" Text="{Binding SweepRate, StringFormat='Sweep {0:0.0}'}" VerticalOptions="Center" />
-                        <Slider Grid.Row="2" Grid.Column="1" Minimum="1" Maximum="60" Value="{Binding SweepRate}" />
-                    </Grid>
-                </VerticalStackLayout>
-
-                <VerticalStackLayout IsVisible="{Binding ShowSnareControls}" Spacing="12">
-                    <Label Text="Snare Body" FontAttributes="Bold" FontSize="14" />
-                    <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="12" ColumnSpacing="14">
-                        <Label Grid.Row="0" Grid.Column="0" Text="{Binding ToneFrequencyHz, StringFormat='Tone {0:0} Hz'}" VerticalOptions="Center" />
-                        <Slider Grid.Row="0" Grid.Column="1" Minimum="50" Maximum="1000" Value="{Binding ToneFrequencyHz}" />
-
-                        <Label Grid.Row="1" Grid.Column="0" Text="{Binding ToneDecayRate, StringFormat='Tone decay {0:0.0}'}" VerticalOptions="Center" />
-                        <Slider Grid.Row="1" Grid.Column="1" Minimum="0.5" Maximum="80" Value="{Binding ToneDecayRate}" />
-
-                        <Label Grid.Row="2" Grid.Column="0" Text="Tone level" VerticalOptions="Center" />
-                        <Slider Grid.Row="2" Grid.Column="1" Minimum="0" Maximum="1" Value="{Binding ToneLevel}" />
-
-                        <Label Grid.Row="3" Grid.Column="0" Text="Noise level" VerticalOptions="Center" />
-                        <Slider Grid.Row="3" Grid.Column="1" Minimum="0" Maximum="1" Value="{Binding NoiseLevel}" />
-                    </Grid>
-                </VerticalStackLayout>
-
-                <VerticalStackLayout IsVisible="{Binding ShowClapControls}" Spacing="12">
-                    <Label Text="Clap Bursts" FontAttributes="Bold" FontSize="14" />
-                    <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto" RowSpacing="12" ColumnSpacing="14">
-                        <Label Grid.Row="0" Grid.Column="0" Text="Burst count" VerticalOptions="Center" />
-                        <Stepper Grid.Row="0" Grid.Column="1" Minimum="1" Maximum="8" Increment="1" Value="{Binding BurstCount}" HorizontalOptions="Start" />
-                        <Label Grid.Row="0" Grid.Column="2" Text="{Binding BurstCount}" VerticalOptions="Center" />
-
-                        <Label Grid.Row="1" Grid.Column="0" Text="{Binding BurstSpacingSeconds, StringFormat='Spacing {0:0.000} s'}" VerticalOptions="Center" />
-                        <Slider Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Minimum="0" Maximum="0.05" Value="{Binding BurstSpacingSeconds}" />
-                    </Grid>
-                </VerticalStackLayout>
-
-                <Label Text="Filter" FontAttributes="Bold" FontSize="14" />
-                <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto" RowSpacing="12" ColumnSpacing="14">
-                    <Label Grid.Row="0" Grid.Column="0" Text="Type" VerticalOptions="Center" />
-                    <Picker Grid.Row="0" Grid.Column="1"
-                            ItemsSource="{x:Static vm:DrumSynthParametersViewModel.FilterOptions}"
-                            SelectedItem="{Binding FilterType}" />
-
-                    <Label Grid.Row="1" Grid.Column="0" Text="{Binding FilterCutoffHz, StringFormat='Cutoff {0:0} Hz'}" VerticalOptions="Center" />
-                    <Slider Grid.Row="1" Grid.Column="1" Minimum="100" Maximum="15000" Value="{Binding FilterCutoffHz}" />
-
-                    <Label Grid.Row="2" Grid.Column="0" Text="{Binding FilterResonance, StringFormat='Resonance {0:0.00}'}" VerticalOptions="Center" />
-                    <Slider Grid.Row="2" Grid.Column="1" Minimum="0.1" Maximum="5" Value="{Binding FilterResonance}" />
-                </Grid>
-            </VerticalStackLayout>
-
-            <Button Text="Generate &amp; Play" Command="{Binding GenerateSelectedDrumCommand}" />
 
             <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
             <Label Text="{Binding StatusMessage}" TextColor="{StaticResource Gray500}" />

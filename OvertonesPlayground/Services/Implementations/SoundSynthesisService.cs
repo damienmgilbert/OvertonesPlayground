@@ -7,13 +7,6 @@ public class SoundSynthesisService : ISoundSynthesisService
 {
     private const int SampleRate = 44_100;
 
-    private readonly IAudioLibraryService _libraryService;
-
-    public SoundSynthesisService(IAudioLibraryService libraryService)
-    {
-        _libraryService = libraryService;
-    }
-
     private static string SynthDirectory
     {
         get
@@ -28,8 +21,7 @@ public class SoundSynthesisService : ISoundSynthesisService
         WaveformType waveform, double frequencyHz, double durationSeconds, double amplitude, string name)
     {
         var samples = WaveformGenerator.Generate(waveform, frequencyHz, durationSeconds, SampleRate, amplitude);
-        var path = await WriteAsync(samples, SampleRate, $"tone_{waveform}");
-        return await _libraryService.AddClipAsync(path, name, isUserRecording: true);
+        return await WriteAsync(samples, SampleRate, $"tone_{waveform}", name);
     }
 
     public async Task<AudioClip> GenerateDrumAsync(DrumType drum, string name, DrumSynthParameters parameters)
@@ -44,11 +36,10 @@ public class SoundSynthesisService : ISoundSynthesisService
             _ => throw new ArgumentOutOfRangeException(nameof(drum)),
         };
 
-        var path = await WriteAsync(samples, parameters.SampleRate, $"drum_{drum}");
-        return await _libraryService.AddClipAsync(path, name, isUserRecording: true);
+        return await WriteAsync(samples, parameters.SampleRate, $"drum_{drum}", name);
     }
 
-    private static async Task<string> WriteAsync(short[] samples, int sampleRate, string prefix)
+    private static async Task<AudioClip> WriteAsync(short[] samples, int sampleRate, string prefix, string name)
     {
         var wav = new WavFile
         {
@@ -60,6 +51,13 @@ public class SoundSynthesisService : ISoundSynthesisService
 
         var path = Path.Combine(SynthDirectory, $"{prefix}_{DateTime.Now:yyyyMMdd_HHmmssfff}.wav");
         await wav.WriteAsync(path);
-        return path;
+
+        return new AudioClip
+        {
+            Name = name,
+            FilePath = path,
+            Duration = wav.Duration,
+            IsUserRecording = true,
+        };
     }
 }

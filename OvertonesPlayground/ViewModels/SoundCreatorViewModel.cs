@@ -35,7 +35,7 @@ public partial class SoundCreatorViewModel : BaseViewModel
         _recorderService = recorderService;
         _libraryService = libraryService;
         _permissionsService = permissionsService;
-        Title = "Sound Creator";
+        Title = "Audio Recorder";
 
         _recorderService.ElapsedChanged += (_, elapsed) => ElapsedText = elapsed.ToString(@"mm\:ss");
     }

@@ -6,10 +6,10 @@ using OvertonesPlayground.Services.Interfaces;
 namespace OvertonesPlayground.ViewModels;
 
 /// <summary>
-/// View model for generating simple synth tones. "Generate &amp; Play" only previews the sound;
-/// it isn't kept until the user explicitly taps Save.
+/// View model for the Drum &amp; Bass Synth. "Generate &amp; Play" only previews the sound; it
+/// isn't kept until the user explicitly taps Save.
 /// </summary>
-public partial class ToneGeneratorViewModel : BaseViewModel
+public partial class DrumSynthViewModel : BaseViewModel
 {
     private readonly ISoundSynthesisService _synthesisService;
     private readonly IAudioEditorService _editorService;
@@ -19,16 +19,7 @@ public partial class ToneGeneratorViewModel : BaseViewModel
     private AudioClip? _pendingClip;
 
     [ObservableProperty]
-    public partial WaveformType SelectedWaveform { get; set; } = WaveformType.Sine;
-
-    [ObservableProperty]
-    public partial double FrequencyHz { get; set; } = 440;
-
-    [ObservableProperty]
-    public partial double DurationSeconds { get; set; } = 1.0;
-
-    [ObservableProperty]
-    public partial double Amplitude { get; set; } = 0.8;
+    public partial DrumSynthParametersViewModel SelectedDrumParams { get; set; }
 
     [ObservableProperty]
     public partial float[] WaveformPeaks { get; set; } = [];
@@ -36,9 +27,9 @@ public partial class ToneGeneratorViewModel : BaseViewModel
     [ObservableProperty]
     public partial bool CanSave { get; set; }
 
-    public IReadOnlyList<WaveformType> WaveformOptions { get; } = Enum.GetValues<WaveformType>();
+    public IReadOnlyList<DrumType> DrumOptions { get; } = Enum.GetValues<DrumType>();
 
-    public ToneGeneratorViewModel(
+    public DrumSynthViewModel(
         ISoundSynthesisService synthesisService,
         IAudioEditorService editorService,
         IAudioPlaybackService playbackService,
@@ -48,7 +39,17 @@ public partial class ToneGeneratorViewModel : BaseViewModel
         _editorService = editorService;
         _playbackService = playbackService;
         _libraryService = libraryService;
-        Title = "Tone Generator";
+        Title = "Drum Synth";
+
+        SelectedDrumParams = new DrumSynthParametersViewModel(DrumType.Kick);
+    }
+
+    [RelayCommand]
+    private void SelectDrum(DrumType drum)
+    {
+        SelectedDrumParams = new DrumSynthParametersViewModel(drum);
+        CanSave = false;
+        WaveformPeaks = [];
     }
 
     [RelayCommand]
@@ -62,9 +63,8 @@ public partial class ToneGeneratorViewModel : BaseViewModel
         IsBusy = true;
         try
         {
-            var name = $"{SelectedWaveform} {FrequencyHz:0}Hz";
-            _pendingClip = await _synthesisService.GenerateToneAsync(
-                SelectedWaveform, FrequencyHz, DurationSeconds, Amplitude, name);
+            _pendingClip = await _synthesisService.GenerateDrumAsync(
+                SelectedDrumParams.DrumType, SelectedDrumParams.DrumType.ToString(), SelectedDrumParams.ToParameters());
 
             WaveformPeaks = await _editorService.GetWaveformPeaksAsync(_pendingClip.FilePath, 300);
             await _playbackService.LoadAsync(_pendingClip);

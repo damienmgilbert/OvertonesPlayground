@@ -40,6 +40,12 @@ public partial class MixerChannelViewModel : ObservableObject
     [ObservableProperty]
     public partial string SourceLabel { get; set; } = "No sample loaded";
 
+    /// <summary>Whether this channel's voice is currently sounding.</summary>
+    [ObservableProperty]
+    public partial bool IsPlaying { get; set; }
+
+    public bool HasSource => !string.IsNullOrEmpty(Channel.SourceClipPath);
+
     public MixerChannelViewModel(MixerChannelStrip channel, IAudioPlaybackService playbackService)
     {
         Channel = channel;
@@ -53,9 +59,15 @@ public partial class MixerChannelViewModel : ObservableObject
 
     public void AssignSource(string filePath, string label)
     {
+        // Loading a new sample shouldn't start it blaring - the user starts it with the toggle.
+        if (IsPlaying)
+        {
+            Stop();
+        }
+
         Channel.SourceClipPath = filePath;
         SourceLabel = label;
-        _playbackService.PlayChannel(Channel);
+        OnPropertyChanged(nameof(HasSource));
     }
 
     partial void OnVolumeChanged(double value)
@@ -78,11 +90,34 @@ public partial class MixerChannelViewModel : ObservableObject
 
     partial void OnIsSoloedChanged(bool value) => Channel.IsSoloed = value;
 
-    public void Stop() => _playbackService.StopChannel(Channel.Id);
+    public void Stop()
+    {
+        _playbackService.StopChannel(Channel.Id);
+        IsPlaying = false;
+    }
 
     [RelayCommand]
     private void ToggleMute() => IsMuted = !IsMuted;
 
     [RelayCommand]
     private void ToggleSolo() => IsSoloed = !IsSoloed;
+
+    [RelayCommand]
+    private void TogglePlayback()
+    {
+        if (!HasSource)
+        {
+            return;
+        }
+
+        if (IsPlaying)
+        {
+            Stop();
+        }
+        else
+        {
+            _playbackService.PlayChannel(Channel);
+            IsPlaying = true;
+        }
+    }
 }

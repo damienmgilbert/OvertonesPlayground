@@ -131,6 +131,10 @@
         </Setter>
     </Style>
 
+    <Style x:Key="InvalidEntryStyle" TargetType="Entry">
+        <Setter Property="TextColor" Value="{StaticResource Magenta}" />
+    </Style>
+
     <Style TargetType="ImageButton">
         <Setter Property="Opacity" Value="1" />
         <Setter Property="BorderColor" Value="Transparent"/>

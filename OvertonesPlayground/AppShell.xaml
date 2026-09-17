@@ -23,12 +23,16 @@
         <ShellContent ContentTemplate="{DataTemplate views:MixerPage}" Route="mixer" />
     </FlyoutItem>
 
-    <FlyoutItem Title="Sound Creator" Route="soundcreator">
+    <FlyoutItem Title="Audio Recorder" Route="soundcreator">
         <ShellContent ContentTemplate="{DataTemplate views:SoundCreatorPage}" Route="soundcreator" />
     </FlyoutItem>
 
     <FlyoutItem Title="Tone Generator" Route="tonegenerator">
         <ShellContent ContentTemplate="{DataTemplate views:ToneGeneratorPage}" Route="tonegenerator" />
+    </FlyoutItem>
+
+    <FlyoutItem Title="Drum Synth" Route="drumsynth">
+        <ShellContent ContentTemplate="{DataTemplate views:DrumSynthPage}" Route="drumsynth" />
     </FlyoutItem>
 
     <FlyoutItem Title="Settings" Route="settings">

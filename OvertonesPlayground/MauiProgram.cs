@@ -69,6 +69,9 @@ public static class MauiProgram
         services.AddTransient<ToneGeneratorViewModel>();
         services.AddTransient<ToneGeneratorPage>();
 
+        services.AddTransient<DrumSynthViewModel>();
+        services.AddTransient<DrumSynthPage>();
+
         services.AddTransient<AudioEditorViewModel>();
         services.AddTransient<AudioEditorPage>();
 
