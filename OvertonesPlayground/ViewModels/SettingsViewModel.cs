@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.Logging;
 using OvertonesPlayground.Models;
 using OvertonesPlayground.Services.Interfaces;
 
@@ -25,7 +26,7 @@ public partial class SettingsViewModel : BaseViewModel
     ///<summary>
     ///Creates the settings view model, restoring the persisted screen-on and theme preferences.
     ///</summary>
-    public SettingsViewModel(IAudioLibraryService libraryService, IAudioPlaybackService playbackService)
+    public SettingsViewModel(IAudioLibraryService libraryService, IAudioPlaybackService playbackService, ILogger<SettingsViewModel> logger) : base(logger)
     {
         _libraryService = libraryService;
         _playbackService = playbackService;
@@ -47,6 +48,7 @@ public partial class SettingsViewModel : BaseViewModel
     private async Task ClearLibraryAsync()
     {
         IReadOnlyList<AudioClip> clips = await _libraryService.GetClipsAsync();
+        Logger.LogDebug("Clearing library: {ClipCount} clips.", clips.Count);
         foreach(AudioClip clip in clips)
         {
             await _libraryService.DeleteClipAsync(clip);
@@ -57,12 +59,14 @@ public partial class SettingsViewModel : BaseViewModel
 
     partial void OnKeepScreenOnChanged(bool value)
     {
+        Logger.LogDebug("Keep screen on changed to {Value}.", value);
         Preferences.Default.Set(KeepScreenOnKey, value);
         ApplyKeepScreenOn(value);
     }
 
     partial void OnSelectedThemeChanged(ThemePreference value)
     {
+        Logger.LogDebug("Theme preference changed to {Theme}.", value);
         Preferences.Default.Set(ThemePreferenceKey, value.ToString());
         ApplyTheme(value);
     }
@@ -71,7 +75,11 @@ public partial class SettingsViewModel : BaseViewModel
     ///Immediately silences every playing/looping voice across the app.
     ///</summary>
     [RelayCommand]
-    private void StopAllAudio() { _playbackService.StopEverything(); }
+    private void StopAllAudio()
+    {
+        Logger.LogDebug("Stopping all audio.");
+        _playbackService.StopEverything();
+    }
     #endregion
 
     #region Public methods

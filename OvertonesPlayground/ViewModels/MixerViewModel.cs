@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.Logging;
 using OvertonesPlayground.Models;
 using OvertonesPlayground.Services.Interfaces;
 
@@ -28,7 +29,7 @@ public partial class MixerViewModel : BaseViewModel
     ///<summary>
     ///Creates the view model and populates it with four empty channel strips.
     ///</summary>
-    public MixerViewModel(IAudioPlaybackService playbackService, IAudioLibraryService libraryService)
+    public MixerViewModel(IAudioPlaybackService playbackService, IAudioLibraryService libraryService, ILoggerFactory loggerFactory, ILogger<MixerViewModel> logger) : base(logger)
     {
         _playbackService = playbackService;
         _libraryService = libraryService;
@@ -37,7 +38,7 @@ public partial class MixerViewModel : BaseViewModel
         for(int i = 1; i <= 4; i++)
         {
             MixerChannelStrip strip = new() { Name = $"Track {i}", ColorHex = ChannelPalette[(i - 1) % ChannelPalette.Length] };
-            MixerChannelViewModel channel = new(strip, _playbackService);
+            MixerChannelViewModel channel = new(strip, _playbackService, loggerFactory.CreateLogger<MixerChannelViewModel>());
             channel.PropertyChanged += OnChannelPropertyChanged;
             Channels.Add(channel);
         }
@@ -57,6 +58,7 @@ public partial class MixerViewModel : BaseViewModel
         }
 
         bool anySoloed = Channels.Any(c => c.IsSoloed);
+        Logger.LogDebug("Solo state changed; {SoloedCount} channel(s) soloed.", Channels.Count(c => c.IsSoloed));
         foreach(MixerChannelViewModel channel in Channels)
         {
             channel.IsDimmed = anySoloed && !channel.IsSoloed;
@@ -77,6 +79,7 @@ public partial class MixerViewModel : BaseViewModel
         AudioClip? clip = await _libraryService.ImportFromPickerAsync();
         if(clip is not null)
         {
+            Logger.LogDebug("Loaded sample '{ClipName}' into channel '{ChannelName}'.", clip.Name, channel.Name);
             channel.AssignSource(clip.FilePath, clip.Name);
         }
     }
@@ -87,6 +90,7 @@ public partial class MixerViewModel : BaseViewModel
     [RelayCommand]
     private void StopAll()
     {
+        Logger.LogDebug("Stopping all channels.");
         foreach(MixerChannelViewModel channel in Channels)
         {
             channel.Stop();

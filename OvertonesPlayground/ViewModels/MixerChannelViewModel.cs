@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.Logging;
 using OvertonesPlayground.Models;
 using OvertonesPlayground.Services.Interfaces;
 
@@ -12,19 +13,22 @@ namespace OvertonesPlayground.ViewModels;
 public partial class MixerChannelViewModel : ObservableObject
 {
     #region Fields
+    private readonly ILogger<MixerChannelViewModel> _logger;
     private readonly IAudioPlaybackService _playbackService;
     #endregion
 
     #region Constructors
-    public MixerChannelViewModel(MixerChannelStrip channel, IAudioPlaybackService playbackService)
+    public MixerChannelViewModel(MixerChannelStrip channel, IAudioPlaybackService playbackService, ILogger<MixerChannelViewModel> logger)
     {
         Channel = channel;
         _playbackService = playbackService;
+        _logger = logger;
         Name = channel.Name;
         Volume = channel.Volume;
         Pan = channel.Pan;
         IsMuted = channel.IsMuted;
         IsSoloed = channel.IsSoloed;
+        _logger.LogDebug("Channel '{ChannelName}' created.", Name);
     }
     #endregion
 
@@ -52,7 +56,11 @@ public partial class MixerChannelViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void ToggleMute() { IsMuted = !IsMuted; }
+    private void ToggleMute()
+    {
+        IsMuted = !IsMuted;
+        _logger.LogDebug("Channel '{ChannelName}' mute set to {IsMuted}.", Name, IsMuted);
+    }
     [RelayCommand]
     private void TogglePlayback()
     {
@@ -66,13 +74,18 @@ public partial class MixerChannelViewModel : ObservableObject
             Stop();
         } else
         {
+            _logger.LogDebug("Channel '{ChannelName}' playback started.", Name);
             _playbackService.PlayChannel(Channel);
             IsPlaying = true;
         }
     }
 
     [RelayCommand]
-    private void ToggleSolo() { IsSoloed = !IsSoloed; }
+    private void ToggleSolo()
+    {
+        IsSoloed = !IsSoloed;
+        _logger.LogDebug("Channel '{ChannelName}' solo set to {IsSoloed}.", Name, IsSoloed);
+    }
     #endregion
 
     #region Public methods
@@ -91,6 +104,7 @@ public partial class MixerChannelViewModel : ObservableObject
 
     public void Stop()
     {
+        _logger.LogDebug("Channel '{ChannelName}' playback stopped.", Name);
         _playbackService.StopChannel(Channel.Id);
         IsPlaying = false;
     }

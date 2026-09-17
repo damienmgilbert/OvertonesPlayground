@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.Logging;
 using OvertonesPlayground.Models;
 using OvertonesPlayground.Services.Interfaces;
 
@@ -22,7 +23,7 @@ public partial class LibraryViewModel : BaseViewModel
     #endregion
 
     #region Constructors
-    public LibraryViewModel(IAudioLibraryService libraryService, IAudioPlaybackService playbackService)
+    public LibraryViewModel(IAudioLibraryService libraryService, IAudioPlaybackService playbackService, ILogger<LibraryViewModel> logger) : base(logger)
     {
         _libraryService = libraryService;
         _playbackService = playbackService;
@@ -42,6 +43,7 @@ public partial class LibraryViewModel : BaseViewModel
             return;
         }
 
+        Logger.LogDebug("Deleting clip '{ClipName}' ({ClipId}).", clip.Name, clip.Id);
         await _libraryService.DeleteClipAsync(clip);
         Clips.Remove(clip);
     }
@@ -54,16 +56,22 @@ public partial class LibraryViewModel : BaseViewModel
             return;
         }
 
+        Logger.LogDebug("Navigating to editor for clip '{ClipName}' ({ClipId}).", clip.Name, clip.Id);
         await Shell.Current.GoToAsync($"editor?clipId={clip.Id}");
     }
 
     [RelayCommand]
     private async Task ImportAsync()
     {
+        Logger.LogDebug("Importing a clip from the picker.");
         AudioClip? clip = await _libraryService.ImportFromPickerAsync();
         if(clip is not null)
         {
+            Logger.LogDebug("Imported clip '{ClipName}'.", clip.Name);
             Clips.Insert(0, clip);
+        } else
+        {
+            Logger.LogDebug("Import canceled.");
         }
     }
 
@@ -79,6 +87,7 @@ public partial class LibraryViewModel : BaseViewModel
         try
         {
             IReadOnlyList<AudioClip> clips = await _libraryService.GetClipsAsync();
+            Logger.LogDebug("Loaded {ClipCount} clips.", clips.Count);
             Clips.Clear();
             foreach(AudioClip clip in clips)
             {
@@ -99,13 +108,18 @@ public partial class LibraryViewModel : BaseViewModel
             return;
         }
 
+        Logger.LogDebug("Playing clip '{ClipName}' ({ClipId}).", clip.Name, clip.Id);
         await _playbackService.LoadAsync(clip);
         _playbackService.Play();
         await Shell.Current.GoToAsync("//player");
     }
 
     [RelayCommand]
-    private void SetViewMode(LibraryViewMode mode) { ViewMode = mode; }
+    private void SetViewMode(LibraryViewMode mode)
+    {
+        Logger.LogDebug("View mode changed to {ViewMode}.", mode);
+        ViewMode = mode;
+    }
     #endregion
 
     #region Public properties

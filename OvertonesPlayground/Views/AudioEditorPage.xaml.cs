@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using Microsoft.Extensions.Logging;
 using OvertonesPlayground.ViewModels;
 
 namespace OvertonesPlayground.Views;
@@ -10,6 +11,7 @@ public partial class AudioEditorPage : ContentPage
 {
     #region Fields
     private readonly WaveformDrawable _drawable = new();
+    private readonly ILogger<AudioEditorPage> _logger;
     private readonly AudioEditorViewModel _viewModel;
     #endregion
 
@@ -17,10 +19,11 @@ public partial class AudioEditorPage : ContentPage
     ///<summary>
     ///Creates the page and hooks up its waveform drawable.
     ///</summary>
-    public AudioEditorPage(AudioEditorViewModel viewModel)
+    public AudioEditorPage(AudioEditorViewModel viewModel, ILogger<AudioEditorPage> logger)
     {
         InitializeComponent();
         BindingContext = _viewModel = viewModel;
+        _logger = logger;
 
         WaveformView.Drawable = _drawable;
         _viewModel.PropertyChanged += OnViewModelPropertyChanged;
@@ -38,6 +41,20 @@ public partial class AudioEditorPage : ContentPage
             _drawable.Peaks = _viewModel.WaveformPeaks;
             WaveformView.Invalidate();
         }
+    }
+    #endregion
+
+    #region Protected methods
+    protected override void OnAppearing()
+    {
+        base.OnAppearing();
+        _logger.LogDebug("Page appeared.");
+    }
+
+    protected override void OnDisappearing()
+    {
+        base.OnDisappearing();
+        _logger.LogDebug("Page disappeared.");
     }
     #endregion
 }

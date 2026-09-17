@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.Logging;
 using OvertonesPlayground.Models;
 using OvertonesPlayground.Services.Interfaces;
 
@@ -26,7 +27,7 @@ public partial class DrumSynthViewModel : BaseViewModel
     ///<summary>
     ///Creates the view model with Kick selected as the initial drum type.
     ///</summary>
-    public DrumSynthViewModel(ISoundSynthesisService synthesisService, IAudioEditorService editorService, IAudioPlaybackService playbackService, IAudioLibraryService libraryService)
+    public DrumSynthViewModel(ISoundSynthesisService synthesisService, IAudioEditorService editorService, IAudioPlaybackService playbackService, IAudioLibraryService libraryService, ILogger<DrumSynthViewModel> logger) : base(logger)
     {
         _synthesisService = synthesisService;
         _editorService = editorService;
@@ -53,6 +54,7 @@ public partial class DrumSynthViewModel : BaseViewModel
         IsBusy = true;
         try
         {
+            Logger.LogDebug("Generating drum sample for {DrumType}.", SelectedDrumParams.DrumType);
             _pendingClip = await _synthesisService.GenerateDrumAsync(SelectedDrumParams.DrumType, SelectedDrumParams.DrumType.ToString(), SelectedDrumParams.ToParameters());
 
             WaveformPeaks = await _editorService.GetWaveformPeaksAsync(_pendingClip.FilePath, 300);
@@ -81,6 +83,7 @@ public partial class DrumSynthViewModel : BaseViewModel
         IsBusy = true;
         try
         {
+            Logger.LogDebug("Saving generated drum sample '{ClipName}'.", _pendingClip.Name);
             AudioClip saved = await _libraryService.AddClipAsync(_pendingClip.FilePath, _pendingClip.Name, isUserRecording: true);
             StatusMessage = saved.PublicStorageLocation is { } location ? $"Saved '{saved.Name}' - also in {location}." : $"Saved '{saved.Name}' to your library.";
 
@@ -98,6 +101,7 @@ public partial class DrumSynthViewModel : BaseViewModel
     [RelayCommand]
     private void SelectDrum(DrumType drum)
     {
+        Logger.LogDebug("Selected drum type {DrumType}.", drum);
         SelectedDrumParams = new DrumSynthParametersViewModel(drum);
         CanSave = false;
         WaveformPeaks = [];

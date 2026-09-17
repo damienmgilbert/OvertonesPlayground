@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using OvertonesPlayground.ViewModels;
 
 namespace OvertonesPlayground;
@@ -6,16 +7,33 @@ namespace OvertonesPlayground;
 /// <summary>The app's entry point: sets up the main window and restores the user's saved theme.</summary>
 public partial class App : Application
 {
+    private readonly ILogger<App> _logger;
+    private readonly IServiceProvider _services;
+
     /// <summary>Initializes the application and applies the persisted light/dark/system theme preference.</summary>
-    public App()
+    public App(IServiceProvider services, ILogger<App> logger)
     {
         InitializeComponent();
+        _services = services;
+        _logger = logger;
+        _logger.LogDebug("App constructed.");
         SettingsViewModel.ApplyTheme(SettingsViewModel.LoadSavedThemePreference());
     }
 
-    /// <summary>Creates the app's single window, hosting the Shell-based navigation.</summary>
+    /// <summary>Creates the app's single window, hosting the Shell-based navigation, and logs its cross-platform
+    /// lifecycle events (Created/Activated/Deactivated/Stopped/Resumed/Destroying).</summary>
     protected override Window CreateWindow(IActivationState? activationState)
     {
-        return new Window(new AppShell());
+        // Resolved through DI (rather than `new AppShell()`) so it can receive an ILogger<AppShell>.
+        Window window = new(_services.GetRequiredService<AppShell>());
+
+        window.Created += (_, _) => _logger.LogDebug("Window created.");
+        window.Activated += (_, _) => _logger.LogDebug("Window activated.");
+        window.Deactivated += (_, _) => _logger.LogDebug("Window deactivated.");
+        window.Stopped += (_, _) => _logger.LogDebug("Window stopped.");
+        window.Resumed += (_, _) => _logger.LogDebug("Window resumed.");
+        window.Destroying += (_, _) => _logger.LogDebug("Window destroying.");
+
+        return window;
     }
 }

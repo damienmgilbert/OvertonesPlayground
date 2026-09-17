@@ -32,6 +32,7 @@ public static class MauiProgram
 
 #if DEBUG
         builder.Logging.AddDebug();
+        builder.Logging.SetMinimumLevel(LogLevel.Debug);
 #endif
 
         return builder.Build();
@@ -81,5 +82,8 @@ public static class MauiProgram
 
         services.AddTransient<SettingsViewModel>();
         services.AddTransient<SettingsPage>();
+
+        // Resolved once in App.CreateWindow so it can receive a logger, rather than being constructed with `new`.
+        services.AddTransient<AppShell>();
     }
 }

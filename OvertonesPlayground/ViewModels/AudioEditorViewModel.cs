@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.Logging;
 using OvertonesPlayground.Models;
 using OvertonesPlayground.Services.Interfaces;
 
@@ -19,7 +20,7 @@ public partial class AudioEditorViewModel : BaseViewModel
     #endregion
 
     #region Constructors
-    public AudioEditorViewModel(IAudioEditorService editorService, IAudioLibraryService libraryService, IAudioPlaybackService playbackService)
+    public AudioEditorViewModel(IAudioEditorService editorService, IAudioLibraryService libraryService, IAudioPlaybackService playbackService, ILogger<AudioEditorViewModel> logger) : base(logger)
     {
         _editorService = editorService;
         _libraryService = libraryService;
@@ -29,7 +30,7 @@ public partial class AudioEditorViewModel : BaseViewModel
     #endregion
 
     #region Private methods
-    private async Task ApplyEditAsync(Func<AudioClip, Task<string>> operation)
+    private async Task ApplyEditAsync(string operationName, Func<AudioClip, Task<string>> operation)
     {
         if(LoadedClip is null || IsBusy)
         {
@@ -39,6 +40,7 @@ public partial class AudioEditorViewModel : BaseViewModel
         IsBusy = true;
         try
         {
+            Logger.LogDebug("Applying '{Operation}' to clip '{ClipName}'.", operationName, LoadedClip.Name);
             string outputPath = await operation(LoadedClip);
             AudioClip newClip = await _libraryService.AddClipAsync(outputPath, $"{LoadedClip.Name} (edited)", isUserRecording: true);
             await SetLoadedClipAsync(newClip);
@@ -50,9 +52,9 @@ public partial class AudioEditorViewModel : BaseViewModel
     }
 
     [RelayCommand]
-    private async Task ApplyFadeAsync() { await ApplyEditAsync(clip => _editorService.ApplyFadeAsync(clip.FilePath, TimeSpan.FromSeconds(FadeInSeconds), TimeSpan.FromSeconds(FadeOutSeconds), "fade")); }
+    private async Task ApplyFadeAsync() { await ApplyEditAsync("fade", clip => _editorService.ApplyFadeAsync(clip.FilePath, TimeSpan.FromSeconds(FadeInSeconds), TimeSpan.FromSeconds(FadeOutSeconds), "fade")); }
     [RelayCommand]
-    private async Task ApplyGainAsync() { await ApplyEditAsync(clip => _editorService.ApplyGainAsync(clip.FilePath, GainDb, "gain")); }
+    private async Task ApplyGainAsync() { await ApplyEditAsync("gain", clip => _editorService.ApplyGainAsync(clip.FilePath, GainDb, "gain")); }
 
     private async Task LoadClipAsync(string clipId)
     {
@@ -63,10 +65,12 @@ public partial class AudioEditorViewModel : BaseViewModel
             AudioClip? clip = clips.FirstOrDefault(c => c.Id == clipId);
             if(clip is null)
             {
+                Logger.LogDebug("Clip {ClipId} not found.", clipId);
                 StatusMessage = "Could not find that clip.";
                 return;
             }
 
+            Logger.LogDebug("Loading clip '{ClipName}' ({ClipId}) into editor.", clip.Name, clipId);
             await SetLoadedClipAsync(clip);
         } finally
         {
@@ -75,7 +79,7 @@ public partial class AudioEditorViewModel : BaseViewModel
     }
 
     [RelayCommand]
-    private async Task NormalizeAsync() { await ApplyEditAsync(clip => _editorService.NormalizeAsync(clip.FilePath, "normalize")); }
+    private async Task NormalizeAsync() { await ApplyEditAsync("normalize", clip => _editorService.NormalizeAsync(clip.FilePath, "normalize")); }
 
     partial void OnClipIdChanged(string? value)
     {
@@ -93,12 +97,13 @@ public partial class AudioEditorViewModel : BaseViewModel
             return;
         }
 
+        Logger.LogDebug("Previewing clip '{ClipName}'.", LoadedClip.Name);
         await _playbackService.LoadAsync(LoadedClip);
         _playbackService.Play();
     }
 
     [RelayCommand]
-    private async Task ReverseAsync() { await ApplyEditAsync(clip => _editorService.ReverseAsync(clip.FilePath, "reverse")); }
+    private async Task ReverseAsync() { await ApplyEditAsync("reverse", clip => _editorService.ReverseAsync(clip.FilePath, "reverse")); }
 
     private async Task SetLoadedClipAsync(AudioClip clip)
     {
@@ -110,7 +115,7 @@ public partial class AudioEditorViewModel : BaseViewModel
     }
 
     [RelayCommand]
-    private async Task TrimAsync() { await ApplyEditAsync(clip => _editorService.TrimAsync(clip.FilePath, TimeSpan.FromSeconds(TrimStartSeconds), TimeSpan.FromSeconds(TrimEndSeconds), "trim")); }
+    private async Task TrimAsync() { await ApplyEditAsync("trim", clip => _editorService.TrimAsync(clip.FilePath, TimeSpan.FromSeconds(TrimStartSeconds), TimeSpan.FromSeconds(TrimEndSeconds), "trim")); }
     #endregion
 
     #region Public properties

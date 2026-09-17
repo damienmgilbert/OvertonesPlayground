@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using OvertonesPlayground.ViewModels;
 
 namespace OvertonesPlayground.Views;
@@ -8,6 +9,7 @@ namespace OvertonesPlayground.Views;
 public partial class PlayerPage : ContentPage
 {
     #region Fields
+    private readonly ILogger<PlayerPage> _logger;
     private readonly PlayerViewModel _viewModel;
     #endregion
 
@@ -15,10 +17,11 @@ public partial class PlayerPage : ContentPage
     ///<summary>
     ///Creates the page and binds it to its view model.
     ///</summary>
-    public PlayerPage(PlayerViewModel viewModel)
+    public PlayerPage(PlayerViewModel viewModel, ILogger<PlayerPage> logger)
     {
         InitializeComponent();
         BindingContext = _viewModel = viewModel;
+        _logger = logger;
     }
     #endregion
 
@@ -36,6 +39,7 @@ public partial class PlayerPage : ContentPage
     protected override void OnAppearing()
     {
         base.OnAppearing();
+        _logger.LogDebug("Page appeared.");
         _viewModel.StartTicking(Dispatcher);
     }
 
@@ -45,6 +49,7 @@ public partial class PlayerPage : ContentPage
     protected override void OnDisappearing()
     {
         base.OnDisappearing();
+        _logger.LogDebug("Page disappeared.");
         _viewModel.StopTicking();
     }
     #endregion

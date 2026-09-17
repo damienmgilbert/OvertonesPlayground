@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.Logging;
 using OvertonesPlayground.Models;
 using OvertonesPlayground.Services.Interfaces;
 
@@ -36,7 +37,7 @@ public partial class LaunchpadViewModel : BaseViewModel
     ///<summary>
     ///Creates the view model and fills the grid with <see cref="Rows"/> x <see cref="Columns"/> empty pads.
     ///</summary>
-    public LaunchpadViewModel(IAudioPlaybackService playbackService, IAudioLibraryService libraryService)
+    public LaunchpadViewModel(IAudioPlaybackService playbackService, IAudioLibraryService libraryService, ILogger<LaunchpadViewModel> logger) : base(logger)
     {
         _playbackService = playbackService;
         _libraryService = libraryService;
@@ -68,6 +69,7 @@ public partial class LaunchpadViewModel : BaseViewModel
         }
 
         string color = PadPalette[pad.Index % PadPalette.Length];
+        Logger.LogDebug("Assigned clip '{ClipName}' to pad {PadIndex}.", clip.Name, pad.Index);
         pad.Assign(clip.FilePath, clip.Name, color);
     }
 
@@ -75,7 +77,11 @@ public partial class LaunchpadViewModel : BaseViewModel
     ///Stops every currently-sounding pad voice.
     ///</summary>
     [RelayCommand]
-    private void StopAll() { _playbackService.StopAllPads(); }
+    private void StopAll()
+    {
+        Logger.LogDebug("Stopping all pads.");
+        _playbackService.StopAllPads();
+    }
     ///<summary>
     ///Stops every currently-sounding voice for a single pad.
     ///</summary>
@@ -87,6 +93,7 @@ public partial class LaunchpadViewModel : BaseViewModel
             return;
         }
 
+        Logger.LogDebug("Stopping pad {PadIndex}.", pad.Index);
         _playbackService.StopPad(pad.Index);
     }
 
@@ -94,7 +101,16 @@ public partial class LaunchpadViewModel : BaseViewModel
     ///Toggles whether a pad loops its sample instead of playing a one-shot.
     ///</summary>
     [RelayCommand]
-    private void ToggleLoop(LaunchpadPadViewModel? pad) { pad?.ToggleLoop(); }
+    private void ToggleLoop(LaunchpadPadViewModel? pad)
+    {
+        if(pad is null)
+        {
+            return;
+        }
+
+        Logger.LogDebug("Pad {PadIndex} loop toggled.", pad.Index);
+        pad.ToggleLoop();
+    }
     ///<summary>
     ///Fires a new voice for the tapped pad, if it has a sample assigned.
     ///</summary>
@@ -106,6 +122,7 @@ public partial class LaunchpadViewModel : BaseViewModel
             return;
         }
 
+        Logger.LogDebug("Triggering pad {PadIndex}.", pad.Index);
         _playbackService.TriggerPad(pad.Pad);
     }
     #endregion

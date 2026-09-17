@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.Logging;
 using OvertonesPlayground.Services.Interfaces;
 
 namespace OvertonesPlayground.ViewModels;
@@ -19,7 +20,7 @@ public partial class PlayerViewModel : BaseViewModel, IDisposable
     ///<summary>
     ///Creates the view model and syncs its initial state from the shared playback service.
     ///</summary>
-    public PlayerViewModel(IAudioPlaybackService playbackService)
+    public PlayerViewModel(IAudioPlaybackService playbackService, ILogger<PlayerViewModel> logger) : base(logger)
     {
         _playbackService = playbackService;
         Title = "Player";
@@ -40,9 +41,11 @@ public partial class PlayerViewModel : BaseViewModel, IDisposable
     {
         if(_playbackService.IsPlaying)
         {
+            Logger.LogDebug("Pausing playback.");
             _playbackService.Pause();
         } else
         {
+            Logger.LogDebug("Starting playback.");
             _playbackService.Play();
         }
     }
@@ -64,12 +67,20 @@ public partial class PlayerViewModel : BaseViewModel, IDisposable
     ///Moves playback to the given position, in seconds.
     ///</summary>
     [RelayCommand]
-    private void Seek(double positionSeconds) { _playbackService.Seek(TimeSpan.FromSeconds(positionSeconds)); }
+    private void Seek(double positionSeconds)
+    {
+        Logger.LogDebug("Seeking to {PositionSeconds}s.", positionSeconds);
+        _playbackService.Seek(TimeSpan.FromSeconds(positionSeconds));
+    }
     ///<summary>
     ///Stops playback and resets position to the start.
     ///</summary>
     [RelayCommand]
-    private void Stop() { _playbackService.Stop(); }
+    private void Stop()
+    {
+        Logger.LogDebug("Stopping playback.");
+        _playbackService.Stop();
+    }
     #endregion
 
     #region Public methods
@@ -78,6 +89,7 @@ public partial class PlayerViewModel : BaseViewModel, IDisposable
     ///</summary>
     public void Dispose()
     {
+        Logger.LogDebug("Disposing.");
         _playbackService.PlaybackStateChanged -= OnPlaybackStateChanged;
         StopTicking();
     }

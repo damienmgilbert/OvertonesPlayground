@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.Logging;
 using OvertonesPlayground.Models;
 using OvertonesPlayground.Services.Interfaces;
 
@@ -26,7 +27,7 @@ public partial class ToneGeneratorViewModel : BaseViewModel
     ///<summary>
     ///Creates the view model with its default sine-wave settings.
     ///</summary>
-    public ToneGeneratorViewModel(ISoundSynthesisService synthesisService, IAudioEditorService editorService, IAudioPlaybackService playbackService, IAudioLibraryService libraryService)
+    public ToneGeneratorViewModel(ISoundSynthesisService synthesisService, IAudioEditorService editorService, IAudioPlaybackService playbackService, IAudioLibraryService libraryService, ILogger<ToneGeneratorViewModel> logger) : base(logger)
     {
         _synthesisService = synthesisService;
         _editorService = editorService;
@@ -52,6 +53,7 @@ public partial class ToneGeneratorViewModel : BaseViewModel
         try
         {
             string name = $"{SelectedWaveform} {FrequencyHz:0}Hz";
+            Logger.LogDebug("Generating tone '{Name}' ({DurationSeconds}s, amplitude {Amplitude}).", name, DurationSeconds, Amplitude);
             _pendingClip = await _synthesisService.GenerateToneAsync(SelectedWaveform, FrequencyHz, DurationSeconds, Amplitude, name);
 
             WaveformPeaks = await _editorService.GetWaveformPeaksAsync(_pendingClip.FilePath, 300);
@@ -80,6 +82,7 @@ public partial class ToneGeneratorViewModel : BaseViewModel
         IsBusy = true;
         try
         {
+            Logger.LogDebug("Saving generated clip '{ClipName}'.", _pendingClip.Name);
             AudioClip saved = await _libraryService.AddClipAsync(_pendingClip.FilePath, _pendingClip.Name, isUserRecording: true);
             StatusMessage = saved.PublicStorageLocation is { } location ? $"Saved '{saved.Name}' - also in {location}." : $"Saved '{saved.Name}' to your library.";
 
@@ -97,6 +100,7 @@ public partial class ToneGeneratorViewModel : BaseViewModel
     [RelayCommand]
     private void SelectPreset(TonePreset preset)
     {
+        Logger.LogDebug("Selected preset '{PresetName}'.", preset.Name);
         SelectedWaveform = preset.Waveform;
         FrequencyHz = preset.FrequencyHz;
         DurationSeconds = preset.DurationSeconds;

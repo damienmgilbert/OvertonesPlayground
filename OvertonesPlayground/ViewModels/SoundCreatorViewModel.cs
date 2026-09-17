@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.Logging;
 using OvertonesPlayground.Models;
 using OvertonesPlayground.Services.Interfaces;
 
@@ -21,7 +22,7 @@ public partial class SoundCreatorViewModel : BaseViewModel
     ///<summary>
     ///Creates the view model and subscribes to the recorder's elapsed-time updates.
     ///</summary>
-    public SoundCreatorViewModel(IAudioRecorderService recorderService, IAudioLibraryService libraryService, IPermissionsService permissionsService)
+    public SoundCreatorViewModel(IAudioRecorderService recorderService, IAudioLibraryService libraryService, IPermissionsService permissionsService, ILogger<SoundCreatorViewModel> logger) : base(logger)
     {
         _recorderService = recorderService;
         _libraryService = libraryService;
@@ -44,6 +45,7 @@ public partial class SoundCreatorViewModel : BaseViewModel
             return;
         }
 
+        Logger.LogDebug("Canceling recording.");
         await _recorderService.CancelAsync();
         IsRecording = false;
         StatusMessage = "Recording discarded.";
@@ -57,11 +59,13 @@ public partial class SoundCreatorViewModel : BaseViewModel
         bool granted = await _permissionsService.EnsureMicrophonePermissionAsync();
         if(!granted)
         {
+            Logger.LogDebug("Microphone permission denied.");
             StatusMessage = "Microphone permission is required to record.";
             return;
         }
 
         NewClipName = $"Recording {DateTime.Now:HH:mm:ss}";
+        Logger.LogDebug("Starting recording '{ClipName}'.", NewClipName);
         await _recorderService.StartAsync();
         IsRecording = true;
         StatusMessage = null;
@@ -78,6 +82,7 @@ public partial class SoundCreatorViewModel : BaseViewModel
         }
 
         string name = string.IsNullOrWhiteSpace(NewClipName) ? $"Recording {DateTime.Now:HHmmss}" : NewClipName;
+        Logger.LogDebug("Stopping recording, saving as '{ClipName}'.", name);
         AudioClip recorded = await _recorderService.StopAsync(name);
         IsRecording = false;
 
