@@ -5,41 +5,28 @@ using OvertonesPlayground.Services.Interfaces;
 
 namespace OvertonesPlayground.ViewModels;
 
-/// <summary>
-/// View model for the Drum &amp; Bass Synth. "Generate &amp; Play" only previews the sound; it
-/// isn't kept until the user explicitly taps Save.
-/// </summary>
+///<summary>
+///View model for the Drum &amp; Bass Synth. "Generate &amp; Play" only previews the sound; it isn't kept until the user
+///explicitly taps Save.
+///</summary>
 public partial class DrumSynthViewModel : BaseViewModel
 {
-    private readonly ISoundSynthesisService _synthesisService;
+    #region Fields
     private readonly IAudioEditorService _editorService;
-    private readonly IAudioPlaybackService _playbackService;
     private readonly IAudioLibraryService _libraryService;
-
-    /// <summary>The most recently generated, not-yet-saved preview clip; null once saved or before the first Generate.</summary>
+    ///<summary>
+    ///The most recently generated, not-yet-saved preview clip; null once saved or before the first Generate.
+    ///</summary>
     private AudioClip? _pendingClip;
+    private readonly IAudioPlaybackService _playbackService;
+    private readonly ISoundSynthesisService _synthesisService;
+    #endregion
 
-    /// <summary>The tunable parameters for the currently selected drum type.</summary>
-    [ObservableProperty]
-    public partial DrumSynthParametersViewModel SelectedDrumParams { get; set; }
-
-    /// <summary>Waveform peaks for the most recently generated preview, used to draw the waveform view.</summary>
-    [ObservableProperty]
-    public partial float[] WaveformPeaks { get; set; } = [];
-
-    /// <summary>Whether there's a generated preview waiting to be saved.</summary>
-    [ObservableProperty]
-    public partial bool CanSave { get; set; }
-
-    /// <summary>Every drum type the Generate row can select from.</summary>
-    public IReadOnlyList<DrumType> DrumOptions { get; } = Enum.GetValues<DrumType>();
-
-    /// <summary>Creates the view model with Kick selected as the initial drum type.</summary>
-    public DrumSynthViewModel(
-        ISoundSynthesisService synthesisService,
-        IAudioEditorService editorService,
-        IAudioPlaybackService playbackService,
-        IAudioLibraryService libraryService)
+    #region Constructors
+    ///<summary>
+    ///Creates the view model with Kick selected as the initial drum type.
+    ///</summary>
+    public DrumSynthViewModel(ISoundSynthesisService synthesisService, IAudioEditorService editorService, IAudioPlaybackService playbackService, IAudioLibraryService libraryService)
     {
         _synthesisService = synthesisService;
         _editorService = editorService;
@@ -49,21 +36,16 @@ public partial class DrumSynthViewModel : BaseViewModel
 
         SelectedDrumParams = new DrumSynthParametersViewModel(DrumType.Kick);
     }
+    #endregion
 
-    /// <summary>Switches to a new drum type, loading its default parameters and clearing any pending preview.</summary>
-    [RelayCommand]
-    private void SelectDrum(DrumType drum)
-    {
-        SelectedDrumParams = new DrumSynthParametersViewModel(drum);
-        CanSave = false;
-        WaveformPeaks = [];
-    }
-
-    /// <summary>Synthesizes the current parameters, previews the result, and enables Save.</summary>
+    #region Private methods
+    ///<summary>
+    ///Synthesizes the current parameters, previews the result, and enables Save.
+    ///</summary>
     [RelayCommand]
     private async Task GenerateAsync()
     {
-        if (IsBusy)
+        if(IsBusy)
         {
             return;
         }
@@ -71,8 +53,7 @@ public partial class DrumSynthViewModel : BaseViewModel
         IsBusy = true;
         try
         {
-            _pendingClip = await _synthesisService.GenerateDrumAsync(
-                SelectedDrumParams.DrumType, SelectedDrumParams.DrumType.ToString(), SelectedDrumParams.ToParameters());
+            _pendingClip = await _synthesisService.GenerateDrumAsync(SelectedDrumParams.DrumType, SelectedDrumParams.DrumType.ToString(), SelectedDrumParams.ToParameters());
 
             WaveformPeaks = await _editorService.GetWaveformPeaksAsync(_pendingClip.FilePath, 300);
             await _playbackService.LoadAsync(_pendingClip);
@@ -80,18 +61,19 @@ public partial class DrumSynthViewModel : BaseViewModel
 
             CanSave = true;
             StatusMessage = "Previewing - tap Save to keep it in your library.";
-        }
-        finally
+        } finally
         {
             IsBusy = false;
         }
     }
 
-    /// <summary>Persists the pending preview clip into the library (and, best-effort, the shared Music folder).</summary>
+    ///<summary>
+    ///Persists the pending preview clip into the library (and, best-effort, the shared Music folder).
+    ///</summary>
     [RelayCommand]
     private async Task SaveAsync()
     {
-        if (_pendingClip is null || IsBusy)
+        if(_pendingClip is null || IsBusy)
         {
             return;
         }
@@ -99,17 +81,51 @@ public partial class DrumSynthViewModel : BaseViewModel
         IsBusy = true;
         try
         {
-            var saved = await _libraryService.AddClipAsync(_pendingClip.FilePath, _pendingClip.Name, isUserRecording: true);
-            StatusMessage = saved.PublicStorageLocation is { } location
-                ? $"Saved '{saved.Name}' - also in {location}."
-                : $"Saved '{saved.Name}' to your library.";
+            AudioClip saved = await _libraryService.AddClipAsync(_pendingClip.FilePath, _pendingClip.Name, isUserRecording: true);
+            StatusMessage = saved.PublicStorageLocation is { } location ? $"Saved '{saved.Name}' - also in {location}." : $"Saved '{saved.Name}' to your library.";
 
             _pendingClip = null;
             CanSave = false;
-        }
-        finally
+        } finally
         {
             IsBusy = false;
         }
     }
+
+    ///<summary>
+    ///Switches to a new drum type, loading its default parameters and clearing any pending preview.
+    ///</summary>
+    [RelayCommand]
+    private void SelectDrum(DrumType drum)
+    {
+        SelectedDrumParams = new DrumSynthParametersViewModel(drum);
+        CanSave = false;
+        WaveformPeaks = [];
+    }
+    #endregion
+
+    #region Public properties
+    ///<summary>
+    ///Whether there's a generated preview waiting to be saved.
+    ///</summary>
+    [ObservableProperty]
+    public partial bool CanSave { get; set; }
+
+    ///<summary>
+    ///Every drum type the Generate row can select from.
+    ///</summary>
+    public IReadOnlyList<DrumType> DrumOptions { get; } = Enum.GetValues<DrumType>();
+
+    ///<summary>
+    ///The tunable parameters for the currently selected drum type.
+    ///</summary>
+    [ObservableProperty]
+    public partial DrumSynthParametersViewModel SelectedDrumParams { get; set; }
+
+    ///<summary>
+    ///Waveform peaks for the most recently generated preview, used to draw the waveform view.
+    ///</summary>
+    [ObservableProperty]
+    public partial float[] WaveformPeaks { get; set; } = [];
+    #endregion
 }

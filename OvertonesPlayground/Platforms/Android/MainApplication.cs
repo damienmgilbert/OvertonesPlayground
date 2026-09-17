@@ -3,7 +3,7 @@ using Android.Runtime;
 
 namespace OvertonesPlayground;
 
-/// <summary>The Android <see cref="Application"/> subclass MAUI requires as the process entry point.</summary>
+/// <summary>The Android <see cref="Android.App.Application"/> subclass MAUI requires as the process entry point.</summary>
 [Application]
 public class MainApplication : MauiApplication
 {
