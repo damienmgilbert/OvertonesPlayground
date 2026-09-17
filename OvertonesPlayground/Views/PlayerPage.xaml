@@ -14,8 +14,9 @@
             <Label Text="{Binding ClipName}" FontSize="26" FontAttributes="Bold" HorizontalTextAlignment="Center" />
         </VerticalStackLayout>
 
-        <Border Grid.Row="1" StrokeShape="Rectangle" Stroke="{StaticResource Gray200}"
-                BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray950}}">
+        <Border Grid.Row="1" StrokeShape="Rectangle"
+                Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardStrokeDark}}"
+                BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource CardBackgroundDark}}">
             <VerticalStackLayout Padding="24,18" Spacing="14">
 
                 <Slider x:Name="PositionSlider"

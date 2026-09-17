@@ -40,6 +40,13 @@
     <Color x:Key="Gray900">#1A1A1A</Color>
     <Color x:Key="Gray950">#202020</Color>
 
+    <!-- Fluent Win11 dark-theme surface layering: cards/panels sit one layer above the Mica
+         "OffBlack" page background (CardBackgroundFillColorDefault), with a subtle divider
+         stroke (CardStrokeColorDefault / DividerStrokeColorDefault) instead of a flat mid-gray
+         line. Keeps the app's card/border UI from blending into the page in dark mode. -->
+    <Color x:Key="CardBackgroundDark">#2C2C2C</Color>
+    <Color x:Key="CardStrokeDark">#3D3D3D</Color>
+
     <SolidColorBrush x:Key="PrimaryBrush" Color="{StaticResource Primary}"/>
     <SolidColorBrush x:Key="SecondaryBrush" Color="{StaticResource Secondary}"/>
     <SolidColorBrush x:Key="TertiaryBrush" Color="{StaticResource Tertiary}"/>
