@@ -5,6 +5,10 @@ using OvertonesPlayground.Services.Interfaces;
 
 namespace OvertonesPlayground.ViewModels;
 
+/// <summary>
+/// View model for the audio editor page. Loads a selected <see cref="OvertonesPlayground.Models.AudioClip"/>
+/// and exposes commands to preview and perform simple edits (trim, fade, normalize, reverse).
+/// </summary>
 [QueryProperty(nameof(ClipId), "clipId")]
 public partial class AudioEditorViewModel : BaseViewModel
 {
@@ -12,30 +16,39 @@ public partial class AudioEditorViewModel : BaseViewModel
     private readonly IAudioLibraryService _libraryService;
     private readonly IAudioPlaybackService _playbackService;
 
+    /// <summary>Id of the clip to load (set via query property when navigating to the editor).</summary>
     [ObservableProperty]
     public partial string? ClipId { get; set; }
 
+    /// <summary>The clip currently loaded into the editor.</summary>
     [ObservableProperty]
     public partial AudioClip? LoadedClip { get; set; }
 
+    /// <summary>Preview waveform peaks used by the UI to draw an overview.</summary>
     [ObservableProperty]
     public partial float[] WaveformPeaks { get; set; } = [];
 
+    /// <summary>Duration of the loaded clip in seconds.</summary>
     [ObservableProperty]
     public partial double DurationSeconds { get; set; }
 
+    /// <summary>Start position (seconds) for trimming operations.</summary>
     [ObservableProperty]
     public partial double TrimStartSeconds { get; set; }
 
+    /// <summary>End position (seconds) for trimming operations.</summary>
     [ObservableProperty]
     public partial double TrimEndSeconds { get; set; }
 
+    /// <summary>Gain to apply (dB) when applying a gain edit.</summary>
     [ObservableProperty]
     public partial double GainDb { get; set; }
 
+    /// <summary>Fade-in duration in seconds when applying fades.</summary>
     [ObservableProperty]
     public partial double FadeInSeconds { get; set; } = 0.5;
 
+    /// <summary>Fade-out duration in seconds when applying fades.</summary>
     [ObservableProperty]
     public partial double FadeOutSeconds { get; set; } = 0.5;
 

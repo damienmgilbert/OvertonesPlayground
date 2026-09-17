@@ -4,23 +4,32 @@ using OvertonesPlayground.Services.Interfaces;
 
 namespace OvertonesPlayground.ViewModels;
 
+/// <summary>
+/// View model for the global audio player. Exposes playback controls, current
+/// clip metadata and position information used by the player UI.
+/// </summary>
 public partial class PlayerViewModel : BaseViewModel, IDisposable
 {
     private readonly IAudioPlaybackService _playbackService;
     private IDispatcherTimer? _positionTimer;
 
+    /// <summary>Name of the currently loaded clip or a placeholder when none is loaded.</summary>
     [ObservableProperty]
     public partial string ClipName { get; set; } = "Nothing loaded";
 
+    /// <summary>Whether playback is currently active.</summary>
     [ObservableProperty]
     public partial bool IsPlaying { get; set; }
 
+    /// <summary>Current playback position in seconds.</summary>
     [ObservableProperty]
     public partial double PositionSeconds { get; set; }
 
+    /// <summary>Total duration of the loaded clip in seconds.</summary>
     [ObservableProperty]
     public partial double DurationSeconds { get; set; } = 1;
 
+    /// <summary>Master playback volume for the player.</summary>
     [ObservableProperty]
     public partial double Volume { get; set; } = 1.0;
 

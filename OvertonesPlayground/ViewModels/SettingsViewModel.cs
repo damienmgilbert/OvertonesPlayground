@@ -4,6 +4,10 @@ using OvertonesPlayground.Services.Interfaces;
 
 namespace OvertonesPlayground.ViewModels;
 
+/// <summary>
+/// View model for the settings page. Exposes application preferences and
+/// commands for global audio control and library maintenance.
+/// </summary>
 public partial class SettingsViewModel : BaseViewModel
 {
     private const string KeepScreenOnKey = "keep_screen_on";
@@ -11,6 +15,7 @@ public partial class SettingsViewModel : BaseViewModel
     private readonly IAudioLibraryService _libraryService;
     private readonly IAudioPlaybackService _playbackService;
 
+    /// <summary>Whether the device screen should be kept on while the app is running.</summary>
     [ObservableProperty]
     public partial bool KeepScreenOn { get; set; }
 

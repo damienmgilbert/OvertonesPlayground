@@ -1,48 +1,65 @@
 namespace OvertonesPlayground.Models;
 
 /// <summary>
-/// Every tunable knob the Drum &amp; Bass Synth exposes. Not every field applies to every
-/// <see cref="DrumType"/> - the ViewModel's DrumSynthParametersViewModel decides which
-/// sections are shown for which type.
+/// Every tunable parameter exposed by the drum and bass synthesizer. Not every
+/// property applies to every <see cref="DrumType"/>; the view model decides
+/// which controls to show for a given type.
 /// </summary>
 public class DrumSynthParameters
 {
+    /// <summary>The sample rate (Hz) used when synthesizing the sound.</summary>
     public int SampleRate { get; set; } = 44_100;
 
+    /// <summary>Overall length of the generated sound in seconds.</summary>
     public double DurationSeconds { get; set; }
 
+    /// <summary>Playback amplitude multiplier (0.0 - 1.0).</summary>
     public double Amplitude { get; set; } = 0.8;
 
+    /// <summary>Envelope decay rate used to shape the sound's tail.</summary>
     public double DecayRate { get; set; }
 
     // Kick / Bass: pitch-sweep shape
+    /// <summary>Starting frequency (Hz) for a pitched sweep.</summary>
     public double StartFrequencyHz { get; set; }
 
+    /// <summary>Ending frequency (Hz) for a pitched sweep.</summary>
     public double EndFrequencyHz { get; set; }
 
+    /// <summary>Rate controlling how the frequency sweep progresses.</summary>
     public double SweepRate { get; set; }
 
     // Snare: tonal body layered under the noise
+    /// <summary>Tone oscillator frequency (Hz) used for snare body.</summary>
     public double ToneFrequencyHz { get; set; } = 180;
 
+    /// <summary>Decay rate for the tonal body component.</summary>
     public double ToneDecayRate { get; set; } = 30;
 
+    /// <summary>Level of the tonal body relative to the noise component.</summary>
     public double ToneLevel { get; set; } = 0.4;
 
+    /// <summary>Relative level of the noise component for snares/claps.</summary>
     public double NoiseLevel { get; set; } = 0.9;
 
     // Clap: layered noise bursts
+    /// <summary>Number of noise bursts used for clap-like sounds.</summary>
     public int BurstCount { get; set; } = 4;
 
+    /// <summary>Spacing (seconds) between clap bursts.</summary>
     public double BurstSpacingSeconds { get; set; } = 0.012;
 
     // Post-processing filter, applied to every drum type
+    /// <summary>Type of filter applied after synthesis.</summary>
     public FilterType FilterType { get; set; } = FilterType.None;
 
+    /// <summary>Filter cutoff frequency in Hz.</summary>
     public double FilterCutoffHz { get; set; } = 4000;
 
+    /// <summary>Filter resonance (Q) value.</summary>
     public double FilterResonance { get; set; } = 0.7;
 
+    /// <summary>Creates sensible defaults for a given drum type.</summary>
     public static DrumSynthParameters CreateDefault(DrumType type) => type switch
     {
         DrumType.Kick => new DrumSynthParameters

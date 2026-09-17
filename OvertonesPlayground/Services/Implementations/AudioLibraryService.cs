@@ -1,7 +1,7 @@
-using System.Text.Json;
 using OvertonesPlayground.Models;
 using OvertonesPlayground.Services.Interfaces;
 using Plugin.Maui.Audio;
+using System.Text.Json;
 
 namespace OvertonesPlayground.Services.Implementations;
 
@@ -35,7 +35,8 @@ public class AudioLibraryService : IAudioLibraryService
     public async Task<IReadOnlyList<AudioClip>> GetClipsAsync()
     {
         await EnsureLoadedAsync();
-        return _cache!.OrderByDescending(c => c.ImportedAt).ToList();
+        List<AudioClip> audioClips = [.. _cache!.OrderByDescending(c => c.ImportedAt)];
+        return audioClips;
     }
 
     public async Task<AudioClip?> ImportFromPickerAsync()

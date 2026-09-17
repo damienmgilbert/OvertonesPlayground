@@ -5,16 +5,23 @@ using OvertonesPlayground.Services.Interfaces;
 
 namespace OvertonesPlayground.ViewModels;
 
+/// <summary>
+/// View model used by the sound recording/creation page. Manages recording state,
+/// elapsed time display and interactions with the audio recorder and library.
+/// </summary>
 public partial class SoundCreatorViewModel : BaseViewModel
 {
     #region Fields
+    /// <summary>Human readable elapsed time for the current recording.</summary>
     [ObservableProperty]
     public partial string ElapsedText { get; set; } = "00:00";
 
+    /// <summary>Whether a recording is currently in progress.</summary>
     [ObservableProperty]
     public partial bool IsRecording { get; set; }
 
     private readonly IAudioLibraryService _libraryService;
+    /// <summary>Name proposed for the newly recorded clip.</summary>
     [ObservableProperty]
     public partial string NewClipName { get; set; } = string.Empty;
 

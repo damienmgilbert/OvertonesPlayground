@@ -5,27 +5,39 @@ using OvertonesPlayground.Services.Interfaces;
 
 namespace OvertonesPlayground.ViewModels;
 
+/// <summary>
+/// View model for generating simple tones and synthesized drums. Exposes options
+/// for waveform, frequency, duration and amplitude as well as commands to
+/// generate and preview sounds.
+/// </summary>
 public partial class ToneGeneratorViewModel : BaseViewModel
 {
     private readonly ISoundSynthesisService _synthesisService;
     private readonly IAudioEditorService _editorService;
     private readonly IAudioPlaybackService _playbackService;
 
+
+    /// <summary>Selected waveform type for tone generation.</summary>
     [ObservableProperty]
     public partial WaveformType SelectedWaveform { get; set; } = WaveformType.Sine;
 
+    /// <summary>Frequency in Hz for the generated tone.</summary>
     [ObservableProperty]
     public partial double FrequencyHz { get; set; } = 440;
 
+    /// <summary>Duration of the generated tone in seconds.</summary>
     [ObservableProperty]
     public partial double DurationSeconds { get; set; } = 1.0;
 
+    /// <summary>Amplitude (0.0 - 1.0) for the generated tone.</summary>
     [ObservableProperty]
     public partial double Amplitude { get; set; } = 0.8;
 
+    /// <summary>Preview waveform peaks used by the UI to draw the waveform.</summary>
     [ObservableProperty]
     public partial float[] WaveformPeaks { get; set; } = [];
 
+    /// <summary>Parameters for drum synthesis when generating drum sounds.</summary>
     [ObservableProperty]
     public partial DrumSynthParametersViewModel SelectedDrumParams { get; set; }
 

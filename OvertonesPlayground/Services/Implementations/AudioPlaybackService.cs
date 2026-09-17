@@ -46,10 +46,7 @@ public class AudioPlaybackService : IAudioPlaybackService
         get => _mainPlayer?.Volume ?? 1.0;
         set
         {
-            if (_mainPlayer is not null)
-            {
-                _mainPlayer.Volume = value;
-            }
+            _mainPlayer?.Volume = value;
         }
     }
 

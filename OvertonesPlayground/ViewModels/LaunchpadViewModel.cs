@@ -5,6 +5,10 @@ using OvertonesPlayground.Services.Interfaces;
 
 namespace OvertonesPlayground.ViewModels;
 
+/// <summary>
+/// View model for the Launchpad screen. Manages a grid of pads and exposes
+/// commands to trigger, assign and control pad playback.
+/// </summary>
 public partial class LaunchpadViewModel : BaseViewModel
 {
     public const int Rows = 8;
@@ -31,6 +35,7 @@ public partial class LaunchpadViewModel : BaseViewModel
         }
     }
 
+    /// <summary>Collection of pad view models backing the UI grid.</summary>
     public ObservableCollection<LaunchpadPadViewModel> Pads { get; } = [];
 
     [RelayCommand]

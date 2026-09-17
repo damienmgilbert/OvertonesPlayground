@@ -5,6 +5,10 @@ using OvertonesPlayground.Services.Interfaces;
 
 namespace OvertonesPlayground.ViewModels;
 
+/// <summary>
+/// View model for the library page. Exposes the list of available audio clips and
+/// commands to load, import, play, edit and delete clips.
+/// </summary>
 public partial class LibraryViewModel : BaseViewModel
 {
     private readonly IAudioLibraryService _libraryService;
@@ -17,6 +21,7 @@ public partial class LibraryViewModel : BaseViewModel
         Title = "Library";
     }
 
+    /// <summary>Observable collection of audio clips shown in the library UI.</summary>
     public ObservableCollection<AudioClip> Clips { get; } = [];
 
     [RelayCommand]

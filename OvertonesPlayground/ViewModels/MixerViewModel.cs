@@ -5,6 +5,10 @@ using OvertonesPlayground.Services.Interfaces;
 
 namespace OvertonesPlayground.ViewModels;
 
+/// <summary>
+/// View model for the mixer page. Manages a collection of mixer channel view models
+/// and provides commands to load samples and control playback per channel.
+/// </summary>
 public partial class MixerViewModel : BaseViewModel
 {
     private readonly IAudioPlaybackService _playbackService;
@@ -23,6 +27,7 @@ public partial class MixerViewModel : BaseViewModel
         }
     }
 
+    /// <summary>Collection of mixer channel view models shown in the UI.</summary>
     public ObservableCollection<MixerChannelViewModel> Channels { get; } = [];
 
     [RelayCommand]

@@ -10,10 +10,13 @@ namespace OvertonesPlayground.ViewModels;
 /// </summary>
 public partial class DrumSynthParametersViewModel : ObservableObject
 {
+    /// <summary>Common sample rate choices presented to the user.</summary>
     public static IReadOnlyList<int> SampleRateOptions { get; } = [8_000, 11_025, 22_050, 44_100, 48_000];
 
+    /// <summary>Available filter types for post-processing.</summary>
     public static IReadOnlyList<FilterType> FilterOptions { get; } = Enum.GetValues<FilterType>();
 
+    /// <summary>The drum type this view model is representing.</summary>
     public DrumType DrumType { get; }
 
     [ObservableProperty]
@@ -64,10 +67,13 @@ public partial class DrumSynthParametersViewModel : ObservableObject
     [ObservableProperty]
     public partial double FilterResonance { get; set; }
 
+    /// <summary>True when pitch-sweep controls are relevant for the selected drum.</summary>
     public bool ShowPitchSweep => DrumType is DrumType.Kick or DrumType.Bass;
 
+    /// <summary>True when snare-specific controls should be shown.</summary>
     public bool ShowSnareControls => DrumType is DrumType.Snare;
 
+    /// <summary>True when clap-specific controls should be shown.</summary>
     public bool ShowClapControls => DrumType is DrumType.Clap;
 
     public DrumSynthParametersViewModel(DrumType drumType)
@@ -96,6 +102,7 @@ public partial class DrumSynthParametersViewModel : ObservableObject
         FilterResonance = defaults.FilterResonance;
     }
 
+    /// <summary>Converts the view model values into a <see cref="DrumSynthParameters"/> instance.</summary>
     public DrumSynthParameters ToParameters() => new()
     {
         SampleRate = SampleRate,
