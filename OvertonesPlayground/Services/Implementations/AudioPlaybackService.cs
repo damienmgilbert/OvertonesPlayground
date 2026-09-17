@@ -45,7 +45,8 @@ public class AudioPlaybackService : IAudioPlaybackService
     ///</summary>
     private void OnAudioFocusChanged(object? sender, bool haveFocus)
     {
-        if (!haveFocus)
+        bool lostFocus = !haveFocus;
+        if (lostFocus)
         {
             Pause();
         }

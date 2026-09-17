@@ -11,7 +11,9 @@ internal static class BiquadFilter
     #region Public methods
     public static void Apply(short[] samples, int sampleRate, FilterType type, double cutoffHz, double resonanceQ)
     {
-        if(type == FilterType.None || samples.Length == 0)
+        bool isNone = type == FilterType.None;
+        bool isEmpty = samples.Length == 0;
+        if (isNone || isEmpty)
         {
             return;
         }
@@ -26,7 +28,7 @@ internal static class BiquadFilter
 
         double b0, b1, b2, a0, a1, a2;
 
-        switch(type)
+        switch (type)
         {
             case FilterType.LowPass:
                 b0 = (1 - cosw) / 2;
@@ -67,7 +69,7 @@ internal static class BiquadFilter
 
         double x1 = 0, x2 = 0, y1 = 0, y2 = 0;
 
-        for(int i = 0; i < samples.Length; i++)
+        for (int i = 0; i < samples.Length; i++)
         {
             double x0 = samples[i] / (double)short.MaxValue;
             double y0 = (b0 * x0) + (b1 * x1) + (b2 * x2) - (a1 * y1) - (a2 * y2);

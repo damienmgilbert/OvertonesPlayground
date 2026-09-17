@@ -112,7 +112,7 @@ public partial class DrumSynthParametersViewModel : ObservableObject
     ///<summary>
     ///Common sample rate choices presented to the user.
     ///</summary>
-    public static IReadOnlyList<int> SampleRateOptions { get; } = [ 8_000, 11_025, 22_050, 44_100, 48_000 ];
+    public static IReadOnlyList<int> SampleRateOptions { get; } = [8_000, 11_025, 22_050, 44_100, 48_000];
 
     ///<summary>
     ///True when clap-specific controls should be shown.

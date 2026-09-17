@@ -17,7 +17,11 @@ public record TonePreset(string Name, WaveformType Waveform, double FrequencyHz,
     public static IReadOnlyList<TonePreset> All
     {
         get;
-    } =[ new("A4 Concert Pitch", WaveformType.Sine, 440, 1.5, 0.8), new("Sub Bass", WaveformType.Sine, 55, 2.0, 0.9), new("High Chime", WaveformType.Sine, 2000, 0.6, 0.6), new("Soft Pad", WaveformType.Triangle, 220, 2.0, 0.5), new("Alarm Beep", WaveformType.Square, 880, 0.3, 0.9), new(
+    } =
+        [
+            new("A4 Concert Pitch", WaveformType.Sine, 440, 1.5, 0.8),
+            new("Sub Bass", WaveformType.Sine, 55, 2.0, 0.9),
+            new("High Chime", WaveformType.Sine, 2000, 0.6, 0.6), new("Soft Pad", WaveformType.Triangle, 220, 2.0, 0.5), new("Alarm Beep", WaveformType.Square, 880, 0.3, 0.9), new(
                                                                                                                                                                                                                                                                                           "Click",
                                                                                                                                                                                                                                                                                           WaveformType.Square,
                                                                                                                                                                                                                                                                                           3000,

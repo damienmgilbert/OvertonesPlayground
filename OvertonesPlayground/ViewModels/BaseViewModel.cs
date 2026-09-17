@@ -8,6 +8,7 @@ namespace OvertonesPlayground.ViewModels;
 public partial class BaseViewModel : ObservableObject
 {
     #region Public properties
+
     ///<summary>
     ///Indicates whether the view model is performing work.
     ///</summary>
