@@ -1,5 +1,4 @@
 using CommunityToolkit.Mvvm.ComponentModel;
-using Microsoft.Extensions.Logging;
 
 namespace OvertonesPlayground.ViewModels;
 

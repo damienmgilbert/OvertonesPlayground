@@ -1,5 +1,4 @@
 using CommunityToolkit.Maui;
-using Microsoft.Extensions.Logging;
 using OvertonesPlayground.Platforms.Android.Services;
 using OvertonesPlayground.Services.Implementations;
 using OvertonesPlayground.Services.Interfaces;

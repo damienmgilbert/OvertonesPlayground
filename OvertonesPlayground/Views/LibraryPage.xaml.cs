@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Logging;
 using OvertonesPlayground.ViewModels;
 
 namespace OvertonesPlayground.Views;

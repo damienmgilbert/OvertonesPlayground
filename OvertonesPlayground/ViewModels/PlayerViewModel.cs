@@ -1,6 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Microsoft.Extensions.Logging;
 using OvertonesPlayground.Services.Interfaces;
 
 namespace OvertonesPlayground.ViewModels;
@@ -73,6 +72,7 @@ public partial class PlayerViewModel : BaseViewModel, IDisposable
         _logger.LogDebug("Seeking to {PositionSeconds}s.", positionSeconds);
         _playbackService.Seek(TimeSpan.FromSeconds(positionSeconds));
     }
+
     ///<summary>
     ///Stops playback and resets position to the start.
     ///</summary>
