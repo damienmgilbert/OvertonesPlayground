@@ -5,7 +5,7 @@
              xmlns:models="clr-namespace:OvertonesPlayground.Models"
              xmlns:controls="clr-namespace:OvertonesPlayground.Controls"
              xmlns:toolkit="clr-namespace:CommunityToolkit.Maui.Views;assembly=CommunityToolkit.Maui"
-             x:Class="OvertonesPlayground.Views.DrumSynthPage"
+             x:Class="OvertonesPlayground.Views.DrumSynthPage" AutomationId="drumsynth-page"
              x:DataType="vm:DrumSynthViewModel"
              Title="{Binding Title}">
 
@@ -16,99 +16,99 @@
             <Label Text="Pick a type to load its defaults, tune every knob, Generate &amp; Play to preview, then Save to keep it in your library (and your device's Music folder) for the Launchpad and Mixer."
                    FontSize="12" TextColor="{StaticResource Gray500}" />
 
-            <CollectionView ItemsSource="{Binding DrumOptions}" HeightRequest="150">
+            <CollectionView AutomationId="drumsynth-types" ItemsSource="{Binding DrumOptions}" HeightRequest="150">
                 <CollectionView.ItemsLayout>
                     <GridItemsLayout Orientation="Vertical" Span="5" HorizontalItemSpacing="8" VerticalItemSpacing="8" />
                 </CollectionView.ItemsLayout>
                 <CollectionView.ItemTemplate>
                     <DataTemplate x:DataType="models:DrumType">
-                        <Button Text="{Binding .}"
+                        <Button AutomationId="{Binding ., StringFormat='drumsynth-type-{0}'}" Text="{Binding .}"
                                 Command="{Binding Source={RelativeSource AncestorType={x:Type vm:DrumSynthViewModel}}, Path=SelectDrumCommand}"
                                 CommandParameter="{Binding .}" />
                     </DataTemplate>
                 </CollectionView.ItemTemplate>
             </CollectionView>
 
-            <GraphicsView x:Name="WaveformView" HeightRequest="120" BackgroundColor="{StaticResource Gray950}" />
+            <GraphicsView AutomationId="drumsynth-waveform" x:Name="WaveformView" HeightRequest="120" BackgroundColor="{StaticResource Gray950}" />
 
             <VerticalStackLayout BindingContext="{Binding SelectedDrumParams}"
                                   x:DataType="vm:DrumSynthParametersViewModel"
                                   Spacing="12">
 
-                <Label Text="{Binding DrumType, StringFormat='🎚 Editing: {0}'}" FontAttributes="Bold" TextColor="{StaticResource Secondary}" />
+                <Label AutomationId="drumsynth-editing" Text="{Binding DrumType, StringFormat='🎚 Editing: {0}'}" FontAttributes="Bold" TextColor="{StaticResource Secondary}" />
 
                 <Grid ColumnDefinitions="Auto,*" RowSpacing="12">
                     <Label Grid.Row="0" Grid.Column="0" Text="Sample rate" VerticalOptions="Center" />
-                    <Picker Grid.Row="0" Grid.Column="1"
+                    <Picker AutomationId="drumsynth-sample-rate" Grid.Row="0" Grid.Column="1"
                             ItemsSource="{x:Static vm:DrumSynthParametersViewModel.SampleRateOptions}"
                             SelectedItem="{Binding SampleRate}" />
                 </Grid>
 
-                <controls:LabeledSlider LabelText="Duration" Minimum="0.02" Maximum="2" Digits="3" Value="{Binding DurationSeconds}" />
-                <controls:LabeledSlider LabelText="Level" Minimum="0" Maximum="1" Digits="2" Value="{Binding Amplitude}" />
-                <controls:LabeledSlider LabelText="Decay" Minimum="0.5" Maximum="60" Digits="1" Value="{Binding DecayRate}" />
+                <controls:LabeledSlider AutomationId="drumsynth-duration" LabelText="Duration" Minimum="0.02" Maximum="2" Digits="3" Value="{Binding DurationSeconds}" />
+                <controls:LabeledSlider AutomationId="drumsynth-level" LabelText="Level" Minimum="0" Maximum="1" Digits="2" Value="{Binding Amplitude}" />
+                <controls:LabeledSlider AutomationId="drumsynth-decay" LabelText="Decay" Minimum="0.5" Maximum="60" Digits="1" Value="{Binding DecayRate}" />
 
                 <toolkit:Expander IsVisible="{Binding ShowPitchSweep}" IsExpanded="True">
                     <toolkit:Expander.Header>
-                        <Label Text="📈 Pitch Sweep" FontAttributes="Bold" FontSize="14" Padding="0,10" />
+                        <Label AutomationId="drumsynth-pitch-sweep-header" Text="📈 Pitch Sweep" FontAttributes="Bold" FontSize="14" Padding="0,10" />
                     </toolkit:Expander.Header>
                     <VerticalStackLayout Spacing="12" Padding="0,4,0,12">
-                        <controls:LabeledSlider LabelText="Start" Minimum="20" Maximum="2000" Digits="0" Value="{Binding StartFrequencyHz}" />
-                        <controls:LabeledSlider LabelText="End" Minimum="20" Maximum="2000" Digits="0" Value="{Binding EndFrequencyHz}" />
-                        <controls:LabeledSlider LabelText="Sweep" Minimum="1" Maximum="60" Digits="1" Value="{Binding SweepRate}" />
+                        <controls:LabeledSlider AutomationId="drumsynth-sweep-start" LabelText="Start" Minimum="20" Maximum="2000" Digits="0" Value="{Binding StartFrequencyHz}" />
+                        <controls:LabeledSlider AutomationId="drumsynth-sweep-end" LabelText="End" Minimum="20" Maximum="2000" Digits="0" Value="{Binding EndFrequencyHz}" />
+                        <controls:LabeledSlider AutomationId="drumsynth-sweep-rate" LabelText="Sweep" Minimum="1" Maximum="60" Digits="1" Value="{Binding SweepRate}" />
                     </VerticalStackLayout>
                 </toolkit:Expander>
 
                 <toolkit:Expander IsVisible="{Binding ShowSnareControls}" IsExpanded="True">
                     <toolkit:Expander.Header>
-                        <Label Text="🥁 Snare Body" FontAttributes="Bold" FontSize="14" Padding="0,10" />
+                        <Label AutomationId="drumsynth-snare-header" Text="🥁 Snare Body" FontAttributes="Bold" FontSize="14" Padding="0,10" />
                     </toolkit:Expander.Header>
                     <VerticalStackLayout Spacing="12" Padding="0,4,0,12">
-                        <controls:LabeledSlider LabelText="Tone" Minimum="50" Maximum="1000" Digits="0" Value="{Binding ToneFrequencyHz}" />
-                        <controls:LabeledSlider LabelText="Tone decay" Minimum="0.5" Maximum="80" Digits="1" Value="{Binding ToneDecayRate}" />
-                        <controls:LabeledSlider LabelText="Tone level" Minimum="0" Maximum="1" Digits="2" Value="{Binding ToneLevel}" />
-                        <controls:LabeledSlider LabelText="Noise level" Minimum="0" Maximum="1" Digits="2" Value="{Binding NoiseLevel}" />
+                        <controls:LabeledSlider AutomationId="drumsynth-snare-tone" LabelText="Tone" Minimum="50" Maximum="1000" Digits="0" Value="{Binding ToneFrequencyHz}" />
+                        <controls:LabeledSlider AutomationId="drumsynth-snare-tone-decay" LabelText="Tone decay" Minimum="0.5" Maximum="80" Digits="1" Value="{Binding ToneDecayRate}" />
+                        <controls:LabeledSlider AutomationId="drumsynth-snare-tone-level" LabelText="Tone level" Minimum="0" Maximum="1" Digits="2" Value="{Binding ToneLevel}" />
+                        <controls:LabeledSlider AutomationId="drumsynth-snare-noise-level" LabelText="Noise level" Minimum="0" Maximum="1" Digits="2" Value="{Binding NoiseLevel}" />
                     </VerticalStackLayout>
                 </toolkit:Expander>
 
                 <toolkit:Expander IsVisible="{Binding ShowClapControls}" IsExpanded="True">
                     <toolkit:Expander.Header>
-                        <Label Text="👏 Clap Bursts" FontAttributes="Bold" FontSize="14" Padding="0,10" />
+                        <Label AutomationId="drumsynth-clap-header" Text="👏 Clap Bursts" FontAttributes="Bold" FontSize="14" Padding="0,10" />
                     </toolkit:Expander.Header>
                     <VerticalStackLayout Spacing="12" Padding="0,4,0,12">
                         <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
                             <Label Grid.Column="0" Text="Burst count" VerticalOptions="Center" />
-                            <Stepper Grid.Column="1" Minimum="1" Maximum="8" Increment="1" Value="{Binding BurstCount}" HorizontalOptions="Start" />
-                            <Label Grid.Column="2" Text="{Binding BurstCount}" VerticalOptions="Center" />
+                            <Stepper AutomationId="drumsynth-clap-burst-count" Grid.Column="1" Minimum="1" Maximum="8" Increment="1" Value="{Binding BurstCount}" HorizontalOptions="Start" />
+                            <Label AutomationId="drumsynth-clap-burst-count-text" Grid.Column="2" Text="{Binding BurstCount}" VerticalOptions="Center" />
                         </Grid>
-                        <controls:LabeledSlider LabelText="Spacing" Minimum="0" Maximum="0.05" Digits="3" Value="{Binding BurstSpacingSeconds}" />
+                        <controls:LabeledSlider AutomationId="drumsynth-clap-spacing" LabelText="Spacing" Minimum="0" Maximum="0.05" Digits="3" Value="{Binding BurstSpacingSeconds}" />
                     </VerticalStackLayout>
                 </toolkit:Expander>
 
                 <toolkit:Expander IsExpanded="False">
                     <toolkit:Expander.Header>
-                        <Label Text="🎛 Filter" FontAttributes="Bold" FontSize="14" Padding="0,10" />
+                        <Label AutomationId="drumsynth-filter-header" Text="🎛 Filter" FontAttributes="Bold" FontSize="14" Padding="0,10" />
                     </toolkit:Expander.Header>
                     <VerticalStackLayout Spacing="12" Padding="0,4,0,12">
                         <Grid ColumnDefinitions="Auto,*" RowSpacing="12">
                             <Label Grid.Row="0" Grid.Column="0" Text="Type" VerticalOptions="Center" />
-                            <Picker Grid.Row="0" Grid.Column="1"
+                            <Picker AutomationId="drumsynth-filter-type" Grid.Row="0" Grid.Column="1"
                                     ItemsSource="{x:Static vm:DrumSynthParametersViewModel.FilterOptions}"
                                     SelectedItem="{Binding FilterType}" />
                         </Grid>
-                        <controls:LabeledSlider LabelText="Cutoff" Minimum="100" Maximum="15000" Digits="0" Value="{Binding FilterCutoffHz}" />
-                        <controls:LabeledSlider LabelText="Resonance" Minimum="0.1" Maximum="5" Digits="2" Value="{Binding FilterResonance}" />
+                        <controls:LabeledSlider AutomationId="drumsynth-filter-cutoff" LabelText="Cutoff" Minimum="100" Maximum="15000" Digits="0" Value="{Binding FilterCutoffHz}" />
+                        <controls:LabeledSlider AutomationId="drumsynth-filter-resonance" LabelText="Resonance" Minimum="0.1" Maximum="5" Digits="2" Value="{Binding FilterResonance}" />
                     </VerticalStackLayout>
                 </toolkit:Expander>
             </VerticalStackLayout>
 
             <HorizontalStackLayout Spacing="12">
-                <Button Text="▶ Generate &amp; Play" Command="{Binding GenerateCommand}" />
-                <Button Text="💾 Save" Command="{Binding SaveCommand}" IsEnabled="{Binding CanSave}" BackgroundColor="{StaticResource Tertiary}" />
+                <Button AutomationId="drumsynth-generate" Text="▶ Generate &amp; Play" Command="{Binding GenerateCommand}" />
+                <Button AutomationId="drumsynth-save" Text="💾 Save" Command="{Binding SaveCommand}" IsEnabled="{Binding CanSave}" BackgroundColor="{StaticResource Tertiary}" />
             </HorizontalStackLayout>
 
-            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
-            <Label Text="{Binding StatusMessage}" TextColor="{StaticResource Gray500}" />
+            <ActivityIndicator AutomationId="drumsynth-busy" IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
+            <Label AutomationId="drumsynth-status" Text="{Binding StatusMessage}" TextColor="{StaticResource Gray500}" />
 
         </VerticalStackLayout>
     </ScrollView>

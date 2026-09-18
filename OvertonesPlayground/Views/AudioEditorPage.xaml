@@ -4,120 +4,120 @@
              xmlns:vm="clr-namespace:OvertonesPlayground.ViewModels"
              xmlns:controls="clr-namespace:OvertonesPlayground.Controls"
              xmlns:toolkit="clr-namespace:CommunityToolkit.Maui.Views;assembly=CommunityToolkit.Maui"
-             x:Class="OvertonesPlayground.Views.AudioEditorPage"
+             x:Class="OvertonesPlayground.Views.AudioEditorPage" AutomationId="audioeditor-page"
              x:DataType="vm:AudioEditorViewModel"
              Title="{Binding Title}">
 
     <ScrollView>
         <VerticalStackLayout Padding="24" Spacing="18">
 
-            <Label Text="{Binding LoadedClip.Name}" FontSize="22" FontAttributes="Bold" />
+            <Label AutomationId="audioeditor-clip-name" Text="{Binding LoadedClip.Name}" FontSize="22" FontAttributes="Bold" />
 
-            <GraphicsView x:Name="WaveformView" HeightRequest="160" BackgroundColor="{StaticResource Gray950}" />
+            <GraphicsView AutomationId="audioeditor-waveform" x:Name="WaveformView" HeightRequest="160" BackgroundColor="{StaticResource Gray950}" />
 
             <HorizontalStackLayout Spacing="12">
-                <Button Text="▶ Preview" Command="{Binding PreviewCommand}" />
-                <Button Text="✂ Open Trim Editor" Command="{Binding OpenTrimEditorCommand}" />
+                <Button AutomationId="audioeditor-preview" Text="▶ Preview" Command="{Binding PreviewCommand}" />
+                <Button AutomationId="audioeditor-open-trim" Text="✂ Open Trim Editor" Command="{Binding OpenTrimEditorCommand}" />
             </HorizontalStackLayout>
 
             <toolkit:Expander IsExpanded="True">
                 <toolkit:Expander.Header>
-                    <Label Text="✂ Trim" FontAttributes="Bold" Padding="0,10" />
+                    <Label AutomationId="audioeditor-trim-header" Text="✂ Trim" FontAttributes="Bold" Padding="0,10" />
                 </toolkit:Expander.Header>
                 <VerticalStackLayout Spacing="12" Padding="0,4,0,12">
-                    <controls:LabeledSlider LabelText="Start (s)" Minimum="0" Maximum="{Binding DurationSeconds}" Digits="2" Value="{Binding TrimStartSeconds}" />
-                    <controls:LabeledSlider LabelText="End (s)" Minimum="0" Maximum="{Binding DurationSeconds}" Digits="2" Value="{Binding TrimEndSeconds}" />
-                    <Button Text="Apply Trim" Command="{Binding TrimCommand}" />
+                    <controls:LabeledSlider AutomationId="audioeditor-trim-start" LabelText="Start (s)" Minimum="0" Maximum="{Binding DurationSeconds}" Digits="2" Value="{Binding TrimStartSeconds}" />
+                    <controls:LabeledSlider AutomationId="audioeditor-trim-end" LabelText="End (s)" Minimum="0" Maximum="{Binding DurationSeconds}" Digits="2" Value="{Binding TrimEndSeconds}" />
+                    <Button AutomationId="audioeditor-trim-apply" Text="Apply Trim" Command="{Binding TrimCommand}" />
                 </VerticalStackLayout>
             </toolkit:Expander>
 
             <toolkit:Expander IsExpanded="True">
                 <toolkit:Expander.Header>
-                    <Label Text="🔊 Gain" FontAttributes="Bold" Padding="0,10" />
+                    <Label AutomationId="audioeditor-gain-header" Text="🔊 Gain" FontAttributes="Bold" Padding="0,10" />
                 </toolkit:Expander.Header>
                 <VerticalStackLayout Spacing="12" Padding="0,4,0,12">
-                    <controls:LabeledSlider LabelText="Gain (dB)" Minimum="-24" Maximum="24" Digits="1" Value="{Binding GainDb}" />
-                    <Button Text="Apply Gain" Command="{Binding ApplyGainCommand}" />
+                    <controls:LabeledSlider AutomationId="audioeditor-gain" LabelText="Gain (dB)" Minimum="-24" Maximum="24" Digits="1" Value="{Binding GainDb}" />
+                    <Button AutomationId="audioeditor-gain-apply" Text="Apply Gain" Command="{Binding ApplyGainCommand}" />
                 </VerticalStackLayout>
             </toolkit:Expander>
 
             <toolkit:Expander IsExpanded="False">
                 <toolkit:Expander.Header>
-                    <Label Text="📉 Fade In / Out" FontAttributes="Bold" Padding="0,10" />
+                    <Label AutomationId="audioeditor-fade-header" Text="📉 Fade In / Out" FontAttributes="Bold" Padding="0,10" />
                 </toolkit:Expander.Header>
                 <VerticalStackLayout Spacing="12" Padding="0,4,0,12">
-                    <controls:LabeledSlider LabelText="Fade in" Minimum="0" Maximum="5" Digits="2" Value="{Binding FadeInSeconds}" />
-                    <controls:LabeledSlider LabelText="Fade out" Minimum="0" Maximum="5" Digits="2" Value="{Binding FadeOutSeconds}" />
-                    <Button Text="Apply Fade" Command="{Binding ApplyFadeCommand}" />
+                    <controls:LabeledSlider AutomationId="audioeditor-fade-in" LabelText="Fade in" Minimum="0" Maximum="5" Digits="2" Value="{Binding FadeInSeconds}" />
+                    <controls:LabeledSlider AutomationId="audioeditor-fade-out" LabelText="Fade out" Minimum="0" Maximum="5" Digits="2" Value="{Binding FadeOutSeconds}" />
+                    <Button AutomationId="audioeditor-fade-apply" Text="Apply Fade" Command="{Binding ApplyFadeCommand}" />
                 </VerticalStackLayout>
             </toolkit:Expander>
 
             <toolkit:Expander IsExpanded="False">
                 <toolkit:Expander.Header>
-                    <Label Text="🎚 Equalizer" FontAttributes="Bold" Padding="0,10" />
+                    <Label AutomationId="audioeditor-eq-header" Text="🎚 Equalizer" FontAttributes="Bold" Padding="0,10" />
                 </toolkit:Expander.Header>
                 <VerticalStackLayout Spacing="12" Padding="0,4,0,12">
-                    <controls:LabeledSlider LabelText="Low (dB)" Minimum="-12" Maximum="12" Digits="1" Value="{Binding EqLowGainDb}" />
-                    <controls:LabeledSlider LabelText="Mid (dB)" Minimum="-12" Maximum="12" Digits="1" Value="{Binding EqMidGainDb}" />
-                    <controls:LabeledSlider LabelText="High (dB)" Minimum="-12" Maximum="12" Digits="1" Value="{Binding EqHighGainDb}" />
-                    <Button Text="Apply EQ" Command="{Binding ApplyEqualizerCommand}" />
+                    <controls:LabeledSlider AutomationId="audioeditor-eq-low" LabelText="Low (dB)" Minimum="-12" Maximum="12" Digits="1" Value="{Binding EqLowGainDb}" />
+                    <controls:LabeledSlider AutomationId="audioeditor-eq-mid" LabelText="Mid (dB)" Minimum="-12" Maximum="12" Digits="1" Value="{Binding EqMidGainDb}" />
+                    <controls:LabeledSlider AutomationId="audioeditor-eq-high" LabelText="High (dB)" Minimum="-12" Maximum="12" Digits="1" Value="{Binding EqHighGainDb}" />
+                    <Button AutomationId="audioeditor-eq-apply" Text="Apply EQ" Command="{Binding ApplyEqualizerCommand}" />
                 </VerticalStackLayout>
             </toolkit:Expander>
 
             <toolkit:Expander IsExpanded="False">
                 <toolkit:Expander.Header>
-                    <Label Text="🗜 Compression" FontAttributes="Bold" Padding="0,10" />
+                    <Label AutomationId="audioeditor-compression-header" Text="🗜 Compression" FontAttributes="Bold" Padding="0,10" />
                 </toolkit:Expander.Header>
                 <VerticalStackLayout Spacing="12" Padding="0,4,0,12">
-                    <controls:LabeledSlider LabelText="Threshold (dB)" Minimum="-60" Maximum="0" Digits="1" Value="{Binding CompressionThresholdDb}" />
-                    <controls:LabeledSlider LabelText="Ratio" Minimum="1" Maximum="20" Digits="1" Value="{Binding CompressionRatio}" />
-                    <controls:LabeledSlider LabelText="Attack (ms)" Minimum="1" Maximum="200" Digits="0" Value="{Binding CompressionAttackMs}" />
-                    <controls:LabeledSlider LabelText="Release (ms)" Minimum="10" Maximum="1000" Digits="0" Value="{Binding CompressionReleaseMs}" />
-                    <Button Text="Apply Compression" Command="{Binding ApplyCompressionCommand}" />
+                    <controls:LabeledSlider AutomationId="audioeditor-compression-threshold" LabelText="Threshold (dB)" Minimum="-60" Maximum="0" Digits="1" Value="{Binding CompressionThresholdDb}" />
+                    <controls:LabeledSlider AutomationId="audioeditor-compression-ratio" LabelText="Ratio" Minimum="1" Maximum="20" Digits="1" Value="{Binding CompressionRatio}" />
+                    <controls:LabeledSlider AutomationId="audioeditor-compression-attack" LabelText="Attack (ms)" Minimum="1" Maximum="200" Digits="0" Value="{Binding CompressionAttackMs}" />
+                    <controls:LabeledSlider AutomationId="audioeditor-compression-release" LabelText="Release (ms)" Minimum="10" Maximum="1000" Digits="0" Value="{Binding CompressionReleaseMs}" />
+                    <Button AutomationId="audioeditor-compression-apply" Text="Apply Compression" Command="{Binding ApplyCompressionCommand}" />
                 </VerticalStackLayout>
             </toolkit:Expander>
 
             <toolkit:Expander IsExpanded="False">
                 <toolkit:Expander.Header>
-                    <Label Text="🧹 Remove Noise" FontAttributes="Bold" Padding="0,10" />
+                    <Label AutomationId="audioeditor-noise-header" Text="🧹 Remove Noise" FontAttributes="Bold" Padding="0,10" />
                 </toolkit:Expander.Header>
                 <VerticalStackLayout Spacing="12" Padding="0,4,0,12">
                     <Label Text="Uses the first stretch of the clip as its noise sample - trim to hum/hiss-only audio before running this for the best result." FontSize="12" TextColor="{StaticResource Gray500}" />
-                    <controls:LabeledSlider LabelText="Noise sample (s)" Minimum="0.1" Maximum="5" Digits="2" Value="{Binding NoiseSampleSeconds}" />
-                    <Button Text="Reduce Noise" Command="{Binding ReduceNoiseCommand}" />
+                    <controls:LabeledSlider AutomationId="audioeditor-noise-sample" LabelText="Noise sample (s)" Minimum="0.1" Maximum="5" Digits="2" Value="{Binding NoiseSampleSeconds}" />
+                    <Button AutomationId="audioeditor-noise-apply" Text="Reduce Noise" Command="{Binding ReduceNoiseCommand}" />
                 </VerticalStackLayout>
             </toolkit:Expander>
 
             <toolkit:Expander IsExpanded="False">
                 <toolkit:Expander.Header>
-                    <Label Text="🎤 Remove Vocals" FontAttributes="Bold" Padding="0,10" />
+                    <Label AutomationId="audioeditor-vocals-header" Text="🎤 Remove Vocals" FontAttributes="Bold" Padding="0,10" />
                 </toolkit:Expander.Header>
                 <VerticalStackLayout Spacing="12" Padding="0,4,0,12">
                     <Label Text="Cancels audio that's identical in both channels - works best on true-stereo tracks with a centered vocal. Mono clips aren't supported." FontSize="12" TextColor="{StaticResource Gray500}" />
-                    <Button Text="Remove Vocals" Command="{Binding RemoveVocalsCommand}" />
+                    <Button AutomationId="audioeditor-vocals-apply" Text="Remove Vocals" Command="{Binding RemoveVocalsCommand}" />
                 </VerticalStackLayout>
             </toolkit:Expander>
 
             <toolkit:Expander IsExpanded="False">
                 <toolkit:Expander.Header>
-                    <Label Text="🎙 Voice Changer" FontAttributes="Bold" Padding="0,10" />
+                    <Label AutomationId="audioeditor-voice-header" Text="🎙 Voice Changer" FontAttributes="Bold" Padding="0,10" />
                 </toolkit:Expander.Header>
                 <VerticalStackLayout Spacing="12" Padding="0,4,0,12">
                     <Label Text="Shifts pitch by changing playback speed - like a record played at the wrong RPM. Duration changes along with pitch." FontSize="12" TextColor="{StaticResource Gray500}" />
-                    <controls:LabeledSlider LabelText="Pitch (semitones)" Minimum="-12" Maximum="12" Digits="1" Value="{Binding VoiceChangeSemitones}" />
-                    <Button Text="Apply Voice Change" Command="{Binding ApplyVoiceChangeCommand}" />
+                    <controls:LabeledSlider AutomationId="audioeditor-voice-pitch" LabelText="Pitch (semitones)" Minimum="-12" Maximum="12" Digits="1" Value="{Binding VoiceChangeSemitones}" />
+                    <Button AutomationId="audioeditor-voice-apply" Text="Apply Voice Change" Command="{Binding ApplyVoiceChangeCommand}" />
                 </VerticalStackLayout>
             </toolkit:Expander>
 
             <BoxView HeightRequest="1" Color="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource CardStrokeDark}}" />
 
             <HorizontalStackLayout Spacing="12">
-                <Button Text="⏪ Reverse" Command="{Binding ReverseCommand}" />
-                <Button Text="⚖ Normalize" Command="{Binding NormalizeCommand}" />
+                <Button AutomationId="audioeditor-reverse" Text="⏪ Reverse" Command="{Binding ReverseCommand}" />
+                <Button AutomationId="audioeditor-normalize" Text="⚖ Normalize" Command="{Binding NormalizeCommand}" />
             </HorizontalStackLayout>
 
-            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
-            <Label Text="{Binding StatusMessage}" TextColor="{StaticResource Gray500}" />
+            <ActivityIndicator AutomationId="audioeditor-busy" IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
+            <Label AutomationId="audioeditor-status" Text="{Binding StatusMessage}" TextColor="{StaticResource Gray500}" />
 
         </VerticalStackLayout>
     </ScrollView>

@@ -4,7 +4,7 @@
              xmlns:vm="clr-namespace:OvertonesPlayground.ViewModels"
              xmlns:models="clr-namespace:OvertonesPlayground.Models"
              xmlns:controls="clr-namespace:OvertonesPlayground.Controls"
-             x:Class="OvertonesPlayground.Views.ToneGeneratorPage"
+             x:Class="OvertonesPlayground.Views.ToneGeneratorPage" AutomationId="tonegenerator-page"
              x:DataType="vm:ToneGeneratorViewModel"
              Title="{Binding Title}">
 
@@ -16,13 +16,13 @@
                    FontSize="12" TextColor="{StaticResource Gray500}" />
 
             <Label Text="Presets" FontAttributes="Bold" FontSize="14" />
-            <CollectionView ItemsSource="{Binding Presets}" HeightRequest="56">
+            <CollectionView AutomationId="tonegenerator-presets" ItemsSource="{Binding Presets}" HeightRequest="56">
                 <CollectionView.ItemsLayout>
                     <LinearItemsLayout Orientation="Horizontal" ItemSpacing="8" />
                 </CollectionView.ItemsLayout>
                 <CollectionView.ItemTemplate>
                     <DataTemplate x:DataType="models:TonePreset">
-                        <Button Text="{Binding Name}"
+                        <Button AutomationId="{Binding AutomationKey, StringFormat='tonegenerator-preset-{0}'}" Text="{Binding Name}"
                                 Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ToneGeneratorViewModel}}, Path=SelectPresetCommand}"
                                 CommandParameter="{Binding .}" />
                     </DataTemplate>
@@ -31,24 +31,24 @@
 
             <Grid ColumnDefinitions="Auto,*" RowSpacing="14">
                 <Label Grid.Row="0" Grid.Column="0" Text="Wave" VerticalOptions="Center" />
-                <Picker Grid.Row="0" Grid.Column="1"
+                <Picker AutomationId="tonegenerator-wave" Grid.Row="0" Grid.Column="1"
                         ItemsSource="{Binding WaveformOptions}"
                         SelectedItem="{Binding SelectedWaveform}" />
             </Grid>
 
-            <controls:LabeledSlider LabelText="Frequency" Minimum="20" Maximum="2000" Digits="0" Value="{Binding FrequencyHz}" />
-            <controls:LabeledSlider LabelText="Duration" Minimum="0.1" Maximum="3" Digits="2" Value="{Binding DurationSeconds}" />
-            <controls:LabeledSlider LabelText="Level" Minimum="0" Maximum="1" Digits="2" Value="{Binding Amplitude}" />
+            <controls:LabeledSlider AutomationId="tonegenerator-frequency" LabelText="Frequency" Minimum="20" Maximum="2000" Digits="0" Value="{Binding FrequencyHz}" />
+            <controls:LabeledSlider AutomationId="tonegenerator-duration" LabelText="Duration" Minimum="0.1" Maximum="3" Digits="2" Value="{Binding DurationSeconds}" />
+            <controls:LabeledSlider AutomationId="tonegenerator-level" LabelText="Level" Minimum="0" Maximum="1" Digits="2" Value="{Binding Amplitude}" />
 
             <HorizontalStackLayout Spacing="12">
-                <Button Text="▶ Generate &amp; Play" Command="{Binding GenerateCommand}" />
-                <Button Text="💾 Save" Command="{Binding SaveCommand}" IsEnabled="{Binding CanSave}" BackgroundColor="{StaticResource Tertiary}" />
+                <Button AutomationId="tonegenerator-generate" Text="▶ Generate &amp; Play" Command="{Binding GenerateCommand}" />
+                <Button AutomationId="tonegenerator-save" Text="💾 Save" Command="{Binding SaveCommand}" IsEnabled="{Binding CanSave}" BackgroundColor="{StaticResource Tertiary}" />
             </HorizontalStackLayout>
 
-            <GraphicsView x:Name="WaveformView" HeightRequest="120" BackgroundColor="{StaticResource Gray950}" />
+            <GraphicsView AutomationId="tonegenerator-waveform" x:Name="WaveformView" HeightRequest="120" BackgroundColor="{StaticResource Gray950}" />
 
-            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
-            <Label Text="{Binding StatusMessage}" TextColor="{StaticResource Gray500}" />
+            <ActivityIndicator AutomationId="tonegenerator-busy" IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
+            <Label AutomationId="tonegenerator-status" Text="{Binding StatusMessage}" TextColor="{StaticResource Gray500}" />
 
         </VerticalStackLayout>
     </ScrollView>

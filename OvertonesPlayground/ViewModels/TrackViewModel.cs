@@ -128,6 +128,12 @@ public partial class TrackViewModel : ObservableObject
     public partial string Name { get; set; }
 
     ///<summary>
+    ///One-based position of this track on the Multi-Track page, used to build stable, predictable AutomationIds
+    ///(for example "mixer-channel-2-mute").
+    ///</summary>
+    public int Number { get; init; }
+
+    ///<summary>
     ///Stereo pan for this track's output, from -1 (left) to 1 (right).
     ///</summary>
     [ObservableProperty]

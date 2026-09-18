@@ -2,7 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:OvertonesPlayground.ViewModels"
-             x:Class="OvertonesPlayground.Views.SettingsPage"
+             x:Class="OvertonesPlayground.Views.SettingsPage" AutomationId="settings-page"
              x:DataType="vm:SettingsViewModel"
              Title="{Binding Title}">
 
@@ -10,25 +10,25 @@
 
         <Grid ColumnDefinitions="Auto,*">
             <Label Grid.Column="0" Text="🎨 Theme" VerticalOptions="Center" />
-            <Picker Grid.Column="1" ItemsSource="{Binding ThemeOptions}" SelectedItem="{Binding SelectedTheme}" />
+            <Picker AutomationId="settings-theme" Grid.Column="1" ItemsSource="{Binding ThemeOptions}" SelectedItem="{Binding SelectedTheme}" />
         </Grid>
 
         <Grid ColumnDefinitions="*,Auto">
             <Label Grid.Column="0" Text="Keep screen on while using OvertonesPlayground" VerticalOptions="Center" />
-            <Switch Grid.Column="1" IsToggled="{Binding KeepScreenOn}" />
+            <Switch AutomationId="settings-keep-screen-on" Grid.Column="1" IsToggled="{Binding KeepScreenOn}" />
         </Grid>
 
         <BoxView HeightRequest="1" Color="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource CardStrokeDark}}" />
 
-        <Button Text="⏹ Stop All Audio" Command="{Binding StopAllAudioCommand}" />
+        <Button AutomationId="settings-stop-all-audio" Text="⏹ Stop All Audio" Command="{Binding StopAllAudioCommand}" />
 
-        <Button Text="🗑 Clear Library" BackgroundColor="{StaticResource Gray600}" Command="{Binding ClearLibraryCommand}" />
+        <Button AutomationId="settings-clear-library" Text="🗑 Clear Library" BackgroundColor="{StaticResource Gray600}" Command="{Binding ClearLibraryCommand}" />
 
-        <Label Text="{Binding StatusMessage}" TextColor="{StaticResource Gray500}" />
+        <Label AutomationId="settings-status" Text="{Binding StatusMessage}" TextColor="{StaticResource Gray500}" />
 
         <BoxView HeightRequest="1" Color="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource CardStrokeDark}}" />
 
-        <Label Text="{Binding AppVersion, StringFormat='OvertonesPlayground v{0}'}" TextColor="{StaticResource Gray500}" />
+        <Label AutomationId="settings-version" Text="{Binding AppVersion, StringFormat='OvertonesPlayground v{0}'}" TextColor="{StaticResource Gray500}" />
 
     </VerticalStackLayout>
 

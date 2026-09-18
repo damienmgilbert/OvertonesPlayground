@@ -7,47 +7,47 @@
     FlyoutBehavior="Flyout"
     Title="OvertonesPlayground">
 
-    <FlyoutItem Title="Library" Route="library">
+    <FlyoutItem AutomationId="flyout-library" Title="Library" Route="library">
         <ShellContent ContentTemplate="{DataTemplate views:LibraryPage}" Route="library" />
     </FlyoutItem>
 
-    <FlyoutItem Title="Player" Route="player">
+    <FlyoutItem AutomationId="flyout-player" Title="Player" Route="player">
         <ShellContent ContentTemplate="{DataTemplate views:PlayerPage}" Route="player" />
     </FlyoutItem>
 
-    <FlyoutItem Title="Launchpad" Route="launchpad">
+    <FlyoutItem AutomationId="flyout-launchpad" Title="Launchpad" Route="launchpad">
         <ShellContent ContentTemplate="{DataTemplate views:LaunchpadPage}" Route="launchpad" />
     </FlyoutItem>
 
-    <FlyoutItem Title="Mixer" Route="mixer">
+    <FlyoutItem AutomationId="flyout-mixer" Title="Mixer" Route="mixer">
         <ShellContent ContentTemplate="{DataTemplate views:MixerPage}" Route="mixer" />
     </FlyoutItem>
 
-    <FlyoutItem Title="Multi-Track" Route="multitrack">
+    <FlyoutItem AutomationId="flyout-multitrack" Title="Multi-Track" Route="multitrack">
         <ShellContent ContentTemplate="{DataTemplate views:MultiTrackPage}" Route="multitrack" />
     </FlyoutItem>
 
-    <FlyoutItem Title="Audio Recorder" Route="soundcreator">
+    <FlyoutItem AutomationId="flyout-soundcreator" Title="Audio Recorder" Route="soundcreator">
         <ShellContent ContentTemplate="{DataTemplate views:SoundCreatorPage}" Route="soundcreator" />
     </FlyoutItem>
 
-    <FlyoutItem Title="Tone Generator" Route="tonegenerator">
+    <FlyoutItem AutomationId="flyout-tonegenerator" Title="Tone Generator" Route="tonegenerator">
         <ShellContent ContentTemplate="{DataTemplate views:ToneGeneratorPage}" Route="tonegenerator" />
     </FlyoutItem>
 
-    <FlyoutItem Title="Drum Synth" Route="drumsynth">
+    <FlyoutItem AutomationId="flyout-drumsynth" Title="Drum Synth" Route="drumsynth">
         <ShellContent ContentTemplate="{DataTemplate views:DrumSynthPage}" Route="drumsynth" />
     </FlyoutItem>
 
-    <FlyoutItem Title="Text to Speech" Route="texttospeech">
+    <FlyoutItem AutomationId="flyout-texttospeech" Title="Text to Speech" Route="texttospeech">
         <ShellContent ContentTemplate="{DataTemplate views:TextToSpeechPage}" Route="texttospeech" />
     </FlyoutItem>
 
-    <FlyoutItem Title="Speech to Text" Route="speechtotext">
+    <FlyoutItem AutomationId="flyout-speechtotext" Title="Speech to Text" Route="speechtotext">
         <ShellContent ContentTemplate="{DataTemplate views:SpeechToTextPage}" Route="speechtotext" />
     </FlyoutItem>
 
-    <FlyoutItem Title="Settings" Route="settings">
+    <FlyoutItem AutomationId="flyout-settings" Title="Settings" Route="settings">
         <ShellContent ContentTemplate="{DataTemplate views:SettingsPage}" Route="settings" />
     </FlyoutItem>
 

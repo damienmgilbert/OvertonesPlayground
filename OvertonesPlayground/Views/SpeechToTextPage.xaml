@@ -2,7 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:OvertonesPlayground.ViewModels"
-             x:Class="OvertonesPlayground.Views.SpeechToTextPage"
+             x:Class="OvertonesPlayground.Views.SpeechToTextPage" AutomationId="speechtotext-page"
              x:DataType="vm:SpeechToTextViewModel"
              Title="{Binding Title}">
 
@@ -13,29 +13,29 @@
             <Label Text="Listen live through the microphone and watch the transcript build up, then Copy or Share it. There's no reliable way to transcribe an existing recording - only live listening."
                    FontSize="12" TextColor="{StaticResource Gray500}" />
 
-            <Button Text="🎤 Start Listening"
+            <Button AutomationId="speechtotext-start" Text="🎤 Start Listening"
                     Command="{Binding StartListeningCommand}"
                     IsVisible="{Binding IsListening, Converter={StaticResource InvertedBool}}" />
 
-            <Button Text="⏹ Stop Listening"
+            <Button AutomationId="speechtotext-stop" Text="⏹ Stop Listening"
                     Command="{Binding StopListeningCommand}"
                     IsVisible="{Binding IsListening}"
                     BackgroundColor="{StaticResource Tertiary}" />
 
-            <ActivityIndicator IsRunning="{Binding IsListening}" IsVisible="{Binding IsListening}" />
+            <ActivityIndicator AutomationId="speechtotext-listening" IsRunning="{Binding IsListening}" IsVisible="{Binding IsListening}" />
 
-            <Editor Text="{Binding Transcript}"
+            <Editor AutomationId="speechtotext-transcript" Text="{Binding Transcript}"
                     IsReadOnly="True"
                     Placeholder="Your transcript will appear here as you speak..."
                     AutoSize="TextChanges"
                     MinimumHeightRequest="150" />
 
             <HorizontalStackLayout Spacing="12">
-                <Button Text="📋 Copy" Command="{Binding CopyCommand}" />
-                <Button Text="📤 Share" Command="{Binding ShareCommand}" />
+                <Button AutomationId="speechtotext-copy" Text="📋 Copy" Command="{Binding CopyCommand}" />
+                <Button AutomationId="speechtotext-share" Text="📤 Share" Command="{Binding ShareCommand}" />
             </HorizontalStackLayout>
 
-            <Label Text="{Binding StatusMessage}" TextColor="{StaticResource Gray500}" />
+            <Label AutomationId="speechtotext-status" Text="{Binding StatusMessage}" TextColor="{StaticResource Gray500}" />
 
         </VerticalStackLayout>
     </ScrollView>

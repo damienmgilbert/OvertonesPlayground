@@ -12,6 +12,7 @@
                LineBreakMode="TailTruncation" />
 
         <Slider Grid.Column="1"
+                x:Name="ValueSlider"
                 Minimum="{Binding Minimum, Source={x:Reference Root}}"
                 Maximum="{Binding Maximum, Source={x:Reference Root}}"
                 Value="{Binding Value, Source={x:Reference Root}}"

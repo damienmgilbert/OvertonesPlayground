@@ -2,7 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:OvertonesPlayground.ViewModels"
-             x:Class="OvertonesPlayground.Views.TextToSpeechPage"
+             x:Class="OvertonesPlayground.Views.TextToSpeechPage" AutomationId="texttospeech-page"
              x:DataType="vm:TextToSpeechViewModel"
              Title="{Binding Title}">
 
@@ -13,17 +13,17 @@
             <Label Text="Type something, Generate &amp; Play to preview it, then Save to keep it in your library (and your device's Music folder)."
                    FontSize="12" TextColor="{StaticResource Gray500}" />
 
-            <Editor Placeholder="Type the text to speak..." Text="{Binding Text}" AutoSize="TextChanges" MinimumHeightRequest="120" />
+            <Editor AutomationId="texttospeech-text" Placeholder="Type the text to speak..." Text="{Binding Text}" AutoSize="TextChanges" MinimumHeightRequest="120" />
 
             <HorizontalStackLayout Spacing="12">
-                <Button Text="▶ Generate &amp; Play" Command="{Binding GenerateCommand}" />
-                <Button Text="💾 Save" Command="{Binding SaveCommand}" IsEnabled="{Binding CanSave}" BackgroundColor="{StaticResource Tertiary}" />
+                <Button AutomationId="texttospeech-generate" Text="▶ Generate &amp; Play" Command="{Binding GenerateCommand}" />
+                <Button AutomationId="texttospeech-save" Text="💾 Save" Command="{Binding SaveCommand}" IsEnabled="{Binding CanSave}" BackgroundColor="{StaticResource Tertiary}" />
             </HorizontalStackLayout>
 
-            <GraphicsView x:Name="WaveformView" HeightRequest="120" BackgroundColor="{StaticResource Gray950}" />
+            <GraphicsView AutomationId="texttospeech-waveform" x:Name="WaveformView" HeightRequest="120" BackgroundColor="{StaticResource Gray950}" />
 
-            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
-            <Label Text="{Binding StatusMessage}" TextColor="{StaticResource Gray500}" />
+            <ActivityIndicator AutomationId="texttospeech-busy" IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
+            <Label AutomationId="texttospeech-status" Text="{Binding StatusMessage}" TextColor="{StaticResource Gray500}" />
 
         </VerticalStackLayout>
     </ScrollView>

@@ -2,23 +2,23 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:OvertonesPlayground.ViewModels"
-             x:Class="OvertonesPlayground.Views.MixerPage"
+             x:Class="OvertonesPlayground.Views.MixerPage" AutomationId="mixer-page"
              x:DataType="vm:MixerViewModel"
              Title="{Binding Title}">
 
     <ContentPage.ToolbarItems>
-        <ToolbarItem Text="⏹ Stop All" Command="{Binding StopAllCommand}" />
+        <ToolbarItem AutomationId="mixer-stop-all" Text="⏹ Stop All" Command="{Binding StopAllCommand}" />
     </ContentPage.ToolbarItems>
 
     <!-- Channel strips sit side by side like a real mixing console, scrolling horizontally as tracks are added,
          instead of wrapping into a card grid. -->
-    <CollectionView ItemsSource="{Binding Channels}" Margin="12">
+    <CollectionView AutomationId="mixer-channels" ItemsSource="{Binding Channels}" Margin="12">
         <CollectionView.ItemsLayout>
             <LinearItemsLayout Orientation="Horizontal" ItemSpacing="2" />
         </CollectionView.ItemsLayout>
         <CollectionView.ItemTemplate>
             <DataTemplate x:DataType="vm:MixerChannelViewModel">
-                <Border StrokeShape="RoundRectangle 6,6,0,0" Padding="10,12" VerticalOptions="Fill">
+                <Border AutomationId="{Binding Number, StringFormat='mixer-channel-{0}'}" StrokeShape="RoundRectangle 6,6,0,0" Padding="10,12" VerticalOptions="Fill">
                     <Border.Triggers>
                         <DataTrigger TargetType="Border" Binding="{Binding IsDimmed}" Value="True">
                             <Setter Property="Opacity" Value="0.45" />
@@ -31,16 +31,16 @@
                         <BoxView Grid.Row="0" HeightRequest="4" CornerRadius="2"
                                  Color="{Binding ColorHex, Converter={StaticResource HexColor}}" />
 
-                        <Entry Grid.Row="1" Text="{Binding Name}" FontAttributes="Bold" FontSize="13"
+                        <Entry AutomationId="{Binding Number, StringFormat='mixer-channel-{0}-name'}" Grid.Row="1" Text="{Binding Name}" FontAttributes="Bold" FontSize="13"
                                HorizontalTextAlignment="Center" />
 
-                        <Label Grid.Row="2" Text="{Binding SourceLabel}" FontSize="10"
+                        <Label AutomationId="{Binding Number, StringFormat='mixer-channel-{0}-source'}" Grid.Row="2" Text="{Binding SourceLabel}" FontSize="10"
                                TextColor="{StaticResource Gray500}" HorizontalTextAlignment="Center"
                                LineBreakMode="TailTruncation" />
 
                         <!-- Vertical fader: Rotation is a render-only transform, so the Slider still lays out at its
                              unrotated WidthRequest/HeightRequest - that's why the row height matches WidthRequest. -->
-                        <Slider Grid.Row="3"
+                        <Slider AutomationId="{Binding Number, StringFormat='mixer-channel-{0}-volume-slider'}" Grid.Row="3"
                                 Rotation="270"
                                 WidthRequest="220"
                                 HeightRequest="36"
@@ -49,29 +49,29 @@
                                 Minimum="0" Maximum="1"
                                 Value="{Binding Volume}" />
 
-                        <Label Grid.Row="4" Text="{Binding Volume, StringFormat='{0:P0}'}" FontSize="10"
+                        <Label AutomationId="{Binding Number, StringFormat='mixer-channel-{0}-volume-text'}" Grid.Row="4" Text="{Binding Volume, StringFormat='{0:P0}'}" FontSize="10"
                                TextColor="{StaticResource Gray500}" HorizontalTextAlignment="Center" />
 
-                        <Slider Grid.Row="5" Minimum="-1" Maximum="1" Value="{Binding Pan}" />
+                        <Slider AutomationId="{Binding Number, StringFormat='mixer-channel-{0}-pan-slider'}" Grid.Row="5" Minimum="-1" Maximum="1" Value="{Binding Pan}" />
 
-                        <Label Grid.Row="6" Text="{Binding Pan, StringFormat='Pan {0:+0.00;-0.00;C}'}" FontSize="10"
+                        <Label AutomationId="{Binding Number, StringFormat='mixer-channel-{0}-pan-text'}" Grid.Row="6" Text="{Binding Pan, StringFormat='Pan {0:+0.00;-0.00;C}'}" FontSize="10"
                                TextColor="{StaticResource Gray500}" HorizontalTextAlignment="Center" />
 
                         <HorizontalStackLayout Grid.Row="7" Spacing="6" HorizontalOptions="Center">
-                            <Button Text="M" WidthRequest="36" HeightRequest="34" Padding="0" FontSize="12"
+                            <Button AutomationId="{Binding Number, StringFormat='mixer-channel-{0}-mute'}" Text="M" WidthRequest="48" HeightRequest="48" Padding="0" FontSize="12"
                                     BackgroundColor="{Binding IsMuted, Converter={StaticResource BoolToAccent}}"
                                     Command="{Binding ToggleMuteCommand}" />
-                            <Button Text="S" WidthRequest="36" HeightRequest="34" Padding="0" FontSize="12"
+                            <Button AutomationId="{Binding Number, StringFormat='mixer-channel-{0}-solo'}" Text="S" WidthRequest="48" HeightRequest="48" Padding="0" FontSize="12"
                                     BackgroundColor="{Binding IsSoloed, Converter={StaticResource BoolToAccent}}"
                                     Command="{Binding ToggleSoloCommand}" />
                         </HorizontalStackLayout>
 
                         <HorizontalStackLayout Grid.Row="8" Spacing="6" HorizontalOptions="Center">
-                            <Button Text="📂" WidthRequest="36" HeightRequest="34" Padding="0"
+                            <Button AutomationId="{Binding Number, StringFormat='mixer-channel-{0}-load'}" Text="📂" WidthRequest="48" HeightRequest="48" Padding="0"
                                     Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MixerViewModel}}, Path=LoadSampleCommand}"
                                     CommandParameter="{Binding .}" />
-                            <Button Text="{Binding IsPlaying, Converter={StaticResource PlayPauseIcon}}"
-                                    WidthRequest="36" HeightRequest="34" Padding="0"
+                            <Button AutomationId="{Binding Number, StringFormat='mixer-channel-{0}-play'}" Text="{Binding IsPlaying, Converter={StaticResource PlayPauseIcon}}"
+                                    WidthRequest="48" HeightRequest="48" Padding="0"
                                     IsEnabled="{Binding HasSource}"
                                     Command="{Binding TogglePlaybackCommand}" />
                         </HorizontalStackLayout>

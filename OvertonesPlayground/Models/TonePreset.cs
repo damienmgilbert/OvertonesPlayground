@@ -44,5 +44,10 @@ public record TonePreset(string Name, WaveformType Waveform, double FrequencyHz,
                                                                                                                                                                                                                                                                                                                  0,
                                                                                                                                                                                                                                                                                                                  1.0,
                                                                                                                                                                                                                                                                                                                  0.4), ];
+
+    ///<summary>
+    ///The preset name with spaces hyphenated (for example "Laser-Zap"), used to build stable AutomationIds.
+    ///</summary>
+    public string AutomationKey => Name.Replace(' ', '-');
     #endregion
 }

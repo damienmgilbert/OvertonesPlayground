@@ -33,7 +33,7 @@ public partial class MultiTrackViewModel : BaseViewModel
         for (int i = 1; i <= TrackCount; i++)
         {
             Track track = new() { Name = $"Track {i}" };
-            TrackViewModel trackViewModel = new(track, loggerFactory.CreateLogger<TrackViewModel>());
+            TrackViewModel trackViewModel = new(track, loggerFactory.CreateLogger<TrackViewModel>()) { Number = i };
             trackViewModel.PropertyChanged += OnTrackPropertyChanged;
             Tracks.Add(trackViewModel);
         }

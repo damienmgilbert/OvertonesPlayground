@@ -2,7 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:OvertonesPlayground.ViewModels"
-             x:Class="OvertonesPlayground.Views.SoundCreatorPage"
+             x:Class="OvertonesPlayground.Views.SoundCreatorPage" AutomationId="soundcreator-page"
              x:DataType="vm:SoundCreatorViewModel"
              Title="{Binding Title}">
 
@@ -11,20 +11,20 @@
         <Label Text="🎙 Audio Recorder" FontSize="24" FontAttributes="Bold" HorizontalTextAlignment="Center" />
         <Label Text="Record a new sample to use in the Launchpad, Mixer, or Editor." HorizontalTextAlignment="Center" TextColor="{StaticResource Gray500}" />
 
-        <Entry Placeholder="Recording name" Text="{Binding NewClipName}" IsEnabled="{Binding IsRecording, Converter={StaticResource InvertedBool}}" />
+        <Entry AutomationId="soundcreator-name" Placeholder="Recording name" Text="{Binding NewClipName}" IsEnabled="{Binding IsRecording, Converter={StaticResource InvertedBool}}" />
 
-        <Label Text="{Binding ElapsedText}" FontSize="42" HorizontalTextAlignment="Center" />
+        <Label AutomationId="soundcreator-elapsed" Text="{Binding ElapsedText}" FontSize="42" HorizontalTextAlignment="Center" />
 
-        <Button Text="{Binding IsRecording, Converter={StaticResource RecordButtonLabel}}"
+        <Button AutomationId="soundcreator-record" Text="{Binding IsRecording, Converter={StaticResource RecordButtonLabel}}"
                 BackgroundColor="{Binding IsRecording, Converter={StaticResource BoolToAccent}}"
                 HeightRequest="70"
                 Command="{Binding ToggleRecordingCommand}" />
 
-        <Button Text="✕ Cancel Recording"
+        <Button AutomationId="soundcreator-cancel" Text="✕ Cancel Recording"
                 IsVisible="{Binding IsRecording}"
                 Command="{Binding CancelRecordingCommand}" />
 
-        <Label Text="{Binding StatusMessage}" HorizontalTextAlignment="Center" TextColor="{StaticResource Gray500}" />
+        <Label AutomationId="soundcreator-status" Text="{Binding StatusMessage}" HorizontalTextAlignment="Center" TextColor="{StaticResource Gray500}" />
 
     </VerticalStackLayout>
 

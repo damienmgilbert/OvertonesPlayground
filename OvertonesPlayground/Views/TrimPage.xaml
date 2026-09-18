@@ -4,50 +4,50 @@
              xmlns:vm="clr-namespace:OvertonesPlayground.ViewModels"
              xmlns:models="clr-namespace:OvertonesPlayground.Models"
              xmlns:controls="clr-namespace:OvertonesPlayground.Controls"
-             x:Class="OvertonesPlayground.Views.TrimPage"
+             x:Class="OvertonesPlayground.Views.TrimPage" AutomationId="trim-page"
              x:DataType="vm:TrimViewModel"
              Title="{Binding Title}">
 
     <ContentPage.ToolbarItems>
-        <ToolbarItem Text="↶ Undo" Command="{Binding UndoCommand}" />
-        <ToolbarItem Text="↷ Redo" Command="{Binding RedoCommand}" />
-        <ToolbarItem Text="💾 Save" Command="{Binding SaveCommand}" />
+        <ToolbarItem AutomationId="trim-undo" Text="↶ Undo" Command="{Binding UndoCommand}" />
+        <ToolbarItem AutomationId="trim-redo" Text="↷ Redo" Command="{Binding RedoCommand}" />
+        <ToolbarItem AutomationId="trim-save" Text="💾 Save" Command="{Binding SaveCommand}" />
     </ContentPage.ToolbarItems>
 
     <Grid RowDefinitions="Auto,Auto,*,Auto,Auto,Auto" Padding="16,12" RowSpacing="12">
 
-        <Label Grid.Row="0" Text="{Binding LoadedClip.Name}" FontSize="18" FontAttributes="Bold" LineBreakMode="TailTruncation" />
+        <Label AutomationId="trim-clip-name" Grid.Row="0" Text="{Binding LoadedClip.Name}" FontSize="18" FontAttributes="Bold" LineBreakMode="TailTruncation" />
 
         <!-- Start/end time steppers, with the total duration centered between them. Tap a time to type an exact value. -->
         <Grid Grid.Row="1" ColumnDefinitions="*,Auto,*" ColumnSpacing="8">
             <HorizontalStackLayout Grid.Column="0" Spacing="4" HorizontalOptions="Start">
-                <Button Text="−" Padding="12,6" FontAttributes="Bold" Command="{Binding DecreaseStartCommand}" />
-                <Label Text="{Binding StartTimeText}" VerticalOptions="Center" FontAttributes="Bold" MinimumWidthRequest="60" HorizontalTextAlignment="Center">
+                <Button AutomationId="trim-start-decrease" Text="−" Padding="12,6" FontAttributes="Bold" Command="{Binding DecreaseStartCommand}" />
+                <Label AutomationId="trim-start-time" Text="{Binding StartTimeText}" VerticalOptions="Center" FontAttributes="Bold" MinimumWidthRequest="60" HorizontalTextAlignment="Center">
                     <Label.GestureRecognizers>
                         <TapGestureRecognizer Tapped="OnStartTimeTapped" />
                     </Label.GestureRecognizers>
                 </Label>
-                <Button Text="+" Padding="12,6" FontAttributes="Bold" Command="{Binding IncreaseStartCommand}" />
+                <Button AutomationId="trim-start-increase" Text="+" Padding="12,6" FontAttributes="Bold" Command="{Binding IncreaseStartCommand}" />
             </HorizontalStackLayout>
 
             <VerticalStackLayout Grid.Column="1" HorizontalOptions="Center" VerticalOptions="Center">
                 <Label Text="Total" FontSize="11" TextColor="{StaticResource Gray500}" HorizontalTextAlignment="Center" />
-                <Label Text="{Binding TotalTimeText}" FontAttributes="Bold" HorizontalTextAlignment="Center" />
+                <Label AutomationId="trim-total-time" Text="{Binding TotalTimeText}" FontAttributes="Bold" HorizontalTextAlignment="Center" />
             </VerticalStackLayout>
 
             <HorizontalStackLayout Grid.Column="2" Spacing="4" HorizontalOptions="End">
-                <Button Text="−" Padding="12,6" FontAttributes="Bold" Command="{Binding DecreaseEndCommand}" />
-                <Label Text="{Binding EndTimeText}" VerticalOptions="Center" FontAttributes="Bold" MinimumWidthRequest="60" HorizontalTextAlignment="Center">
+                <Button AutomationId="trim-end-decrease" Text="−" Padding="12,6" FontAttributes="Bold" Command="{Binding DecreaseEndCommand}" />
+                <Label AutomationId="trim-end-time" Text="{Binding EndTimeText}" VerticalOptions="Center" FontAttributes="Bold" MinimumWidthRequest="60" HorizontalTextAlignment="Center">
                     <Label.GestureRecognizers>
                         <TapGestureRecognizer Tapped="OnEndTimeTapped" />
                     </Label.GestureRecognizers>
                 </Label>
-                <Button Text="+" Padding="12,6" FontAttributes="Bold" Command="{Binding IncreaseEndCommand}" />
+                <Button AutomationId="trim-end-increase" Text="+" Padding="12,6" FontAttributes="Bold" Command="{Binding IncreaseEndCommand}" />
             </HorizontalStackLayout>
         </Grid>
 
         <!-- Waveform, with draggable start/end handles and a scrub-to-seek gesture -->
-        <Grid Grid.Row="2" x:Name="WaveformContainer" SizeChanged="OnWaveformContainerSizeChanged" VerticalOptions="Center" IsClippedToBounds="True">
+        <Grid AutomationId="trim-waveform" Grid.Row="2" x:Name="WaveformContainer" SizeChanged="OnWaveformContainerSizeChanged" VerticalOptions="Center" IsClippedToBounds="True">
             <Grid.GestureRecognizers>
                 <TapGestureRecognizer Tapped="OnWaveformTapped" />
             </Grid.GestureRecognizers>
@@ -56,7 +56,7 @@
 
             <BoxView WidthRequest="2" Color="#0078D4" HorizontalOptions="Start" VerticalOptions="Fill" HeightRequest="240"
                      Margin="-1,0,0,0" TranslationX="{Binding StartHandleX}" InputTransparent="True" />
-            <Border WidthRequest="32" HeightRequest="32" StrokeShape="RoundRectangle 16" Stroke="Transparent" BackgroundColor="#0078D4"
+            <Border AutomationId="trim-start-handle" WidthRequest="32" HeightRequest="32" StrokeShape="RoundRectangle 16" Stroke="Transparent" BackgroundColor="#0078D4"
                     HorizontalOptions="Start" VerticalOptions="Center" Margin="-16,0,0,0" TranslationX="{Binding StartHandleX}">
                 <Label Text="&#8249;" TextColor="White" FontAttributes="Bold" FontSize="16" HorizontalTextAlignment="Center" VerticalTextAlignment="Center" InputTransparent="True" />
                 <Border.GestureRecognizers>
@@ -66,7 +66,7 @@
 
             <BoxView WidthRequest="2" Color="#0078D4" HorizontalOptions="Start" VerticalOptions="Fill" HeightRequest="240"
                      Margin="-1,0,0,0" TranslationX="{Binding EndHandleX}" InputTransparent="True" />
-            <Border WidthRequest="32" HeightRequest="32" StrokeShape="RoundRectangle 16" Stroke="Transparent" BackgroundColor="#0078D4"
+            <Border AutomationId="trim-end-handle" WidthRequest="32" HeightRequest="32" StrokeShape="RoundRectangle 16" Stroke="Transparent" BackgroundColor="#0078D4"
                     HorizontalOptions="Start" VerticalOptions="Center" Margin="-16,0,0,0" TranslationX="{Binding EndHandleX}">
                 <Label Text="&#8250;" TextColor="White" FontAttributes="Bold" FontSize="16" HorizontalTextAlignment="Center" VerticalTextAlignment="Center" InputTransparent="True" />
                 <Border.GestureRecognizers>
@@ -78,7 +78,7 @@
         <!-- Trim mode toggle + zoom/pan controls -->
         <Grid Grid.Row="3" ColumnDefinitions="*,Auto" ColumnSpacing="10">
             <HorizontalStackLayout Grid.Column="0" Spacing="10" HorizontalOptions="Start">
-                <Button Text="✂ Trim" Command="{Binding SetModeCommand}" CommandParameter="{x:Static models:TrimMode.Trim}">
+                <Button AutomationId="trim-mode-trim" Text="✂ Trim" Command="{Binding SetModeCommand}" CommandParameter="{x:Static models:TrimMode.Trim}">
                     <Button.Triggers>
                         <DataTrigger TargetType="Button" Binding="{Binding Mode}" Value="{x:Static models:TrimMode.TrimMiddle}">
                             <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardBackgroundDark}}" />
@@ -86,7 +86,7 @@
                         </DataTrigger>
                     </Button.Triggers>
                 </Button>
-                <Button Text="✂ Trim Middle" Command="{Binding SetModeCommand}" CommandParameter="{x:Static models:TrimMode.TrimMiddle}">
+                <Button AutomationId="trim-mode-trim-middle" Text="✂ Trim Middle" Command="{Binding SetModeCommand}" CommandParameter="{x:Static models:TrimMode.TrimMiddle}">
                     <Button.Triggers>
                         <DataTrigger TargetType="Button" Binding="{Binding Mode}" Value="{x:Static models:TrimMode.Trim}">
                             <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardBackgroundDark}}" />
@@ -97,28 +97,28 @@
             </HorizontalStackLayout>
 
             <HorizontalStackLayout Grid.Column="1" Spacing="4" HorizontalOptions="End">
-                <Button Text="‹" Padding="10,6" FontAttributes="Bold" Command="{Binding PanEarlierCommand}" IsVisible="{Binding IsZoomed}" />
-                <Button Text="−" Padding="10,6" FontAttributes="Bold" Command="{Binding ZoomOutCommand}" />
-                <Label Text="{Binding ZoomLevelText}" VerticalOptions="Center" FontSize="12" MinimumWidthRequest="30" HorizontalTextAlignment="Center" />
-                <Button Text="+" Padding="10,6" FontAttributes="Bold" Command="{Binding ZoomInCommand}" />
-                <Button Text="›" Padding="10,6" FontAttributes="Bold" Command="{Binding PanLaterCommand}" IsVisible="{Binding IsZoomed}" />
+                <Button AutomationId="trim-pan-earlier" Text="‹" Padding="10,6" FontAttributes="Bold" Command="{Binding PanEarlierCommand}" IsVisible="{Binding IsZoomed}" />
+                <Button AutomationId="trim-zoom-out" Text="−" Padding="10,6" FontAttributes="Bold" Command="{Binding ZoomOutCommand}" />
+                <Label AutomationId="trim-zoom-level" Text="{Binding ZoomLevelText}" VerticalOptions="Center" FontSize="12" MinimumWidthRequest="30" HorizontalTextAlignment="Center" />
+                <Button AutomationId="trim-zoom-in" Text="+" Padding="10,6" FontAttributes="Bold" Command="{Binding ZoomInCommand}" />
+                <Button AutomationId="trim-pan-later" Text="›" Padding="10,6" FontAttributes="Bold" Command="{Binding PanLaterCommand}" IsVisible="{Binding IsZoomed}" />
             </HorizontalStackLayout>
         </Grid>
 
         <!-- Split / insert at playhead -->
         <HorizontalStackLayout Grid.Row="4" Spacing="10" HorizontalOptions="Center">
-            <Button Text="✂ Split at Playhead" Command="{Binding SplitAtPlayheadCommand}" />
-            <Button Text="📎 Insert Clip Here" Clicked="OnInsertClipClicked" />
+            <Button AutomationId="trim-split" Text="✂ Split at Playhead" Command="{Binding SplitAtPlayheadCommand}" />
+            <Button AutomationId="trim-insert-clip" Text="📎 Insert Clip Here" Clicked="OnInsertClipClicked" />
         </HorizontalStackLayout>
 
         <!-- Playback transport + bottom quick-action bar -->
         <VerticalStackLayout Grid.Row="5" Spacing="12">
 
             <HorizontalStackLayout Spacing="20" HorizontalOptions="Center">
-                <Button Text="⏮" Command="{Binding SkipToStartCommand}" WidthRequest="52" HeightRequest="52" CornerRadius="26" FontSize="18" />
-                <Button Text="{Binding IsPlaying, Converter={StaticResource PlayPauseIcon}}" Command="{Binding PlayPauseCommand}"
+                <Button AutomationId="trim-skip-start" Text="⏮" Command="{Binding SkipToStartCommand}" WidthRequest="52" HeightRequest="52" CornerRadius="26" FontSize="18" />
+                <Button AutomationId="trim-play-pause" Text="{Binding IsPlaying, Converter={StaticResource PlayPauseIcon}}" Command="{Binding PlayPauseCommand}"
                         WidthRequest="72" HeightRequest="72" CornerRadius="36" FontSize="26" />
-                <Button Text="⏭" Command="{Binding SkipToEndCommand}" WidthRequest="52" HeightRequest="52" CornerRadius="26" FontSize="18" />
+                <Button AutomationId="trim-skip-end" Text="⏭" Command="{Binding SkipToEndCommand}" WidthRequest="52" HeightRequest="52" CornerRadius="26" FontSize="18" />
             </HorizontalStackLayout>
 
             <Border StrokeShape="Rectangle"
@@ -127,7 +127,7 @@
                 <VerticalStackLayout Padding="16,12" Spacing="10">
 
                     <HorizontalStackLayout Spacing="16" HorizontalOptions="Center">
-                        <Button Text="🔊 Volume" Padding="12,8" Command="{Binding ToggleToolCommand}" CommandParameter="{x:Static models:TrimTool.Volume}"
+                        <Button AutomationId="trim-tool-volume" Text="🔊 Volume" Padding="12,8" Command="{Binding ToggleToolCommand}" CommandParameter="{x:Static models:TrimTool.Volume}"
                                 BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardBackgroundDark}}"
                                 TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}">
                             <Button.Triggers>
@@ -137,7 +137,7 @@
                                 </DataTrigger>
                             </Button.Triggers>
                         </Button>
-                        <Button Text="📈 Fade In" Padding="12,8" Command="{Binding ToggleToolCommand}" CommandParameter="{x:Static models:TrimTool.FadeIn}"
+                        <Button AutomationId="trim-tool-fade-in" Text="📈 Fade In" Padding="12,8" Command="{Binding ToggleToolCommand}" CommandParameter="{x:Static models:TrimTool.FadeIn}"
                                 BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardBackgroundDark}}"
                                 TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}">
                             <Button.Triggers>
@@ -147,7 +147,7 @@
                                 </DataTrigger>
                             </Button.Triggers>
                         </Button>
-                        <Button Text="📉 Fade Out" Padding="12,8" Command="{Binding ToggleToolCommand}" CommandParameter="{x:Static models:TrimTool.FadeOut}"
+                        <Button AutomationId="trim-tool-fade-out" Text="📉 Fade Out" Padding="12,8" Command="{Binding ToggleToolCommand}" CommandParameter="{x:Static models:TrimTool.FadeOut}"
                                 BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardBackgroundDark}}"
                                 TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}">
                             <Button.Triggers>
@@ -159,15 +159,15 @@
                         </Button>
                     </HorizontalStackLayout>
 
-                    <controls:LabeledSlider IsVisible="{Binding ActiveTool, Converter={StaticResource EnumEquals}, ConverterParameter=Volume}"
+                    <controls:LabeledSlider AutomationId="trim-gain" IsVisible="{Binding ActiveTool, Converter={StaticResource EnumEquals}, ConverterParameter=Volume}"
                                              LabelText="Volume (dB)" Minimum="-24" Maximum="24" Digits="1" Value="{Binding GainDb}" />
-                    <controls:LabeledSlider IsVisible="{Binding ActiveTool, Converter={StaticResource EnumEquals}, ConverterParameter=FadeIn}"
+                    <controls:LabeledSlider AutomationId="trim-fade-in" IsVisible="{Binding ActiveTool, Converter={StaticResource EnumEquals}, ConverterParameter=FadeIn}"
                                              LabelText="Fade in (s)" Minimum="0" Maximum="5" Digits="2" Value="{Binding FadeInSeconds}" />
-                    <controls:LabeledSlider IsVisible="{Binding ActiveTool, Converter={StaticResource EnumEquals}, ConverterParameter=FadeOut}"
+                    <controls:LabeledSlider AutomationId="trim-fade-out" IsVisible="{Binding ActiveTool, Converter={StaticResource EnumEquals}, ConverterParameter=FadeOut}"
                                              LabelText="Fade out (s)" Minimum="0" Maximum="5" Digits="2" Value="{Binding FadeOutSeconds}" />
 
-                    <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
-                    <Label Text="{Binding StatusMessage}" TextColor="{StaticResource Gray500}" IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBool}}" />
+                    <ActivityIndicator AutomationId="trim-busy" IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
+                    <Label AutomationId="trim-status" Text="{Binding StatusMessage}" TextColor="{StaticResource Gray500}" IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBool}}" />
                 </VerticalStackLayout>
             </Border>
         </VerticalStackLayout>

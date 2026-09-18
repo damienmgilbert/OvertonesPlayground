@@ -35,7 +35,7 @@ public partial class MixerViewModel : BaseViewModel
         for (int i = 1; i <= 4; i++)
         {
             MixerChannelStrip strip = new() { Name = $"Track {i}", ColorHex = ChannelPalette[(i - 1) % ChannelPalette.Length] };
-            MixerChannelViewModel channel = new(strip, _playbackService, loggerFactory.CreateLogger<MixerChannelViewModel>());
+            MixerChannelViewModel channel = new(strip, _playbackService, loggerFactory.CreateLogger<MixerChannelViewModel>()) { Number = i };
             channel.PropertyChanged += OnChannelPropertyChanged;
             Channels.Add(channel);
         }

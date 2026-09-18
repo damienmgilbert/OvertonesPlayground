@@ -171,6 +171,12 @@ public partial class MixerChannelViewModel : ObservableObject
     public partial string Name { get; set; }
 
     ///<summary>
+    ///One-based position of this channel in the mixer, used to build stable, predictable AutomationIds
+    ///(for example "mixer-channel-2-mute").
+    ///</summary>
+    public int Number { get; init; }
+
+    ///<summary>
     ///Stereo pan value (-1 left to +1 right).
     ///</summary>
     [ObservableProperty]

@@ -84,12 +84,37 @@ public partial class LabeledSlider : ContentView
         }
     }
 
+    /// <summary>
+    /// Gives the inner slider and entry their own AutomationIds, derived from this control's, so each is individually
+    /// addressable by UI automation (for example "tone-frequency-slider" and "tone-frequency-entry"). Uses
+    /// <c>SetValue</c> rather than the <c>AutomationId</c> setter because that setter throws if assigned twice, and a
+    /// bound AutomationId can legitimately change.
+    /// </summary>
+    private void ApplyInnerAutomationIds()
+    {
+        if (string.IsNullOrEmpty(AutomationId))
+        {
+            return;
+        }
+
+        ValueSlider.SetValue(AutomationIdProperty, $"{AutomationId}-slider");
+        ValueEntry.SetValue(AutomationIdProperty, $"{AutomationId}-entry");
+    }
+
+    // AutomationId may be a binding, which is only resolved once the binding context arrives, so re-derive then too.
+    protected override void OnBindingContextChanged()
+    {
+        base.OnBindingContextChanged();
+        ApplyInnerAutomationIds();
+    }
+
     protected override void OnParentSet()
     {
         base.OnParentSet();
         if (Parent is not null)
         {
             SyncEntryText();
+            ApplyInnerAutomationIds();
         }
     }
 }

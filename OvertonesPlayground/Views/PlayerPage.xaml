@@ -3,7 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:OvertonesPlayground.ViewModels"
              xmlns:controls="clr-namespace:OvertonesPlayground.Controls"
-             x:Class="OvertonesPlayground.Views.PlayerPage"
+             x:Class="OvertonesPlayground.Views.PlayerPage" AutomationId="player-page"
              x:DataType="vm:PlayerViewModel"
              Title="{Binding Title}">
 
@@ -11,7 +11,7 @@
 
         <VerticalStackLayout Grid.Row="0" VerticalOptions="Center" HorizontalOptions="Center" Spacing="16" Padding="40">
             <Label Text="🎵" FontSize="88" HorizontalTextAlignment="Center" TextColor="{StaticResource Gray300}" />
-            <Label Text="{Binding ClipName}" FontSize="26" FontAttributes="Bold" HorizontalTextAlignment="Center" />
+            <Label AutomationId="player-clip-name" Text="{Binding ClipName}" FontSize="26" FontAttributes="Bold" HorizontalTextAlignment="Center" />
         </VerticalStackLayout>
 
         <Border Grid.Row="1" StrokeShape="Rectangle"
@@ -19,30 +19,30 @@
                 BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource CardBackgroundDark}}">
             <VerticalStackLayout Padding="24,18" Spacing="14">
 
-                <Slider x:Name="PositionSlider"
+                <Slider AutomationId="player-position-slider" x:Name="PositionSlider"
                         Minimum="0"
                         Maximum="{Binding DurationSeconds}"
                         Value="{Binding PositionSeconds, Mode=OneWay}"
                         DragCompleted="OnSeekCompleted" />
 
                 <Grid ColumnDefinitions="*,*">
-                    <Label Grid.Column="0" Text="{Binding PositionText}" FontSize="12" TextColor="{StaticResource Gray500}" />
-                    <Label Grid.Column="1" Text="{Binding DurationText}" FontSize="12" TextColor="{StaticResource Gray500}" HorizontalTextAlignment="End" />
+                    <Label AutomationId="player-position-text" Grid.Column="0" Text="{Binding PositionText}" FontSize="12" TextColor="{StaticResource Gray500}" />
+                    <Label AutomationId="player-duration-text" Grid.Column="1" Text="{Binding DurationText}" FontSize="12" TextColor="{StaticResource Gray500}" HorizontalTextAlignment="End" />
                 </Grid>
 
                 <HorizontalStackLayout Spacing="20" HorizontalOptions="Center">
-                    <Button Text="{Binding IsPlaying, Converter={StaticResource PlayPauseIcon}}"
+                    <Button AutomationId="player-play-pause" Text="{Binding IsPlaying, Converter={StaticResource PlayPauseIcon}}"
                             FontSize="28"
                             WidthRequest="90"
                             HeightRequest="90"
                             CornerRadius="45"
                             Command="{Binding PlayPauseCommand}" />
-                    <Button Text="⏹" FontSize="24" WidthRequest="70" HeightRequest="70" CornerRadius="35"
+                    <Button AutomationId="player-stop" Text="⏹" FontSize="24" WidthRequest="70" HeightRequest="70" CornerRadius="35"
                             VerticalOptions="Center"
                             Command="{Binding StopCommand}" />
                 </HorizontalStackLayout>
 
-                <controls:LabeledSlider LabelText="Volume" Minimum="0" Maximum="1" Digits="2" Value="{Binding Volume}" />
+                <controls:LabeledSlider AutomationId="player-volume" LabelText="Volume" Minimum="0" Maximum="1" Digits="2" Value="{Binding Volume}" />
 
             </VerticalStackLayout>
         </Border>
