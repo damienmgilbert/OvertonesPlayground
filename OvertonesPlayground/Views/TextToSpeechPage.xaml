@@ -20,7 +20,7 @@
                 <Button AutomationId="texttospeech-save" Text="💾 Save" Command="{Binding SaveCommand}" IsEnabled="{Binding CanSave}" BackgroundColor="{StaticResource Tertiary}" />
             </HorizontalStackLayout>
 
-            <GraphicsView AutomationId="texttospeech-waveform" x:Name="WaveformView" HeightRequest="120" BackgroundColor="{StaticResource Gray950}" />
+            <GraphicsView SemanticProperties.Description="Waveform preview of the generated speech" AutomationId="texttospeech-waveform" x:Name="WaveformView" HeightRequest="120" BackgroundColor="{StaticResource Gray950}" />
 
             <ActivityIndicator AutomationId="texttospeech-busy" IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
             <Label AutomationId="texttospeech-status" Text="{Binding StatusMessage}" TextColor="{StaticResource Gray500}" />

@@ -29,7 +29,7 @@
                 </CollectionView.ItemTemplate>
             </CollectionView>
 
-            <GraphicsView AutomationId="drumsynth-waveform" x:Name="WaveformView" HeightRequest="120" BackgroundColor="{StaticResource Gray950}" />
+            <GraphicsView SemanticProperties.Description="Waveform preview of the generated drum sound" AutomationId="drumsynth-waveform" x:Name="WaveformView" HeightRequest="120" BackgroundColor="{StaticResource Gray950}" />
 
             <VerticalStackLayout BindingContext="{Binding SelectedDrumParams}"
                                   x:DataType="vm:DrumSynthParametersViewModel"

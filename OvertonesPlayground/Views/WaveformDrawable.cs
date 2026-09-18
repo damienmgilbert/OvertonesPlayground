@@ -5,6 +5,11 @@ namespace OvertonesPlayground.Views;
 ///</summary>
 public class WaveformDrawable : IDrawable
 {
+    #region Fields
+    // Parsed once: Draw is a hot path, so it must not parse a hex string (and allocate a Color) on every redraw.
+    private static readonly Color BarColor = Color.FromArgb("#512BD4");
+    #endregion
+
     #region Public methods
 
     ///<summary>
@@ -20,7 +25,7 @@ public class WaveformDrawable : IDrawable
             return;
         }
 
-        canvas.StrokeColor = Color.FromArgb("#512BD4");
+        canvas.StrokeColor = BarColor;
         canvas.StrokeSize = Math.Max(1f, dirtyRect.Width / Peaks.Length * 0.7f);
 
         float midY = dirtyRect.Height / 2;

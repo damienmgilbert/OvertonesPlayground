@@ -13,7 +13,7 @@
 
             <Label AutomationId="audioeditor-clip-name" Text="{Binding LoadedClip.Name}" FontSize="22" FontAttributes="Bold" />
 
-            <GraphicsView AutomationId="audioeditor-waveform" x:Name="WaveformView" HeightRequest="160" BackgroundColor="{StaticResource Gray950}" />
+            <GraphicsView SemanticProperties.Description="Waveform of the clip being edited" AutomationId="audioeditor-waveform" x:Name="WaveformView" HeightRequest="160" BackgroundColor="{StaticResource Gray950}" />
 
             <HorizontalStackLayout Spacing="12">
                 <Button AutomationId="audioeditor-preview" Text="▶ Preview" Command="{Binding PreviewCommand}" />

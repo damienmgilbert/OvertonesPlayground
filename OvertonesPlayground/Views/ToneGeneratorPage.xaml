@@ -45,7 +45,7 @@
                 <Button AutomationId="tonegenerator-save" Text="💾 Save" Command="{Binding SaveCommand}" IsEnabled="{Binding CanSave}" BackgroundColor="{StaticResource Tertiary}" />
             </HorizontalStackLayout>
 
-            <GraphicsView AutomationId="tonegenerator-waveform" x:Name="WaveformView" HeightRequest="120" BackgroundColor="{StaticResource Gray950}" />
+            <GraphicsView SemanticProperties.Description="Waveform preview of the generated tone" AutomationId="tonegenerator-waveform" x:Name="WaveformView" HeightRequest="120" BackgroundColor="{StaticResource Gray950}" />
 
             <ActivityIndicator AutomationId="tonegenerator-busy" IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
             <Label AutomationId="tonegenerator-status" Text="{Binding StatusMessage}" TextColor="{StaticResource Gray500}" />

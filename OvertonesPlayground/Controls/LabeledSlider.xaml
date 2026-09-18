@@ -13,13 +13,17 @@
 
         <Slider Grid.Column="1"
                 x:Name="ValueSlider"
+                SemanticProperties.Description="{Binding LabelText, Source={x:Reference Root}}"
                 Minimum="{Binding Minimum, Source={x:Reference Root}}"
                 Maximum="{Binding Maximum, Source={x:Reference Root}}"
                 Value="{Binding Value, Source={x:Reference Root}}"
                 VerticalOptions="Center" />
 
+        <!-- A Hint, not a Description: on Android a content description on an EditText can replace the value that a
+             screen reader reads out. -->
         <Entry Grid.Column="2"
                x:Name="ValueEntry"
+               SemanticProperties.Hint="{Binding LabelText, Source={x:Reference Root}, StringFormat='Type an exact value for {0}'}"
                Keyboard="Numeric"
                HorizontalTextAlignment="Center"
                VerticalOptions="Center"

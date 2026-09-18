@@ -11,6 +11,17 @@ public class TrimWaveformDrawable : IDrawable
     private const float RulerHeight = 22f;
     #endregion
 
+    #region Fields
+    // Draw runs on every playhead tick (10 Hz) and on every handle-drag update, and paints one bar per peak, so nothing
+    // in it may parse strings or allocate: colors are parsed once here, and ruler labels are cached by second.
+    private static readonly Color DiscardedBarColor = Color.FromArgb("#4D4D4D");
+    private static readonly Color KeptBarColor = Color.FromArgb("#0078D4");
+    private static readonly Color PlayheadColor = Color.FromArgb("#FFB900");
+    private static readonly Color RulerTextColor = Color.FromArgb("#A3A3A3");
+    private static readonly Color RulerTickColor = Color.FromArgb("#3D3D3D");
+    private readonly Dictionary<int, string> _rulerLabels = [];
+    #endregion
+
     #region Private methods
     ///<summary>
     ///Draws the tick marks and second labels for the top ruler strip, for ticks that fall within the visible window.
@@ -24,8 +35,8 @@ public class TrimWaveformDrawable : IDrawable
         }
 
         canvas.FontSize = 11;
-        canvas.FontColor = Color.FromArgb("#A3A3A3");
-        canvas.StrokeColor = Color.FromArgb("#3D3D3D");
+        canvas.FontColor = RulerTextColor;
+        canvas.StrokeColor = RulerTickColor;
         canvas.StrokeSize = 1;
 
         double windowEnd = WindowStartSeconds + VisibleSeconds;
@@ -35,7 +46,7 @@ public class TrimWaveformDrawable : IDrawable
         {
             float x = TimeToX(seconds, dirtyRect);
             canvas.DrawLine(x, RulerHeight - 6, x, RulerHeight);
-            canvas.DrawString($"{(int)Math.Round(seconds)}s", x + 3, 1, 48, RulerHeight - 4, HorizontalAlignment.Left, VerticalAlignment.Top);
+            canvas.DrawString(RulerLabel(seconds), x + 3, 1, 48, RulerHeight - 4, HorizontalAlignment.Left, VerticalAlignment.Top);
         }
     }
 
@@ -65,16 +76,39 @@ public class TrimWaveformDrawable : IDrawable
 
         canvas.StrokeSize = Math.Max(1f, stepX * 0.7f);
 
+        // Only touch the canvas's stroke color when the bar's color actually changes (kept/discarded runs are long).
+        Color? currentColor = null;
         for (int i = firstPeak; i < lastPeak; i++)
         {
             float x = (i - firstPeak) * stepX;
             bool isInsideSelection = x >= selStartX && x <= selEndX;
             bool isKept = IsTrimMiddleMode ? !isInsideSelection : isInsideSelection;
-            canvas.StrokeColor = isKept ? Color.FromArgb("#0078D4") : Color.FromArgb("#4D4D4D");
+            Color barColor = isKept ? KeptBarColor : DiscardedBarColor;
+            if (!ReferenceEquals(barColor, currentColor))
+            {
+                canvas.StrokeColor = barColor;
+                currentColor = barColor;
+            }
 
             float barHeight = Peaks[i] * (waveHeight / 2);
             canvas.DrawLine(x, midY - barHeight, x, midY + barHeight);
         }
+    }
+
+    ///<summary>
+    ///Returns the ruler label for a tick (for example "30s"), formatting each distinct second only once. The cache is
+    ///bounded by the clip's length in seconds.
+    ///</summary>
+    private string RulerLabel(double seconds)
+    {
+        int wholeSeconds = (int)Math.Round(seconds);
+        if (!_rulerLabels.TryGetValue(wholeSeconds, out string? label))
+        {
+            label = $"{wholeSeconds}s";
+            _rulerLabels[wholeSeconds] = label;
+        }
+
+        return label;
     }
 
     ///<summary>
@@ -102,7 +136,7 @@ public class TrimWaveformDrawable : IDrawable
             bool isPlayheadVisible = playX >= 0 && playX <= dirtyRect.Width;
             if (isPlayheadVisible)
             {
-                canvas.StrokeColor = Color.FromArgb("#FFB900");
+                canvas.StrokeColor = PlayheadColor;
                 canvas.StrokeSize = 2;
                 canvas.DrawLine(playX, RulerHeight, playX, dirtyRect.Height);
             }

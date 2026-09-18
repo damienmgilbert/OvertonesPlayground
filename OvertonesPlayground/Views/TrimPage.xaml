@@ -22,7 +22,7 @@
         <Grid Grid.Row="1" ColumnDefinitions="*,Auto,*" ColumnSpacing="8">
             <HorizontalStackLayout Grid.Column="0" Spacing="4" HorizontalOptions="Start">
                 <Button AutomationId="trim-start-decrease" Text="−" Padding="12,6" FontAttributes="Bold" Command="{Binding DecreaseStartCommand}" />
-                <Label AutomationId="trim-start-time" Text="{Binding StartTimeText}" VerticalOptions="Center" FontAttributes="Bold" MinimumWidthRequest="60" HorizontalTextAlignment="Center">
+                <Label SemanticProperties.Hint="Enter an exact start time" AutomationId="trim-start-time" Text="{Binding StartTimeText}" VerticalOptions="Center" FontAttributes="Bold" MinimumWidthRequest="60" HorizontalTextAlignment="Center">
                     <Label.GestureRecognizers>
                         <TapGestureRecognizer Tapped="OnStartTimeTapped" />
                     </Label.GestureRecognizers>
@@ -37,7 +37,7 @@
 
             <HorizontalStackLayout Grid.Column="2" Spacing="4" HorizontalOptions="End">
                 <Button AutomationId="trim-end-decrease" Text="−" Padding="12,6" FontAttributes="Bold" Command="{Binding DecreaseEndCommand}" />
-                <Label AutomationId="trim-end-time" Text="{Binding EndTimeText}" VerticalOptions="Center" FontAttributes="Bold" MinimumWidthRequest="60" HorizontalTextAlignment="Center">
+                <Label SemanticProperties.Hint="Enter an exact end time" AutomationId="trim-end-time" Text="{Binding EndTimeText}" VerticalOptions="Center" FontAttributes="Bold" MinimumWidthRequest="60" HorizontalTextAlignment="Center">
                     <Label.GestureRecognizers>
                         <TapGestureRecognizer Tapped="OnEndTimeTapped" />
                     </Label.GestureRecognizers>
@@ -52,11 +52,11 @@
                 <TapGestureRecognizer Tapped="OnWaveformTapped" />
             </Grid.GestureRecognizers>
 
-            <GraphicsView x:Name="WaveformView" HeightRequest="240" BackgroundColor="{StaticResource Gray950}" />
+            <GraphicsView SemanticProperties.Description="Waveform of the clip. The part that Save keeps is highlighted" SemanticProperties.Hint="Tap to move the playhead" x:Name="WaveformView" HeightRequest="240" BackgroundColor="{StaticResource Gray950}" />
 
             <BoxView WidthRequest="2" Color="#0078D4" HorizontalOptions="Start" VerticalOptions="Fill" HeightRequest="240"
                      Margin="-1,0,0,0" TranslationX="{Binding StartHandleX}" InputTransparent="True" />
-            <Border AutomationId="trim-start-handle" WidthRequest="32" HeightRequest="32" StrokeShape="RoundRectangle 16" Stroke="Transparent" BackgroundColor="#0078D4"
+            <Border SemanticProperties.Description="Trim start handle" SemanticProperties.Hint="Drag to move the start. The minus and plus buttons do the same" AutomationId="trim-start-handle" WidthRequest="32" HeightRequest="32" StrokeShape="RoundRectangle 16" Stroke="Transparent" BackgroundColor="#0078D4"
                     HorizontalOptions="Start" VerticalOptions="Center" Margin="-16,0,0,0" TranslationX="{Binding StartHandleX}">
                 <Label Text="&#8249;" TextColor="White" FontAttributes="Bold" FontSize="16" HorizontalTextAlignment="Center" VerticalTextAlignment="Center" InputTransparent="True" />
                 <Border.GestureRecognizers>
@@ -66,7 +66,7 @@
 
             <BoxView WidthRequest="2" Color="#0078D4" HorizontalOptions="Start" VerticalOptions="Fill" HeightRequest="240"
                      Margin="-1,0,0,0" TranslationX="{Binding EndHandleX}" InputTransparent="True" />
-            <Border AutomationId="trim-end-handle" WidthRequest="32" HeightRequest="32" StrokeShape="RoundRectangle 16" Stroke="Transparent" BackgroundColor="#0078D4"
+            <Border SemanticProperties.Description="Trim end handle" SemanticProperties.Hint="Drag to move the end. The minus and plus buttons do the same" AutomationId="trim-end-handle" WidthRequest="32" HeightRequest="32" StrokeShape="RoundRectangle 16" Stroke="Transparent" BackgroundColor="#0078D4"
                     HorizontalOptions="Start" VerticalOptions="Center" Margin="-16,0,0,0" TranslationX="{Binding EndHandleX}">
                 <Label Text="&#8250;" TextColor="White" FontAttributes="Bold" FontSize="16" HorizontalTextAlignment="Center" VerticalTextAlignment="Center" InputTransparent="True" />
                 <Border.GestureRecognizers>
