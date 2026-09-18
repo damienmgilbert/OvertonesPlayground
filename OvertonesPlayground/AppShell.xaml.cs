@@ -26,6 +26,11 @@ public partial class AppShell : Shell
 
         Navigating += (_, e) => Log_Navigating(e.Current?.Location, e.Target?.Location);
         Navigated += (_, e) => Log_Navigated(e.Current?.Location, e.Source);
+
+#if ANDROID
+        // Edge-to-edge: keeps the app bar color and system bar icon contrast in step with the theme and current page.
+        Loaded += (_, _) => SystemBars.Attach(this);
+#endif
     }
     #endregion
 

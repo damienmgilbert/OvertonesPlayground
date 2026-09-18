@@ -3,7 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:OvertonesPlayground.ViewModels"
              xmlns:controls="clr-namespace:OvertonesPlayground.Controls"
-             x:Class="OvertonesPlayground.Views.PlayerPage" AutomationId="player-page"
+             x:Class="OvertonesPlayground.Views.PlayerPage" AutomationId="player-page" SafeAreaEdges="All"
              x:DataType="vm:PlayerViewModel"
              Title="{Binding Title}">
 

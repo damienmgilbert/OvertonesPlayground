@@ -4,7 +4,7 @@
              xmlns:vm="clr-namespace:OvertonesPlayground.ViewModels"
              xmlns:models="clr-namespace:OvertonesPlayground.Models"
              xmlns:controls="clr-namespace:OvertonesPlayground.Controls"
-             x:Class="OvertonesPlayground.Views.ToneGeneratorPage" AutomationId="tonegenerator-page"
+             x:Class="OvertonesPlayground.Views.ToneGeneratorPage" AutomationId="tonegenerator-page" SafeAreaEdges="All"
              x:DataType="vm:ToneGeneratorViewModel"
              Title="{Binding Title}">
 

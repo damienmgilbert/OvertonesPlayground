@@ -5,7 +5,7 @@
              xmlns:models="clr-namespace:OvertonesPlayground.Models"
              xmlns:controls="clr-namespace:OvertonesPlayground.Controls"
              xmlns:toolkit="clr-namespace:CommunityToolkit.Maui.Views;assembly=CommunityToolkit.Maui"
-             x:Class="OvertonesPlayground.Views.DrumSynthPage" AutomationId="drumsynth-page"
+             x:Class="OvertonesPlayground.Views.DrumSynthPage" AutomationId="drumsynth-page" SafeAreaEdges="All"
              x:DataType="vm:DrumSynthViewModel"
              Title="{Binding Title}">
 

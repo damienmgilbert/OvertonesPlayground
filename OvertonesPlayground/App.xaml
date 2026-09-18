@@ -3,6 +3,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:local="clr-namespace:OvertonesPlayground"
              xmlns:conv="clr-namespace:OvertonesPlayground.Converters"
+             xmlns:android="clr-namespace:Microsoft.Maui.Controls.PlatformConfiguration.AndroidSpecific;assembly=Microsoft.Maui.Controls"
+             android:Application.WindowSoftInputModeAdjust="Resize"
              x:Class="OvertonesPlayground.App">
     <Application.Resources>
         <ResourceDictionary>

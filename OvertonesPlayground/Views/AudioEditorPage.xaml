@@ -4,7 +4,7 @@
              xmlns:vm="clr-namespace:OvertonesPlayground.ViewModels"
              xmlns:controls="clr-namespace:OvertonesPlayground.Controls"
              xmlns:toolkit="clr-namespace:CommunityToolkit.Maui.Views;assembly=CommunityToolkit.Maui"
-             x:Class="OvertonesPlayground.Views.AudioEditorPage" AutomationId="audioeditor-page"
+             x:Class="OvertonesPlayground.Views.AudioEditorPage" AutomationId="audioeditor-page" SafeAreaEdges="All"
              x:DataType="vm:AudioEditorViewModel"
              Title="{Binding Title}">
 
