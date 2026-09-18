@@ -22,16 +22,38 @@ public partial class LaunchpadPadViewModel : ObservableObject
         OnPropertyChanged(nameof(Label));
         OnPropertyChanged(nameof(ColorHex));
         OnPropertyChanged(nameof(HasClip));
+        OnPropertyChanged(nameof(AccessibleName));
+    }
+
+    ///<summary>
+    ///Unassigns the pad's sample and resets it to the empty, non-looping state.
+    ///</summary>
+    public void Clear()
+    {
+        Pad.ClipPath = null;
+        Pad.Label = string.Empty;
+        Pad.IsLooping = false;
+        OnPropertyChanged(nameof(Label));
+        OnPropertyChanged(nameof(ColorHex));
+        OnPropertyChanged(nameof(HasClip));
+        OnPropertyChanged(nameof(IsLooping));
+        OnPropertyChanged(nameof(AccessibleName));
     }
 
     public void ToggleLoop()
     {
         Pad.IsLooping = !Pad.IsLooping;
         OnPropertyChanged(nameof(IsLooping));
+        OnPropertyChanged(nameof(AccessibleName));
     }
     #endregion
 
     #region Public properties
+    ///<summary>
+    ///Name announced by a screen reader, for example "Pad 3, Kick, looping".
+    ///</summary>
+    public string AccessibleName => $"Pad {Index + 1}, {Label}{(IsLooping ? ", looping" : string.Empty)}";
+
     ///<summary>
     ///Display color for the pad; a dimmed color when empty.
     ///</summary>

@@ -1,25 +1,31 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:OvertonesPlayground.Controls"
              xmlns:vm="clr-namespace:OvertonesPlayground.ViewModels"
              x:Class="OvertonesPlayground.Views.LaunchpadPage" AutomationId="launchpad-page"
              x:DataType="vm:LaunchpadViewModel"
              Title="{Binding Title}">
 
     <ContentPage.ToolbarItems>
+        <ToolbarItem AutomationId="launchpad-edit" Text="{Binding EditModeText}" Command="{Binding ToggleEditModeCommand}" />
         <ToolbarItem AutomationId="launchpad-stop-all" Text="⏹ Stop All" Command="{Binding StopAllCommand}" />
     </ContentPage.ToolbarItems>
 
     <Grid RowDefinitions="Auto,*" Margin="12" RowSpacing="8">
     <Label AutomationId="launchpad-hint" Grid.Row="0" FontSize="12" TextColor="{StaticResource Gray500}"
-           Text="Tap a pad to trigger it • Double-tap to assign a sample • Triple-tap to toggle looping" />
+           Text="{Binding HintText}" />
     <CollectionView AutomationId="launchpad-pads" Grid.Row="1" ItemsSource="{Binding Pads}">
         <CollectionView.ItemsLayout>
             <GridItemsLayout Orientation="Vertical" Span="8" HorizontalItemSpacing="6" VerticalItemSpacing="6" />
         </CollectionView.ItemsLayout>
         <CollectionView.ItemTemplate>
             <DataTemplate x:DataType="vm:LaunchpadPadViewModel">
-                <Border AutomationId="{Binding Index, StringFormat='launchpad-pad-{0}'}" StrokeShape="RoundRectangle 10"
+                <!-- Long-press opens the pad menu (assign / loop / stop / clear): the alternative to the double- and triple-tap
+                     gestures. LongPressBorder is used because a behavior declared in a template gets no binding context. -->
+                <controls:LongPressBorder AutomationId="{Binding Index, StringFormat='launchpad-pad-{0}'}" StrokeShape="RoundRectangle 10" LongPressed="OnPadLongPressed"
+                        SemanticProperties.Description="{Binding AccessibleName}"
+                        SemanticProperties.Hint="Plays this pad. Long-press, or turn on edit mode, for more options"
                         BackgroundColor="{Binding ColorHex, Converter={StaticResource HexColor}}"
                         HeightRequest="90">
                     <Border.GestureRecognizers>
@@ -47,8 +53,17 @@
                                TextColor="White"
                                HorizontalOptions="Center"
                                IsVisible="{Binding IsLooping}" />
+                        <!-- Edit-mode badge: a plain tap opens the pad menu instead of playing the pad. -->
+                        <Label Grid.Row="0"
+                               Text="✎"
+                               FontSize="16"
+                               TextColor="White"
+                               HorizontalOptions="End"
+                               VerticalOptions="Start"
+                               InputTransparent="True"
+                               IsVisible="{Binding Source={RelativeSource AncestorType={x:Type vm:LaunchpadViewModel}}, Path=IsEditMode}" />
                     </Grid>
-                </Border>
+                </controls:LongPressBorder>
             </DataTemplate>
         </CollectionView.ItemTemplate>
     </CollectionView>
