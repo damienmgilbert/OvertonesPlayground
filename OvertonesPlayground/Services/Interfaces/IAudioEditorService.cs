@@ -31,6 +31,13 @@ public interface IAudioEditorService
     Task<string> CutAsync(string sourcePath, TimeSpan start, TimeSpan end, string outputName);
 
     ///<summary>
+    ///Finds the sample nearest <paramref name="near"/> where the waveform crosses zero, searching up to
+    ///<paramref name="maxSearch"/> in each direction. Returns <paramref name="near"/> unchanged if no crossing is
+    ///found within range. Used to snap a trim handle so a cut doesn't land mid-waveform and click audibly.
+    ///</summary>
+    Task<TimeSpan> FindNearestZeroCrossingAsync(string sourcePath, TimeSpan near, TimeSpan maxSearch);
+
+    ///<summary>
     ///Reads a WAV file and downsamples it into <paramref name="peakCount"/> amplitude peaks for waveform display.
     ///</summary>
     Task<float[]> GetWaveformPeaksAsync(string filePath, int peakCount);
@@ -44,6 +51,12 @@ public interface IAudioEditorService
     ///Plays the audio backwards.
     ///</summary>
     Task<string> ReverseAsync(string sourcePath, string outputName);
+
+    ///<summary>
+    ///Splits the audio at <paramref name="at"/> into two new files - everything before it, and everything from it
+    ///on - and returns both paths.
+    ///</summary>
+    Task<(string BeforePath, string AfterPath)> SplitAsync(string sourcePath, TimeSpan at, string outputNameBefore, string outputNameAfter);
 
     ///<summary>
     ///Cuts the audio down to the [<paramref name="start"/>, <paramref name="end"/>] range.

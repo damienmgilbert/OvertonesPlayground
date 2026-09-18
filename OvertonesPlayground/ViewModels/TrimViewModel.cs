@@ -18,6 +18,16 @@ public partial class TrimViewModel : BaseViewModel
     ///How far each tap of a start/end stepper button moves that handle.
     ///</summary>
     private const double NudgeStepSeconds = 0.1;
+
+    ///<summary>
+    ///The zoom levels the Zoom In/Out commands step through.
+    ///</summary>
+    private static readonly double[] ZoomSteps = [1, 2, 4, 8, 16];
+
+    ///<summary>
+    ///How far, in each direction, to search for a zero crossing when a handle drag completes.
+    ///</summary>
+    private static readonly TimeSpan ZeroCrossingSearchWindow = TimeSpan.FromSeconds(0.01);
     #endregion
 
     #region Fields
@@ -84,7 +94,8 @@ public partial class TrimViewModel : BaseViewModel
             DurationSeconds = Math.Max(clip.Duration.TotalSeconds, 0.1);
             TrimStartSeconds = 0;
             TrimEndSeconds = DurationSeconds;
-            RulerStepSeconds = PickRulerStep(DurationSeconds);
+            ZoomLevel = 1;
+            WindowStartSeconds = 0;
             _undoStack.Clear();
             _redoStack.Clear();
             UndoCommand.NotifyCanExecuteChanged();
@@ -119,6 +130,15 @@ public partial class TrimViewModel : BaseViewModel
     [LoggerMessage(Level = LogLevel.Debug, Message = "Saved trimmed clip '{ClipName}'.")]
     private partial void Log_SavedTrim(string clipName);
 
+    [LoggerMessage(Level = LogLevel.Error, Message = "Failed to snap a handle to a zero crossing for clip '{ClipName}'.")]
+    private partial void Log_SnapFailed(Exception exception, string clipName);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Split clip '{ClipName}' at {PositionSeconds}s.")]
+    private partial void Log_Split(string clipName, double positionSeconds);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Failed to split clip '{ClipName}'.")]
+    private partial void Log_SplitFailed(Exception exception, string clipName);
+
     partial void OnClipIdChanged(string? value)
     {
         if (!string.IsNullOrEmpty(value))
@@ -133,15 +153,59 @@ public partial class TrimViewModel : BaseViewModel
     {
         OnPropertyChanged(nameof(EndHandleX));
         OnPropertyChanged(nameof(EndTimeText));
+        FollowWindowIfNeeded(value);
     }
 
     partial void OnTrimStartSecondsChanged(double value)
     {
         OnPropertyChanged(nameof(StartHandleX));
         OnPropertyChanged(nameof(StartTimeText));
+        FollowWindowIfNeeded(value);
     }
 
     partial void OnViewportWidthChanged(double value) => RaiseGeometryChanged();
+
+    partial void OnWindowStartSecondsChanged(double value) => RaiseGeometryChanged();
+
+    partial void OnZoomLevelChanged(double value) => RaiseGeometryChanged();
+
+    ///<summary>
+    ///Shifts the zoom window so it keeps including <paramref name="focusSeconds"/>, e.g. while dragging a handle
+    ///near the edge of a zoomed-in view.
+    ///</summary>
+    private void FollowWindowIfNeeded(double focusSeconds)
+    {
+        if (!IsZoomed)
+        {
+            return;
+        }
+
+        double margin = VisibleSeconds * 0.1;
+        double maxWindowStart = Math.Max(0, DurationSeconds - VisibleSeconds);
+
+        if (focusSeconds < WindowStartSeconds + margin)
+        {
+            WindowStartSeconds = Math.Clamp(focusSeconds - margin, 0, maxWindowStart);
+        }
+        else if (focusSeconds > WindowStartSeconds + VisibleSeconds - margin)
+        {
+            WindowStartSeconds = Math.Clamp(focusSeconds - VisibleSeconds + margin, 0, maxWindowStart);
+        }
+    }
+
+    [RelayCommand]
+    private void PanEarlier()
+    {
+        double maxWindowStart = Math.Max(0, DurationSeconds - VisibleSeconds);
+        WindowStartSeconds = Math.Clamp(WindowStartSeconds - (VisibleSeconds * 0.5), 0, maxWindowStart);
+    }
+
+    [RelayCommand]
+    private void PanLater()
+    {
+        double maxWindowStart = Math.Max(0, DurationSeconds - VisibleSeconds);
+        WindowStartSeconds = Math.Clamp(WindowStartSeconds + (VisibleSeconds * 0.5), 0, maxWindowStart);
+    }
 
     ///<summary>
     ///Chooses a "nice" ruler tick spacing (in seconds) that yields roughly 6-10 ticks across the clip.
@@ -175,14 +239,20 @@ public partial class TrimViewModel : BaseViewModel
     }
 
     ///<summary>
-    ///Re-raises every property derived from <see cref="ViewportWidth"/>/<see cref="DurationSeconds"/>.
+    ///Re-raises every property derived from <see cref="ViewportWidth"/>/<see cref="DurationSeconds"/>/
+    ///<see cref="ZoomLevel"/>/<see cref="WindowStartSeconds"/>, and recomputes the ruler spacing for the now-visible
+    ///window.
     ///</summary>
     private void RaiseGeometryChanged()
     {
+        RulerStepSeconds = PickRulerStep(VisibleSeconds);
+        OnPropertyChanged(nameof(VisibleSeconds));
         OnPropertyChanged(nameof(PixelsPerSecond));
         OnPropertyChanged(nameof(StartHandleX));
         OnPropertyChanged(nameof(EndHandleX));
         OnPropertyChanged(nameof(TotalTimeText));
+        OnPropertyChanged(nameof(IsZoomed));
+        OnPropertyChanged(nameof(ZoomLevelText));
     }
 
     [RelayCommand(CanExecute = nameof(CanRedo))]
@@ -251,6 +321,41 @@ public partial class TrimViewModel : BaseViewModel
     private void SkipToEnd() { _playbackService.Seek(TimeSpan.FromSeconds(TrimEndSeconds)); }
     [RelayCommand]
     private void SkipToStart() { _playbackService.Seek(TimeSpan.FromSeconds(TrimStartSeconds)); }
+
+    [RelayCommand]
+    private async Task SplitAtPlayheadAsync()
+    {
+        bool cannotSplit = LoadedClip is null || IsBusy || PositionSeconds <= 0 || PositionSeconds >= DurationSeconds;
+        if (cannotSplit)
+        {
+            StatusMessage = "Move the playhead into the clip first.";
+            return;
+        }
+
+        IsBusy = true;
+        try
+        {
+            TimeSpan at = TimeSpan.FromSeconds(PositionSeconds);
+            string baseName = LoadedClip!.Name;
+            (string beforePath, string afterPath) = await _editorService.SplitAsync(LoadedClip.FilePath, at, $"{baseName} (part 1)", $"{baseName} (part 2)");
+
+            await _libraryService.AddClipAsync(beforePath, $"{baseName} (part 1)", isUserRecording: true);
+            await _libraryService.AddClipAsync(afterPath, $"{baseName} (part 2)", isUserRecording: true);
+
+            Log_Split(baseName, PositionSeconds);
+            await Shell.Current.GoToAsync("..");
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException or NotSupportedException)
+        {
+            Log_SplitFailed(ex, LoadedClip!.Name);
+            StatusMessage = "Couldn't split that clip.";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
     [RelayCommand]
     private void ToggleTool(TrimTool tool) { ActiveTool = ActiveTool == tool ? TrimTool.None : tool; }
     [RelayCommand(CanExecute = nameof(CanUndo))]
@@ -267,6 +372,22 @@ public partial class TrimViewModel : BaseViewModel
         TrimEndSeconds = end;
         UndoCommand.NotifyCanExecuteChanged();
         RedoCommand.NotifyCanExecuteChanged();
+    }
+
+    [RelayCommand]
+    private void ZoomIn()
+    {
+        double next = ZoomSteps.FirstOrDefault(z => z > ZoomLevel, ZoomSteps[^1]);
+        ZoomLevel = next;
+        WindowStartSeconds = Math.Clamp(WindowStartSeconds, 0, Math.Max(0, DurationSeconds - VisibleSeconds));
+    }
+
+    [RelayCommand]
+    private void ZoomOut()
+    {
+        double next = ZoomSteps.LastOrDefault(z => z < ZoomLevel, ZoomSteps[0]);
+        ZoomLevel = next;
+        WindowStartSeconds = Math.Clamp(WindowStartSeconds, 0, Math.Max(0, DurationSeconds - VisibleSeconds));
     }
     #endregion
 
@@ -291,6 +412,60 @@ public partial class TrimViewModel : BaseViewModel
         double clamped = Math.Clamp(seconds, 0, DurationSeconds);
         _playbackService.Seek(TimeSpan.FromSeconds(clamped));
         PositionSeconds = clamped;
+    }
+
+    ///<summary>
+    ///Sets the end handle to an exact time, in seconds, clamped to [start, duration]. Used by tap-to-type entry.
+    ///</summary>
+    public void SetEndTime(double seconds) => TrimEndSeconds = Math.Clamp(seconds, TrimStartSeconds, DurationSeconds);
+
+    ///<summary>
+    ///Sets the start handle to an exact time, in seconds, clamped to [0, end]. Used by tap-to-type entry.
+    ///</summary>
+    public void SetStartTime(double seconds) => TrimStartSeconds = Math.Clamp(seconds, 0, TrimEndSeconds);
+
+    ///<summary>
+    ///Snaps the end handle to the nearest zero crossing, if one is found nearby. Called after a drag completes so a
+    ///cut doesn't land mid-waveform and click audibly. Leaves the handle where it was dropped if snapping fails.
+    ///</summary>
+    public async Task SnapEndToZeroCrossingAsync()
+    {
+        if (LoadedClip is null)
+        {
+            return;
+        }
+
+        try
+        {
+            TimeSpan snapped = await _editorService.FindNearestZeroCrossingAsync(LoadedClip.FilePath, TimeSpan.FromSeconds(TrimEndSeconds), ZeroCrossingSearchWindow);
+            TrimEndSeconds = Math.Clamp(snapped.TotalSeconds, TrimStartSeconds, DurationSeconds);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException or NotSupportedException)
+        {
+            Log_SnapFailed(ex, LoadedClip.Name);
+        }
+    }
+
+    ///<summary>
+    ///Snaps the start handle to the nearest zero crossing, if one is found nearby. Called after a drag completes so a
+    ///cut doesn't land mid-waveform and click audibly. Leaves the handle where it was dropped if snapping fails.
+    ///</summary>
+    public async Task SnapStartToZeroCrossingAsync()
+    {
+        if (LoadedClip is null)
+        {
+            return;
+        }
+
+        try
+        {
+            TimeSpan snapped = await _editorService.FindNearestZeroCrossingAsync(LoadedClip.FilePath, TimeSpan.FromSeconds(TrimStartSeconds), ZeroCrossingSearchWindow);
+            TrimStartSeconds = Math.Clamp(snapped.TotalSeconds, 0, TrimEndSeconds);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException or NotSupportedException)
+        {
+            Log_SnapFailed(ex, LoadedClip.Name);
+        }
     }
 
     ///<summary>
@@ -339,9 +514,9 @@ public partial class TrimViewModel : BaseViewModel
     public partial double DurationSeconds { get; set; } = 1;
 
     ///<summary>
-    ///Horizontal offset, in device-independent pixels, of the end handle within the waveform view.
+    ///Horizontal offset, in device-independent pixels, of the end handle within the current zoom window.
     ///</summary>
-    public double EndHandleX => TrimEndSeconds * PixelsPerSecond;
+    public double EndHandleX => (TrimEndSeconds - WindowStartSeconds) * PixelsPerSecond;
 
     ///<summary>
     ///The end handle's position, formatted as "mm:ss.f".
@@ -373,6 +548,11 @@ public partial class TrimViewModel : BaseViewModel
     public partial bool IsPlaying { get; set; }
 
     ///<summary>
+    ///Whether the waveform is zoomed in past 1x.
+    ///</summary>
+    public bool IsZoomed => ZoomLevel > 1.01;
+
+    ///<summary>
     ///The clip currently loaded into the trim editor.
     ///</summary>
     [ObservableProperty]
@@ -385,9 +565,9 @@ public partial class TrimViewModel : BaseViewModel
     public partial TrimMode Mode { get; set; }
 
     ///<summary>
-    ///How many device-independent pixels represent one second of audio in the waveform view.
+    ///How many device-independent pixels represent one second of audio in the current zoom window.
     ///</summary>
-    public double PixelsPerSecond => DurationSeconds > 0 ? ViewportWidth / DurationSeconds : 0;
+    public double PixelsPerSecond => VisibleSeconds > 0 ? ViewportWidth / VisibleSeconds : 0;
 
     ///<summary>
     ///Current preview playback position, in seconds.
@@ -402,9 +582,9 @@ public partial class TrimViewModel : BaseViewModel
     public partial double RulerStepSeconds { get; set; } = 30;
 
     ///<summary>
-    ///Horizontal offset, in device-independent pixels, of the start handle within the waveform view.
+    ///Horizontal offset, in device-independent pixels, of the start handle within the current zoom window.
     ///</summary>
-    public double StartHandleX => TrimStartSeconds * PixelsPerSecond;
+    public double StartHandleX => (TrimStartSeconds - WindowStartSeconds) * PixelsPerSecond;
 
     ///<summary>
     ///The start handle's position, formatted as "mm:ss.f".
@@ -429,6 +609,11 @@ public partial class TrimViewModel : BaseViewModel
     public partial double TrimStartSeconds { get; set; }
 
     ///<summary>
+    ///How many seconds of the clip are currently visible across the waveform view's width, given the current zoom.
+    ///</summary>
+    public double VisibleSeconds => ZoomLevel > 0 ? DurationSeconds / ZoomLevel : DurationSeconds;
+
+    ///<summary>
     ///Rendered width, in device-independent pixels, of the waveform view - set from the page once its container is
     ///measured.
     ///</summary>
@@ -440,5 +625,22 @@ public partial class TrimViewModel : BaseViewModel
     ///</summary>
     [ObservableProperty]
     public partial float[] WaveformPeaks { get; set; } = [];
+
+    ///<summary>
+    ///Clip-relative time, in seconds, at the left edge of the current zoom window.
+    ///</summary>
+    [ObservableProperty]
+    public partial double WindowStartSeconds { get; set; }
+
+    ///<summary>
+    ///How many times zoomed in the waveform view currently is. 1 shows the whole clip.
+    ///</summary>
+    [ObservableProperty]
+    public partial double ZoomLevel { get; set; } = 1;
+
+    ///<summary>
+    ///<see cref="ZoomLevel"/>, formatted for display (e.g. "4x").
+    ///</summary>
+    public string ZoomLevelText => $"{ZoomLevel:0.#}x";
     #endregion
 }

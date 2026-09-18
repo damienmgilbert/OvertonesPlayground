@@ -2,7 +2,8 @@ namespace OvertonesPlayground.Views;
 
 ///<summary>
 ///Renders the Trim page's waveform: a time ruler along the top, mirrored bars shaded to show what Save will keep vs.
-///discard, and a playhead line at the current preview position.
+///discard, and a playhead line at the current preview position. Every position is relative to the current zoom
+///window (<see cref="WindowStartSeconds"/>/<see cref="VisibleSeconds"/>), not the clip's full duration.
 ///</summary>
 public class TrimWaveformDrawable : IDrawable
 {
@@ -12,11 +13,11 @@ public class TrimWaveformDrawable : IDrawable
 
     #region Private methods
     ///<summary>
-    ///Draws the tick marks and second labels for the top ruler strip.
+    ///Draws the tick marks and second labels for the top ruler strip, for ticks that fall within the visible window.
     ///</summary>
     private void DrawRuler(ICanvas canvas, RectF dirtyRect)
     {
-        bool cannotDrawTicks = DurationSeconds <= 0 || RulerStepSeconds <= 0;
+        bool cannotDrawTicks = VisibleSeconds <= 0 || RulerStepSeconds <= 0;
         if (cannotDrawTicks)
         {
             return;
@@ -27,38 +28,46 @@ public class TrimWaveformDrawable : IDrawable
         canvas.StrokeColor = Color.FromArgb("#3D3D3D");
         canvas.StrokeSize = 1;
 
-        for (double seconds = 0; seconds <= DurationSeconds + 0.01; seconds += RulerStepSeconds)
+        double windowEnd = WindowStartSeconds + VisibleSeconds;
+        double firstTick = Math.Ceiling(WindowStartSeconds / RulerStepSeconds) * RulerStepSeconds;
+
+        for (double seconds = firstTick; seconds <= windowEnd + 0.01; seconds += RulerStepSeconds)
         {
-            float x = (float)(seconds / DurationSeconds * dirtyRect.Width);
+            float x = TimeToX(seconds, dirtyRect);
             canvas.DrawLine(x, RulerHeight - 6, x, RulerHeight);
-            canvas.DrawString($"{(int)seconds}s", x + 3, 1, 48, RulerHeight - 4, HorizontalAlignment.Left, VerticalAlignment.Top);
+            canvas.DrawString($"{(int)Math.Round(seconds)}s", x + 3, 1, 48, RulerHeight - 4, HorizontalAlignment.Left, VerticalAlignment.Top);
         }
     }
 
     ///<summary>
-    ///Draws the mirrored bar waveform, shading bars outside Save's kept range.
+    ///Draws the mirrored bar waveform for the peaks that fall within the visible window, shading bars outside Save's
+    ///kept range.
     ///</summary>
     private void DrawWaveform(ICanvas canvas, RectF dirtyRect)
     {
-        bool hasNothingToDraw = Peaks.Length == 0 || DurationSeconds <= 0;
+        bool hasNothingToDraw = Peaks.Length == 0 || DurationSeconds <= 0 || VisibleSeconds <= 0;
         if (hasNothingToDraw)
         {
             return;
         }
 
+        double peaksPerSecond = Peaks.Length / DurationSeconds;
+        int firstPeak = Math.Clamp((int)(WindowStartSeconds * peaksPerSecond), 0, Peaks.Length - 1);
+        int lastPeak = Math.Clamp((int)Math.Ceiling((WindowStartSeconds + VisibleSeconds) * peaksPerSecond), firstPeak + 1, Peaks.Length);
+
         float waveTop = RulerHeight;
         float waveHeight = dirtyRect.Height - RulerHeight;
         float midY = waveTop + (waveHeight / 2);
-        float stepX = dirtyRect.Width / Peaks.Length;
+        float stepX = dirtyRect.Width / (lastPeak - firstPeak);
 
-        float selStartX = (float)(SelectionStartSeconds / DurationSeconds * dirtyRect.Width);
-        float selEndX = (float)(SelectionEndSeconds / DurationSeconds * dirtyRect.Width);
+        float selStartX = TimeToX(SelectionStartSeconds, dirtyRect);
+        float selEndX = TimeToX(SelectionEndSeconds, dirtyRect);
 
         canvas.StrokeSize = Math.Max(1f, stepX * 0.7f);
 
-        for (int i = 0; i < Peaks.Length; i++)
+        for (int i = firstPeak; i < lastPeak; i++)
         {
-            float x = i * stepX;
+            float x = (i - firstPeak) * stepX;
             bool isInsideSelection = x >= selStartX && x <= selEndX;
             bool isKept = IsTrimMiddleMode ? !isInsideSelection : isInsideSelection;
             canvas.StrokeColor = isKept ? Color.FromArgb("#0078D4") : Color.FromArgb("#4D4D4D");
@@ -67,6 +76,11 @@ public class TrimWaveformDrawable : IDrawable
             canvas.DrawLine(x, midY - barHeight, x, midY + barHeight);
         }
     }
+
+    ///<summary>
+    ///Converts a clip-relative time into an x coordinate within the current zoom window.
+    ///</summary>
+    private float TimeToX(double seconds, RectF dirtyRect) => (float)((seconds - WindowStartSeconds) / VisibleSeconds * dirtyRect.Width);
     #endregion
 
     #region Public methods
@@ -81,20 +95,24 @@ public class TrimWaveformDrawable : IDrawable
         DrawRuler(canvas, dirtyRect);
         DrawWaveform(canvas, dirtyRect);
 
-        bool canDrawPlayhead = DurationSeconds > 0;
+        bool canDrawPlayhead = VisibleSeconds > 0;
         if (canDrawPlayhead)
         {
-            float playX = (float)(PlayheadSeconds / DurationSeconds * dirtyRect.Width);
-            canvas.StrokeColor = Color.FromArgb("#FFB900");
-            canvas.StrokeSize = 2;
-            canvas.DrawLine(playX, RulerHeight, playX, dirtyRect.Height);
+            float playX = TimeToX(PlayheadSeconds, dirtyRect);
+            bool isPlayheadVisible = playX >= 0 && playX <= dirtyRect.Width;
+            if (isPlayheadVisible)
+            {
+                canvas.StrokeColor = Color.FromArgb("#FFB900");
+                canvas.StrokeSize = 2;
+                canvas.DrawLine(playX, RulerHeight, playX, dirtyRect.Height);
+            }
         }
     }
     #endregion
 
     #region Public properties
     ///<summary>
-    ///Total duration, in seconds, the ruler and waveform positions are measured against.
+    ///Total duration, in seconds, of the loaded clip - used only to map <see cref="Peaks"/> indices to time.
     ///</summary>
     public double DurationSeconds { get; set; } = 1;
 
@@ -105,7 +123,7 @@ public class TrimWaveformDrawable : IDrawable
     public bool IsTrimMiddleMode { get; set; }
 
     ///<summary>
-    ///Normalized amplitude peaks (0 to 1) to render, left to right.
+    ///Normalized amplitude peaks (0 to 1) for the whole clip, left to right.
     ///</summary>
     public float[] Peaks { get; set; } = [];
 
@@ -128,5 +146,15 @@ public class TrimWaveformDrawable : IDrawable
     ///Start of the selected range, in seconds.
     ///</summary>
     public double SelectionStartSeconds { get; set; }
+
+    ///<summary>
+    ///How many seconds of the clip are currently visible across the drawing's full width.
+    ///</summary>
+    public double VisibleSeconds { get; set; } = 1;
+
+    ///<summary>
+    ///Clip-relative time, in seconds, at the left edge of the drawing.
+    ///</summary>
+    public double WindowStartSeconds { get; set; }
     #endregion
 }

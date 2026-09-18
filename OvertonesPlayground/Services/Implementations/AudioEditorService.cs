@@ -103,6 +103,46 @@ public class AudioEditorService : IAudioEditorService
     }
 
     ///<inheritdoc/>
+    public async Task<TimeSpan> FindNearestZeroCrossingAsync(string sourcePath, TimeSpan near, TimeSpan maxSearch)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
+
+        WavFile wav = await WavFile.ReadAsync(sourcePath);
+        bool hasNoSamples = wav.Samples.Length < 2;
+        if (hasNoSamples)
+        {
+            return near;
+        }
+
+        int frameCount = wav.Channels * wav.SampleRate;
+        int centerIndex = Math.Clamp((int)(near.TotalSeconds * frameCount), 0, wav.Samples.Length - 1);
+        int maxOffset = Math.Max(1, (int)(maxSearch.TotalSeconds * frameCount));
+
+        int searchStart = Math.Max(0, centerIndex - maxOffset);
+        int searchEnd = Math.Min(wav.Samples.Length - 2, centerIndex + maxOffset);
+
+        int nearestIndex = centerIndex;
+        int nearestDistance = int.MaxValue;
+        for (int i = searchStart; i <= searchEnd; i++)
+        {
+            bool isCrossing = Math.Sign(wav.Samples[i]) != Math.Sign(wav.Samples[i + 1]);
+            if (!isCrossing)
+            {
+                continue;
+            }
+
+            int distance = Math.Abs(i - centerIndex);
+            if (distance < nearestDistance)
+            {
+                nearestDistance = distance;
+                nearestIndex = i;
+            }
+        }
+
+        return TimeSpan.FromSeconds((double)nearestIndex / frameCount);
+    }
+
+    ///<inheritdoc/>
     public async Task<float[]> GetWaveformPeaksAsync(string filePath, int peakCount)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
@@ -192,6 +232,25 @@ public class AudioEditorService : IAudioEditorService
         }
 
         return await SaveDerivedAsync(wav, output, outputName);
+    }
+
+    ///<inheritdoc/>
+    public async Task<(string BeforePath, string AfterPath)> SplitAsync(string sourcePath, TimeSpan at, string outputNameBefore, string outputNameAfter)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
+        ArgumentException.ThrowIfNullOrWhiteSpace(outputNameBefore);
+        ArgumentException.ThrowIfNullOrWhiteSpace(outputNameAfter);
+
+        WavFile wav = await WavFile.ReadAsync(sourcePath);
+        int frameCount = wav.Channels * wav.SampleRate;
+        int splitIndex = Math.Clamp((int)(at.TotalSeconds * frameCount), 0, wav.Samples.Length);
+
+        short[] before = wav.Samples[..splitIndex];
+        short[] after = wav.Samples[splitIndex..];
+
+        string beforePath = await SaveDerivedAsync(wav, before, outputNameBefore);
+        string afterPath = await SaveDerivedAsync(wav, after, outputNameAfter);
+        return (beforePath, afterPath);
     }
 
     ///<inheritdoc/>

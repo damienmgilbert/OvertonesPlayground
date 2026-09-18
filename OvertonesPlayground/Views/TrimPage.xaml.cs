@@ -4,7 +4,9 @@ using OvertonesPlayground.ViewModels;
 namespace OvertonesPlayground.Views;
 
 ///<summary>
-///Code-behind for the visual Trim page: keeps the waveform drawable in sync with the view model, and turns handle drags
+///Code-behind for the visual Trim page: keeps the waveform drawable in sync with the view model, and turns handle
+///drags, waveform taps, and time-label taps into <see cref="TrimViewModel"/> updates.
+///</summary>
 public partial class TrimPage : ContentPage
 {
     #region Fields
@@ -30,16 +32,11 @@ public partial class TrimPage : ContentPage
     #endregion
 
     #region Private methods
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Page appeared.")]
-    private partial void Log_PageAppeared();
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Page disappeared.")]
-    private partial void Log_PageDisappeared();
-
-        ///<summary>
-///Applies a completed (or in-progress) end-handle drag to the view model, clamped against the start handle.
-///</summary>
-    private void OnEndHandlePanUpdated(object? sender, PanUpdatedEventArgs e)
+    ///<summary>
+    ///Applies a completed (or in-progress) end-handle drag to the view model, clamped against the start handle, then
+    ///snaps to the nearest zero crossing once the drag ends.
+    ///</summary>
+    private async void OnEndHandlePanUpdated(object? sender, PanUpdatedEventArgs e)
     {
         switch (e.StatusType)
         {
@@ -56,15 +53,31 @@ public partial class TrimPage : ContentPage
                 }
 
                 break;
+            case GestureStatus.Completed:
+                await _viewModel.SnapEndToZeroCrossingAsync();
+                break;
             default:
                 break;
         }
     }
 
     ///<summary>
-    ///Applies a completed (or in-progress) start-handle drag to the view model, clamped against the end handle.
+    ///Prompts for an exact end time and applies it, if the entered text parses as a time.
     ///</summary>
-    private void OnStartHandlePanUpdated(object? sender, PanUpdatedEventArgs e)
+    private async void OnEndTimeTapped(object? sender, TappedEventArgs e)
+    {
+        string? input = await DisplayPromptAsync("Set end time", "Enter time as mm:ss or seconds", initialValue: _viewModel.EndTimeText);
+        if (TryParseTime(input, out double seconds))
+        {
+            _viewModel.SetEndTime(seconds);
+        }
+    }
+
+    ///<summary>
+    ///Applies a completed (or in-progress) start-handle drag to the view model, clamped against the end handle, then
+    ///snaps to the nearest zero crossing once the drag ends.
+    ///</summary>
+    private async void OnStartHandlePanUpdated(object? sender, PanUpdatedEventArgs e)
     {
         switch (e.StatusType)
         {
@@ -81,8 +94,23 @@ public partial class TrimPage : ContentPage
                 }
 
                 break;
+            case GestureStatus.Completed:
+                await _viewModel.SnapStartToZeroCrossingAsync();
+                break;
             default:
                 break;
+        }
+    }
+
+    ///<summary>
+    ///Prompts for an exact start time and applies it, if the entered text parses as a time.
+    ///</summary>
+    private async void OnStartTimeTapped(object? sender, TappedEventArgs e)
+    {
+        string? input = await DisplayPromptAsync("Set start time", "Enter time as mm:ss or seconds", initialValue: _viewModel.StartTimeText);
+        if (TryParseTime(input, out double seconds))
+        {
+            _viewModel.SetStartTime(seconds);
         }
     }
 
@@ -114,6 +142,12 @@ public partial class TrimPage : ContentPage
             case nameof(TrimViewModel.PositionSeconds):
                 _drawable.PlayheadSeconds = _viewModel.PositionSeconds;
                 break;
+            case nameof(TrimViewModel.WindowStartSeconds):
+                _drawable.WindowStartSeconds = _viewModel.WindowStartSeconds;
+                break;
+            case nameof(TrimViewModel.VisibleSeconds):
+                _drawable.VisibleSeconds = _viewModel.VisibleSeconds;
+                break;
             default:
                 return;
         }
@@ -142,8 +176,38 @@ public partial class TrimPage : ContentPage
         if (hasPosition)
         {
             double fraction = Math.Clamp(position!.Value.X / WaveformContainer.Width, 0, 1);
-            _viewModel.SeekToPosition(fraction * _viewModel.DurationSeconds);
+            double seconds = _viewModel.WindowStartSeconds + (fraction * _viewModel.VisibleSeconds);
+            _viewModel.SeekToPosition(seconds);
         }
+    }
+
+    ///<summary>
+    ///Parses a time entered as "mm:ss(.f)" or as plain seconds.
+    ///</summary>
+    private static bool TryParseTime(string? input, out double seconds)
+    {
+        seconds = 0;
+        if (string.IsNullOrWhiteSpace(input))
+        {
+            return false;
+        }
+
+        string trimmed = input.Trim();
+        if (trimmed.Contains(':'))
+        {
+            string[] parts = trimmed.Split(':');
+            double minutes = 0;
+            double wholeSeconds = 0;
+            bool isValidMinutesSeconds = parts.Length == 2 && double.TryParse(parts[0], out minutes) && double.TryParse(parts[1], out wholeSeconds);
+            if (isValidMinutesSeconds)
+            {
+                seconds = (minutes * 60) + wholeSeconds;
+            }
+
+            return isValidMinutesSeconds;
+        }
+
+        return double.TryParse(trimmed, out seconds);
     }
     #endregion
 
@@ -161,5 +225,13 @@ public partial class TrimPage : ContentPage
         Log_PageDisappeared();
         _viewModel.StopTicking();
     }
+    #endregion
+
+    #region Logging
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Page appeared.")]
+    private partial void Log_PageAppeared();
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Page disappeared.")]
+    private partial void Log_PageDisappeared();
     #endregion
 }

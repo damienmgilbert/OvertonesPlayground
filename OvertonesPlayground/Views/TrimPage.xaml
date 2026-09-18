@@ -14,15 +14,19 @@
         <ToolbarItem Text="💾 Save" Command="{Binding SaveCommand}" />
     </ContentPage.ToolbarItems>
 
-    <Grid RowDefinitions="Auto,Auto,*,Auto,Auto" Padding="16,12" RowSpacing="12">
+    <Grid RowDefinitions="Auto,Auto,*,Auto,Auto,Auto" Padding="16,12" RowSpacing="12">
 
         <Label Grid.Row="0" Text="{Binding LoadedClip.Name}" FontSize="18" FontAttributes="Bold" LineBreakMode="TailTruncation" />
 
-        <!-- Start/end time steppers, with the total duration centered between them -->
+        <!-- Start/end time steppers, with the total duration centered between them. Tap a time to type an exact value. -->
         <Grid Grid.Row="1" ColumnDefinitions="*,Auto,*" ColumnSpacing="8">
             <HorizontalStackLayout Grid.Column="0" Spacing="4" HorizontalOptions="Start">
                 <Button Text="−" Padding="12,6" FontAttributes="Bold" Command="{Binding DecreaseStartCommand}" />
-                <Label Text="{Binding StartTimeText}" VerticalOptions="Center" FontAttributes="Bold" MinimumWidthRequest="60" HorizontalTextAlignment="Center" />
+                <Label Text="{Binding StartTimeText}" VerticalOptions="Center" FontAttributes="Bold" MinimumWidthRequest="60" HorizontalTextAlignment="Center">
+                    <Label.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnStartTimeTapped" />
+                    </Label.GestureRecognizers>
+                </Label>
                 <Button Text="+" Padding="12,6" FontAttributes="Bold" Command="{Binding IncreaseStartCommand}" />
             </HorizontalStackLayout>
 
@@ -33,13 +37,17 @@
 
             <HorizontalStackLayout Grid.Column="2" Spacing="4" HorizontalOptions="End">
                 <Button Text="−" Padding="12,6" FontAttributes="Bold" Command="{Binding DecreaseEndCommand}" />
-                <Label Text="{Binding EndTimeText}" VerticalOptions="Center" FontAttributes="Bold" MinimumWidthRequest="60" HorizontalTextAlignment="Center" />
+                <Label Text="{Binding EndTimeText}" VerticalOptions="Center" FontAttributes="Bold" MinimumWidthRequest="60" HorizontalTextAlignment="Center">
+                    <Label.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnEndTimeTapped" />
+                    </Label.GestureRecognizers>
+                </Label>
                 <Button Text="+" Padding="12,6" FontAttributes="Bold" Command="{Binding IncreaseEndCommand}" />
             </HorizontalStackLayout>
         </Grid>
 
         <!-- Waveform, with draggable start/end handles and a scrub-to-seek gesture -->
-        <Grid Grid.Row="2" x:Name="WaveformContainer" SizeChanged="OnWaveformContainerSizeChanged" VerticalOptions="Center">
+        <Grid Grid.Row="2" x:Name="WaveformContainer" SizeChanged="OnWaveformContainerSizeChanged" VerticalOptions="Center" IsClippedToBounds="True">
             <Grid.GestureRecognizers>
                 <TapGestureRecognizer Tapped="OnWaveformTapped" />
             </Grid.GestureRecognizers>
@@ -67,28 +75,41 @@
             </Border>
         </Grid>
 
-        <!-- Trim mode toggle -->
-        <HorizontalStackLayout Grid.Row="3" Spacing="10" HorizontalOptions="Center">
-            <Button Text="✂ Trim" Command="{Binding SetModeCommand}" CommandParameter="{x:Static models:TrimMode.Trim}">
-                <Button.Triggers>
-                    <DataTrigger TargetType="Button" Binding="{Binding Mode}" Value="{x:Static models:TrimMode.TrimMiddle}">
-                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardBackgroundDark}}" />
-                        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
-                    </DataTrigger>
-                </Button.Triggers>
-            </Button>
-            <Button Text="✂ Trim Middle" Command="{Binding SetModeCommand}" CommandParameter="{x:Static models:TrimMode.TrimMiddle}">
-                <Button.Triggers>
-                    <DataTrigger TargetType="Button" Binding="{Binding Mode}" Value="{x:Static models:TrimMode.Trim}">
-                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardBackgroundDark}}" />
-                        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
-                    </DataTrigger>
-                </Button.Triggers>
-            </Button>
-        </HorizontalStackLayout>
+        <!-- Trim mode toggle + zoom/pan controls -->
+        <Grid Grid.Row="3" ColumnDefinitions="*,Auto" ColumnSpacing="10">
+            <HorizontalStackLayout Grid.Column="0" Spacing="10" HorizontalOptions="Start">
+                <Button Text="✂ Trim" Command="{Binding SetModeCommand}" CommandParameter="{x:Static models:TrimMode.Trim}">
+                    <Button.Triggers>
+                        <DataTrigger TargetType="Button" Binding="{Binding Mode}" Value="{x:Static models:TrimMode.TrimMiddle}">
+                            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardBackgroundDark}}" />
+                            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+                        </DataTrigger>
+                    </Button.Triggers>
+                </Button>
+                <Button Text="✂ Trim Middle" Command="{Binding SetModeCommand}" CommandParameter="{x:Static models:TrimMode.TrimMiddle}">
+                    <Button.Triggers>
+                        <DataTrigger TargetType="Button" Binding="{Binding Mode}" Value="{x:Static models:TrimMode.Trim}">
+                            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardBackgroundDark}}" />
+                            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+                        </DataTrigger>
+                    </Button.Triggers>
+                </Button>
+            </HorizontalStackLayout>
+
+            <HorizontalStackLayout Grid.Column="1" Spacing="4" HorizontalOptions="End">
+                <Button Text="‹" Padding="10,6" FontAttributes="Bold" Command="{Binding PanEarlierCommand}" IsVisible="{Binding IsZoomed}" />
+                <Button Text="−" Padding="10,6" FontAttributes="Bold" Command="{Binding ZoomOutCommand}" />
+                <Label Text="{Binding ZoomLevelText}" VerticalOptions="Center" FontSize="12" MinimumWidthRequest="30" HorizontalTextAlignment="Center" />
+                <Button Text="+" Padding="10,6" FontAttributes="Bold" Command="{Binding ZoomInCommand}" />
+                <Button Text="›" Padding="10,6" FontAttributes="Bold" Command="{Binding PanLaterCommand}" IsVisible="{Binding IsZoomed}" />
+            </HorizontalStackLayout>
+        </Grid>
+
+        <!-- Split at playhead -->
+        <Button Grid.Row="4" Text="✂ Split at Playhead" HorizontalOptions="Center" Command="{Binding SplitAtPlayheadCommand}" />
 
         <!-- Playback transport + bottom quick-action bar -->
-        <VerticalStackLayout Grid.Row="4" Spacing="12">
+        <VerticalStackLayout Grid.Row="5" Spacing="12">
 
             <HorizontalStackLayout Spacing="20" HorizontalOptions="Center">
                 <Button Text="⏮" Command="{Binding SkipToStartCommand}" WidthRequest="52" HeightRequest="52" CornerRadius="26" FontSize="18" />
