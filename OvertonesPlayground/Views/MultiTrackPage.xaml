@@ -38,10 +38,10 @@
                 <VerticalStackLayout Spacing="10">
                     <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6">
                         <Entry AutomationId="{Binding Number, StringFormat='multitrack-track-{0}-name'}" Grid.Column="0" Text="{Binding Name}" FontAttributes="Bold" FontSize="15" />
-                        <Button AutomationId="{Binding Number, StringFormat='multitrack-track-{0}-mute'}" Grid.Column="1" Text="M" WidthRequest="36" HeightRequest="34" Padding="0" FontSize="12"
+                        <Button AutomationId="{Binding Number, StringFormat='multitrack-track-{0}-mute'}" Grid.Column="1" Text="M" WidthRequest="48" HeightRequest="48" Padding="0" FontSize="12"
                                 BackgroundColor="{Binding IsMuted, Converter={StaticResource BoolToAccent}}"
                                 Command="{Binding ToggleMuteCommand}" />
-                        <Button AutomationId="{Binding Number, StringFormat='multitrack-track-{0}-solo'}" Grid.Column="2" Text="S" WidthRequest="36" HeightRequest="34" Padding="0" FontSize="12"
+                        <Button AutomationId="{Binding Number, StringFormat='multitrack-track-{0}-solo'}" Grid.Column="2" Text="S" WidthRequest="48" HeightRequest="48" Padding="0" FontSize="12"
                                 BackgroundColor="{Binding IsSoloed, Converter={StaticResource BoolToAccent}}"
                                 Command="{Binding ToggleSoloCommand}" />
                     </Grid>
