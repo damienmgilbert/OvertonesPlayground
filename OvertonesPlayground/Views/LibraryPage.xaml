@@ -29,7 +29,7 @@
                                  EmptyView="No audio clips yet. Import a file or record one in Audio Recorder.">
                     <CollectionView.ItemTemplate>
                         <DataTemplate x:DataType="models:AudioClip">
-                            <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="8" Padding="16,10">
+                            <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto" ColumnSpacing="8" Padding="16,10">
                                 <VerticalStackLayout Grid.Column="0" VerticalOptions="Center">
                                     <Label Text="{Binding Name}" FontAttributes="Bold" LineBreakMode="TailTruncation" />
                                     <Label Text="{Binding Duration, StringFormat='{0:mm\\:ss}'}" FontSize="11" TextColor="{StaticResource Gray500}" />
@@ -40,7 +40,8 @@
                                 <Button Grid.Column="2" Text="✎" Padding="10,6"
                                         Command="{Binding Source={RelativeSource AncestorType={x:Type vm:LibraryViewModel}}, Path=EditCommand}"
                                         CommandParameter="{Binding .}" />
-                                <Button Grid.Column="3" Text="🗑" Padding="10,6" BackgroundColor="{StaticResource Gray600}"
+                                <Button Grid.Column="3" Text="⇩" Padding="10,6" Clicked="OnExportClicked" />
+                                <Button Grid.Column="4" Text="🗑" Padding="10,6" BackgroundColor="{StaticResource Gray600}"
                                         Command="{Binding Source={RelativeSource AncestorType={x:Type vm:LibraryViewModel}}, Path=DeleteCommand}"
                                         CommandParameter="{Binding .}" />
                             </Grid>
@@ -74,6 +75,9 @@
                                                 Padding="14,6"
                                                 Command="{Binding Source={RelativeSource AncestorType={x:Type vm:LibraryViewModel}}, Path=EditCommand}"
                                                 CommandParameter="{Binding .}" />
+                                        <Button Text="⇩ Export"
+                                                Padding="14,6"
+                                                Clicked="OnExportClicked" />
                                         <Button Text="🗑 Delete"
                                                 Padding="14,6"
                                                 BackgroundColor="{StaticResource Gray600}"

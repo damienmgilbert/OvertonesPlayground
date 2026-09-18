@@ -160,6 +160,15 @@ public class AudioLibraryService : IAudioLibraryService
     }
 
     ///<inheritdoc/>
+    public async Task<string?> ExportClipAsync(AudioClip clip, AudioExportFormat format)
+    {
+        ArgumentNullException.ThrowIfNull(clip);
+
+        string encodedPath = await _formatConverterService.ConvertFromWavAsync(clip.FilePath, format, clip.Name);
+        return await _publicStorageService.ExportToMusicAsync(encodedPath, Path.GetFileName(encodedPath));
+    }
+
+    ///<inheritdoc/>
     public async Task<IReadOnlyList<AudioClip>> GetClipsAsync()
     {
         await EnsureLoadedAsync();

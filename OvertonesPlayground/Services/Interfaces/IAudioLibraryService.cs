@@ -20,6 +20,13 @@ public interface IAudioLibraryService
     Task DeleteClipAsync(AudioClip clip);
 
     ///<summary>
+    ///Encodes <paramref name="clip"/> to <paramref name="format"/> and exports it to the shared Music folder.
+    ///Returns a short, human-readable location on success, or null if the encode succeeded but the export to shared
+    ///storage did not.
+    ///</summary>
+    Task<string?> ExportClipAsync(AudioClip clip, AudioExportFormat format);
+
+    ///<summary>
     ///Returns every clip currently in the library, newest first.
     ///</summary>
     Task<IReadOnlyList<AudioClip>> GetClipsAsync();

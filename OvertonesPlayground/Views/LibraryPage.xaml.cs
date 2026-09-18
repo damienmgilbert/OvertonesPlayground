@@ -1,9 +1,11 @@
+using OvertonesPlayground.Models;
 using OvertonesPlayground.ViewModels;
 
 namespace OvertonesPlayground.Views;
 
 ///<summary>
-///Code-behind for the Library page: loads the clip catalog each time the page appears.
+///Code-behind for the Library page: loads the clip catalog each time the page appears, and hosts the "Export as..."
+///format picker, which needs a native action sheet and so can't live in the view model.
 ///</summary>
 public partial class LibraryPage : ContentPage
 {
@@ -30,6 +32,30 @@ public partial class LibraryPage : ContentPage
 
     [LoggerMessage(Level = LogLevel.Debug, Message = "Page disappeared.")]
     private partial void Log_PageDisappeared();
+
+    ///<summary>
+    ///Prompts for an export format and, if one is chosen, encodes the tapped clip and exports it to shared storage.
+    ///</summary>
+    private async void OnExportClicked(object? sender, EventArgs e)
+    {
+        if (sender is not Button { BindingContext: AudioClip clip })
+        {
+            return;
+        }
+
+        string? choice = await DisplayActionSheetAsync("Export as...", "Cancel", null, "AAC (recommended)", "MP3 (best-effort)");
+        AudioExportFormat? format = choice switch
+        {
+            "AAC (recommended)" => AudioExportFormat.Aac,
+            "MP3 (best-effort)" => AudioExportFormat.Mp3,
+            _ => null,
+        };
+
+        if (format is not null)
+        {
+            await _viewModel.ExportClipAsync(clip, format.Value);
+        }
+    }
     #endregion
 
     #region Protected methods

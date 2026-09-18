@@ -18,6 +18,24 @@ public class PublicStorageService : IPublicStorageService
 {
     private const string SubFolder = "OvertonesPlayground";
 
+    /// <summary>Maps a file's extension to the MIME type MediaStore should tag it with, defaulting to WAV for
+    /// anything unrecognized since that's every format this app wrote before AAC/MP3 export existed.</summary>
+    private static string GetMimeType(string filePath)
+    {
+        string extension = Path.GetExtension(filePath);
+        if (string.Equals(extension, ".aac", StringComparison.OrdinalIgnoreCase))
+        {
+            return "audio/aac";
+        }
+
+        if (string.Equals(extension, ".mp3", StringComparison.OrdinalIgnoreCase))
+        {
+            return "audio/mpeg";
+        }
+
+        return "audio/wav";
+    }
+
     /// <inheritdoc />
     public async Task<string?> ExportToMusicAsync(string sourceFilePath, string displayFileName)
     {
@@ -45,7 +63,7 @@ public class PublicStorageService : IPublicStorageService
 
         ContentValues values = new();
         values.Put(MediaStore.IMediaColumns.DisplayName, displayFileName);
-        values.Put(MediaStore.IMediaColumns.MimeType, "audio/wav");
+        values.Put(MediaStore.IMediaColumns.MimeType, GetMimeType(sourceFilePath));
         values.Put(MediaStore.IMediaColumns.RelativePath, $"{AndroidEnvironment.DirectoryMusic}/{SubFolder}");
         values.Put(MediaStore.IMediaColumns.IsPending, 1);
 

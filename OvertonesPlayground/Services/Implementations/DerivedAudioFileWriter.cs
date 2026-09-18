@@ -8,6 +8,17 @@ internal static class DerivedAudioFileWriter
 {
     #region Private methods
     ///<summary>
+    ///Builds a timestamped, filename-sanitized path for <paramref name="outputName"/> inside <paramref name="directory"/>
+    ///(created if missing).
+    ///</summary>
+    private static string BuildPath(string directory, string outputName, string extension)
+    {
+        Directory.CreateDirectory(directory);
+        string fileName = $"{SanitizeFileNameSegment(outputName)}_{DateTime.Now:yyyyMMdd_HHmmss}.{extension}";
+        return Path.Combine(directory, fileName);
+    }
+
+    ///<summary>
     ///Replaces characters that aren't valid in a file name (e.g. a clip named with a "/" or ":") with "_", so an
     ///arbitrary clip/operation name can never produce an invalid or unexpectedly-nested output path.
     ///</summary>
@@ -20,15 +31,23 @@ internal static class DerivedAudioFileWriter
 
     #region Public methods
     ///<summary>
+    ///Writes raw encoded bytes (e.g. AAC/MP3) into <paramref name="directory"/> (created if missing) as a
+    ///timestamped, filename-sanitized file named after <paramref name="outputName"/>, and returns its path.
+    ///</summary>
+    public static async Task<string> SaveBytesAsync(byte[] bytes, string directory, string outputName, string extension)
+    {
+        string path = BuildPath(directory, outputName, extension);
+        await File.WriteAllBytesAsync(path, bytes);
+        return path;
+    }
+
+    ///<summary>
     ///Writes <paramref name="wav"/> into <paramref name="directory"/> (created if missing) as a timestamped,
     ///filename-sanitized WAV file named after <paramref name="outputName"/>, and returns its path.
     ///</summary>
     public static async Task<string> SaveAsync(WavFile wav, string directory, string outputName)
     {
-        Directory.CreateDirectory(directory);
-
-        string fileName = $"{SanitizeFileNameSegment(outputName)}_{DateTime.Now:yyyyMMdd_HHmmss}.wav";
-        string path = Path.Combine(directory, fileName);
+        string path = BuildPath(directory, outputName, "wav");
         await wav.WriteAsync(path);
         return path;
     }

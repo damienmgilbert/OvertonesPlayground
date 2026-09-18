@@ -111,6 +111,12 @@ public partial class LibraryViewModel : BaseViewModel
     [LoggerMessage(Level = LogLevel.Debug, Message = "Deleting clip '{ClipName}' ({ClipId}).")]
     private partial void Log_DeletingClip(string clipName, string clipId);
 
+    [LoggerMessage(Level = LogLevel.Error, Message = "Failed to export clip '{ClipName}' as {Format}.")]
+    private partial void Log_ExportFailed(Exception exception, string clipName, AudioExportFormat format);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Exporting clip '{ClipName}' as {Format}.")]
+    private partial void Log_ExportingClip(string clipName, AudioExportFormat format);
+
     [LoggerMessage(Level = LogLevel.Debug, Message = "Import canceled.")]
     private partial void Log_ImportCanceled();
 
@@ -156,6 +162,43 @@ public partial class LibraryViewModel : BaseViewModel
     {
         Log_ViewModeChanged(mode);
         ViewMode = mode;
+    }
+    #endregion
+
+    #region Public methods
+    ///<summary>
+    ///Encodes <paramref name="clip"/> to <paramref name="format"/> and exports it to the shared Music folder. Called
+    ///directly from the page's code-behind, once it already knows which format the user picked from an action sheet.
+    ///</summary>
+    public async Task ExportClipAsync(AudioClip clip, AudioExportFormat format)
+    {
+        ArgumentNullException.ThrowIfNull(clip);
+
+        if (IsBusy)
+        {
+            return;
+        }
+
+        IsBusy = true;
+        try
+        {
+            Log_ExportingClip(clip.Name, format);
+            string? location = await _libraryService.ExportClipAsync(clip, format);
+            StatusMessage = location is not null
+                ? $"Exported '{clip.Name}' to {location}."
+                : $"Encoded '{clip.Name}', but couldn't save it to shared storage.";
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException or NotSupportedException)
+        {
+            Log_ExportFailed(ex, clip.Name, format);
+            StatusMessage = format == AudioExportFormat.Mp3
+                ? $"Couldn't export '{clip.Name}' as MP3 - many Android devices don't have an MP3 encoder. Try AAC instead."
+                : $"Couldn't export '{clip.Name}'.";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
     }
     #endregion
 
