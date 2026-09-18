@@ -6,34 +6,14 @@ namespace OvertonesPlayground.Services.Implementations;
 public class AudioEditorService : IAudioEditorService
 {
     #region Private methods
-
-    ///<summary>
-    ///Rounds and clamps a sample value into the valid 16-bit PCM range.
-    ///</summary>
-    private static short ClampToShort(double value) => (short)Math.Clamp(value, short.MinValue, short.MaxValue);
-
-    ///<summary>
-    ///Replaces characters that aren't valid in a file name (e.g. a clip named with a "/" or ":") with "_", so an
-    ///arbitrary clip/operation name can never produce an invalid or unexpectedly-nested output path.
-    ///</summary>
-    private static string SanitizeFileNameSegment(string value)
-    {
-        char[] invalid = Path.GetInvalidFileNameChars();
-        return string.Concat(value.Select(c => invalid.Contains(c) ? '_' : c));
-    }
-
     ///<summary>
     ///Writes <paramref name="samples"/> as a new WAV file alongside <paramref name="source"/>'s format and returns its
     ///path.
     ///</summary>
-    private static async Task<string> SaveDerivedAsync(WavFile source, short[] samples, string outputName)
+    private static Task<string> SaveDerivedAsync(WavFile source, short[] samples, string outputName)
     {
         WavFile derived = new() { Channels = source.Channels, SampleRate = source.SampleRate, BitsPerSample = source.BitsPerSample, Samples = samples, };
-
-        string fileName = $"{SanitizeFileNameSegment(outputName)}_{DateTime.Now:yyyyMMdd_HHmmss}.wav";
-        string path = Path.Combine(ExportsDirectory, fileName);
-        await derived.WriteAsync(path);
-        return path;
+        return DerivedAudioFileWriter.SaveAsync(derived, ExportsDirectory, outputName);
     }
     #endregion
 
@@ -69,14 +49,14 @@ public class AudioEditorService : IAudioEditorService
         for (int i = 0; i < fadeInFrames && i < output.Length; i++)
         {
             double multiplier = (double)i / fadeInFrames;
-            output[i] = ClampToShort(output[i] * multiplier);
+            output[i] = PcmMath.ClampToShort(output[i] * multiplier);
         }
 
         for (int i = 0; i < fadeOutFrames && i < output.Length; i++)
         {
             int index = output.Length - 1 - i;
             double multiplier = (double)i / fadeOutFrames;
-            output[index] = ClampToShort(output[index] * multiplier);
+            output[index] = PcmMath.ClampToShort(output[index] * multiplier);
         }
 
         string outputPath = await SaveDerivedAsync(wav, output, outputName);
@@ -95,7 +75,7 @@ public class AudioEditorService : IAudioEditorService
         short[] output = new short[wav.Samples.Length];
         for (int i = 0; i < wav.Samples.Length; i++)
         {
-            output[i] = ClampToShort(wav.Samples[i] * factor);
+            output[i] = PcmMath.ClampToShort(wav.Samples[i] * factor);
         }
 
         string outputPath = await SaveDerivedAsync(wav, output, outputName);
@@ -185,7 +165,7 @@ public class AudioEditorService : IAudioEditorService
         short[] output = new short[wav.Samples.Length];
         for (int i = 0; i < wav.Samples.Length; i++)
         {
-            output[i] = ClampToShort(wav.Samples[i] * factor);
+            output[i] = PcmMath.ClampToShort(wav.Samples[i] * factor);
         }
 
         string outputPath = await SaveDerivedAsync(wav, output, outputName);
