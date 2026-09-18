@@ -41,7 +41,7 @@ public partial class MultiTrackViewModel : BaseViewModel
     #endregion
 
     #region Private methods
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanBounce))]
     private async Task BounceAsync()
     {
         if (IsBusy)
@@ -68,6 +68,12 @@ public partial class MultiTrackViewModel : BaseViewModel
             IsBusy = false;
         }
     }
+
+    ///<summary>
+    ///Gates <see cref="BounceCommand"/> so it can't run with a blank project name, which <see cref="IMixdownService.RenderAsync"/>
+    ///would otherwise reject with an unhandled <see cref="ArgumentException"/>.
+    ///</summary>
+    private bool CanBounce() => !string.IsNullOrWhiteSpace(ProjectName);
 
     [LoggerMessage(Level = LogLevel.Debug, Message = "Bounced the multi-track project to '{ClipName}'.")]
     private partial void Log_Bounced(string clipName);
@@ -117,6 +123,7 @@ public partial class MultiTrackViewModel : BaseViewModel
     ///Name the bounced mixdown is saved to the library under.
     ///</summary>
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(BounceCommand))]
     public partial string ProjectName { get; set; } = "Mix";
 
     ///<summary>
