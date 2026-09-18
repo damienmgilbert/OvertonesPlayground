@@ -5,6 +5,28 @@ namespace OvertonesPlayground.Services.Implementations;
 ///<inheritdoc cref="IAudioEditorService"/>
 public class AudioEditorService : IAudioEditorService
 {
+    #region Constants
+    ///<summary>
+    ///Q (bandwidth) shared by all three equalizer bands - a moderate, musically neutral width.
+    ///</summary>
+    private const double EqBandQ = 0.9;
+
+    ///<summary>
+    ///Center frequency of the equalizer's high shelf band.
+    ///</summary>
+    private const double EqHighShelfFrequencyHz = 6000;
+
+    ///<summary>
+    ///Center frequency of the equalizer's low shelf band.
+    ///</summary>
+    private const double EqLowShelfFrequencyHz = 150;
+
+    ///<summary>
+    ///Center frequency of the equalizer's mid peaking band.
+    ///</summary>
+    private const double EqMidPeakFrequencyHz = 1000;
+    #endregion
+
     #region Private methods
     ///<summary>
     ///Writes <paramref name="samples"/> as a new WAV file alongside <paramref name="source"/>'s format and returns its
@@ -33,6 +55,35 @@ public class AudioEditorService : IAudioEditorService
     #endregion
 
     #region Public methods
+    ///<inheritdoc/>
+    public async Task<string> ApplyCompressionAsync(string sourcePath, double thresholdDb, double ratio, double attackMs, double releaseMs, string outputName)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
+        ArgumentException.ThrowIfNullOrWhiteSpace(outputName);
+
+        WavFile wav = await WavFile.ReadAsync(sourcePath);
+        short[] output = (short[])wav.Samples.Clone();
+        DynamicsProcessor.Compress(output, wav.Channels, wav.SampleRate, thresholdDb, Math.Max(1, ratio), attackMs, releaseMs);
+
+        return await SaveDerivedAsync(wav, output, outputName);
+    }
+
+    ///<inheritdoc/>
+    public async Task<string> ApplyEqualizerAsync(string sourcePath, double lowGainDb, double midGainDb, double highGainDb, string outputName)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
+        ArgumentException.ThrowIfNullOrWhiteSpace(outputName);
+
+        WavFile wav = await WavFile.ReadAsync(sourcePath);
+        short[] output = (short[])wav.Samples.Clone();
+
+        BiquadFilter.ApplyLowShelf(output, wav.Channels, wav.SampleRate, EqLowShelfFrequencyHz, lowGainDb, EqBandQ);
+        BiquadFilter.ApplyPeaking(output, wav.Channels, wav.SampleRate, EqMidPeakFrequencyHz, midGainDb, EqBandQ);
+        BiquadFilter.ApplyHighShelf(output, wav.Channels, wav.SampleRate, EqHighShelfFrequencyHz, highGainDb, EqBandQ);
+
+        return await SaveDerivedAsync(wav, output, outputName);
+    }
+
     ///<inheritdoc/>
     public async Task<string> ApplyFadeAsync(string sourcePath, TimeSpan fadeIn, TimeSpan fadeOut, string outputName)
     {
@@ -233,6 +284,48 @@ public class AudioEditorService : IAudioEditorService
 
         string outputPath = await SaveDerivedAsync(wav, output, outputName);
         return outputPath;
+    }
+
+    ///<inheritdoc/>
+    public async Task<string> ReduceNoiseAsync(string sourcePath, TimeSpan noiseSampleDuration, string outputName)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
+        ArgumentException.ThrowIfNullOrWhiteSpace(outputName);
+
+        WavFile wav = await WavFile.ReadAsync(sourcePath);
+        int noiseFrameCount = (int)(noiseSampleDuration.TotalSeconds * wav.SampleRate);
+
+        // Spectral subtraction is CPU-heavy (many FFTs over the whole clip) compared to this service's other
+        // sample-at-a-time edits, so it runs off the calling thread to avoid a UI stall on longer clips.
+        short[] output = await Task.Run(() => SpectralNoiseReducer.Reduce(wav.Samples, wav.Channels, noiseFrameCount));
+
+        return await SaveDerivedAsync(wav, output, outputName);
+    }
+
+    ///<inheritdoc/>
+    public async Task<string> RemoveVocalsAsync(string sourcePath, string outputName)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
+        ArgumentException.ThrowIfNullOrWhiteSpace(outputName);
+
+        WavFile wav = await WavFile.ReadAsync(sourcePath);
+        bool isNotStereo = wav.Channels != 2;
+        if (isNotStereo)
+        {
+            throw new NotSupportedException($"'{sourcePath}' has {wav.Channels} channel(s); vocal removal needs a stereo source to cancel out audio common to both channels.");
+        }
+
+        int frames = wav.Samples.Length / 2;
+        short[] output = new short[wav.Samples.Length];
+        for (int frame = 0; frame < frames; frame++)
+        {
+            int index = frame * 2;
+            short difference = PcmMath.ClampToShort(wav.Samples[index] - wav.Samples[index + 1]);
+            output[index] = difference;
+            output[index + 1] = difference;
+        }
+
+        return await SaveDerivedAsync(wav, output, outputName);
     }
 
     ///<inheritdoc/>

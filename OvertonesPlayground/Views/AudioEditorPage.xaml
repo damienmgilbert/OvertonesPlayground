@@ -52,6 +52,52 @@
                 </VerticalStackLayout>
             </toolkit:Expander>
 
+            <toolkit:Expander IsExpanded="False">
+                <toolkit:Expander.Header>
+                    <Label Text="🎚 Equalizer" FontAttributes="Bold" Padding="0,10" />
+                </toolkit:Expander.Header>
+                <VerticalStackLayout Spacing="12" Padding="0,4,0,12">
+                    <controls:LabeledSlider LabelText="Low (dB)" Minimum="-12" Maximum="12" Digits="1" Value="{Binding EqLowGainDb}" />
+                    <controls:LabeledSlider LabelText="Mid (dB)" Minimum="-12" Maximum="12" Digits="1" Value="{Binding EqMidGainDb}" />
+                    <controls:LabeledSlider LabelText="High (dB)" Minimum="-12" Maximum="12" Digits="1" Value="{Binding EqHighGainDb}" />
+                    <Button Text="Apply EQ" Command="{Binding ApplyEqualizerCommand}" />
+                </VerticalStackLayout>
+            </toolkit:Expander>
+
+            <toolkit:Expander IsExpanded="False">
+                <toolkit:Expander.Header>
+                    <Label Text="🗜 Compression" FontAttributes="Bold" Padding="0,10" />
+                </toolkit:Expander.Header>
+                <VerticalStackLayout Spacing="12" Padding="0,4,0,12">
+                    <controls:LabeledSlider LabelText="Threshold (dB)" Minimum="-60" Maximum="0" Digits="1" Value="{Binding CompressionThresholdDb}" />
+                    <controls:LabeledSlider LabelText="Ratio" Minimum="1" Maximum="20" Digits="1" Value="{Binding CompressionRatio}" />
+                    <controls:LabeledSlider LabelText="Attack (ms)" Minimum="1" Maximum="200" Digits="0" Value="{Binding CompressionAttackMs}" />
+                    <controls:LabeledSlider LabelText="Release (ms)" Minimum="10" Maximum="1000" Digits="0" Value="{Binding CompressionReleaseMs}" />
+                    <Button Text="Apply Compression" Command="{Binding ApplyCompressionCommand}" />
+                </VerticalStackLayout>
+            </toolkit:Expander>
+
+            <toolkit:Expander IsExpanded="False">
+                <toolkit:Expander.Header>
+                    <Label Text="🧹 Remove Noise" FontAttributes="Bold" Padding="0,10" />
+                </toolkit:Expander.Header>
+                <VerticalStackLayout Spacing="12" Padding="0,4,0,12">
+                    <Label Text="Uses the first stretch of the clip as its noise sample - trim to hum/hiss-only audio before running this for the best result." FontSize="12" TextColor="{StaticResource Gray500}" />
+                    <controls:LabeledSlider LabelText="Noise sample (s)" Minimum="0.1" Maximum="5" Digits="2" Value="{Binding NoiseSampleSeconds}" />
+                    <Button Text="Reduce Noise" Command="{Binding ReduceNoiseCommand}" />
+                </VerticalStackLayout>
+            </toolkit:Expander>
+
+            <toolkit:Expander IsExpanded="False">
+                <toolkit:Expander.Header>
+                    <Label Text="🎤 Remove Vocals" FontAttributes="Bold" Padding="0,10" />
+                </toolkit:Expander.Header>
+                <VerticalStackLayout Spacing="12" Padding="0,4,0,12">
+                    <Label Text="Cancels audio that's identical in both channels - works best on true-stereo tracks with a centered vocal. Mono clips aren't supported." FontSize="12" TextColor="{StaticResource Gray500}" />
+                    <Button Text="Remove Vocals" Command="{Binding RemoveVocalsCommand}" />
+                </VerticalStackLayout>
+            </toolkit:Expander>
+
             <BoxView HeightRequest="1" Color="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource CardStrokeDark}}" />
 
             <HorizontalStackLayout Spacing="12">

@@ -15,6 +15,19 @@ public interface IAudioEditorService
     #region Public methods
 
     ///<summary>
+    ///Reduces dynamic range: while the signal's smoothed envelope exceeds <paramref name="thresholdDb"/>, gain above
+    ///that threshold is scaled down by <paramref name="ratio"/>, with <paramref name="attackMs"/>/<paramref name="releaseMs"/>
+    ///controlling how fast the envelope follows rising/falling level.
+    ///</summary>
+    Task<string> ApplyCompressionAsync(string sourcePath, double thresholdDb, double ratio, double attackMs, double releaseMs, string outputName);
+
+    ///<summary>
+    ///Runs a 3-band equalizer (low shelf / mid peaking / high shelf) over the audio, boosting or cutting each band by
+    ///its gain in decibels.
+    ///</summary>
+    Task<string> ApplyEqualizerAsync(string sourcePath, double lowGainDb, double midGainDb, double highGainDb, string outputName);
+
+    ///<summary>
     ///Ramps the amplitude up at the start and down at the end over the given durations.
     ///</summary>
     Task<string> ApplyFadeAsync(string sourcePath, TimeSpan fadeIn, TimeSpan fadeOut, string outputName);
@@ -55,6 +68,21 @@ public interface IAudioEditorService
     ///Scales the audio so its loudest sample reaches full scale.
     ///</summary>
     Task<string> NormalizeAsync(string sourcePath, string outputName);
+
+    ///<summary>
+    ///Reduces steady-state noise (hum, hiss, rumble) via spectral subtraction, estimating the noise profile from the
+    ///first <paramref name="noiseSampleDuration"/> of the clip - trim to a stretch of noise-only audio first for the
+    ///best result.
+    ///</summary>
+    Task<string> ReduceNoiseAsync(string sourcePath, TimeSpan noiseSampleDuration, string outputName);
+
+    ///<summary>
+    ///Cancels out audio that's identical in both channels via phase cancellation (<c>output = left - right</c>),
+    ///which removes a centered vocal from a true-stereo mix. Quality depends entirely on the source actually having a
+    ///centered, unpanned vocal.
+    ///</summary>
+    ///<exception cref="NotSupportedException"><paramref name="sourcePath"/> isn't stereo.</exception>
+    Task<string> RemoveVocalsAsync(string sourcePath, string outputName);
 
     ///<summary>
     ///Plays the audio backwards.

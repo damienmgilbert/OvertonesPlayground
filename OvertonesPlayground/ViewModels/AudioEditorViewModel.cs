@@ -57,6 +57,10 @@ public partial class AudioEditorViewModel : BaseViewModel
     }
 
     [RelayCommand]
+    private async Task ApplyCompressionAsync() { await ApplyEditAsync("compression", clip => _editorService.ApplyCompressionAsync(clip.FilePath, CompressionThresholdDb, CompressionRatio, CompressionAttackMs, CompressionReleaseMs, "compress")); }
+    [RelayCommand]
+    private async Task ApplyEqualizerAsync() { await ApplyEditAsync("EQ", clip => _editorService.ApplyEqualizerAsync(clip.FilePath, EqLowGainDb, EqMidGainDb, EqHighGainDb, "eq")); }
+    [RelayCommand]
     private async Task ApplyFadeAsync() { await ApplyEditAsync("fade", clip => _editorService.ApplyFadeAsync(clip.FilePath, TimeSpan.FromSeconds(FadeInSeconds), TimeSpan.FromSeconds(FadeOutSeconds), "fade")); }
     [RelayCommand]
     private async Task ApplyGainAsync() { await ApplyEditAsync("gain", clip => _editorService.ApplyGainAsync(clip.FilePath, GainDb, "gain")); }
@@ -147,6 +151,12 @@ public partial class AudioEditorViewModel : BaseViewModel
     }
 
     [RelayCommand]
+    private async Task ReduceNoiseAsync() { await ApplyEditAsync("noise reduction", clip => _editorService.ReduceNoiseAsync(clip.FilePath, TimeSpan.FromSeconds(NoiseSampleSeconds), "denoise")); }
+
+    [RelayCommand]
+    private async Task RemoveVocalsAsync() { await ApplyEditAsync("vocal removal", clip => _editorService.RemoveVocalsAsync(clip.FilePath, "no-vocals")); }
+
+    [RelayCommand]
     private async Task ReverseAsync() { await ApplyEditAsync("reverse", clip => _editorService.ReverseAsync(clip.FilePath, "reverse")); }
 
     private async Task SetLoadedClipAsync(AudioClip clip)
@@ -170,10 +180,52 @@ public partial class AudioEditorViewModel : BaseViewModel
     public partial string? ClipId { get; set; }
 
     ///<summary>
+    ///How fast (milliseconds) the compressor's envelope follows a rising level before gain reduction kicks in.
+    ///</summary>
+    [ObservableProperty]
+    public partial double CompressionAttackMs { get; set; } = 10;
+
+    ///<summary>
+    ///How much gain above threshold is reduced - e.g. 4 means 4 dB in becomes 1 dB out.
+    ///</summary>
+    [ObservableProperty]
+    public partial double CompressionRatio { get; set; } = 4;
+
+    ///<summary>
+    ///How fast (milliseconds) the compressor's envelope follows a falling level, releasing gain reduction.
+    ///</summary>
+    [ObservableProperty]
+    public partial double CompressionReleaseMs { get; set; } = 100;
+
+    ///<summary>
+    ///Level (dB) above which the compressor starts reducing gain.
+    ///</summary>
+    [ObservableProperty]
+    public partial double CompressionThresholdDb { get; set; } = -18;
+
+    ///<summary>
     ///Duration of the loaded clip in seconds.
     ///</summary>
     [ObservableProperty]
     public partial double DurationSeconds { get; set; }
+
+    ///<summary>
+    ///Equalizer high shelf gain (dB, ~6 kHz and up).
+    ///</summary>
+    [ObservableProperty]
+    public partial double EqHighGainDb { get; set; }
+
+    ///<summary>
+    ///Equalizer low shelf gain (dB, ~150 Hz and below).
+    ///</summary>
+    [ObservableProperty]
+    public partial double EqLowGainDb { get; set; }
+
+    ///<summary>
+    ///Equalizer mid peaking-band gain (dB, centered ~1 kHz).
+    ///</summary>
+    [ObservableProperty]
+    public partial double EqMidGainDb { get; set; }
 
     ///<summary>
     ///Fade-in duration in seconds when applying fades.
@@ -198,6 +250,13 @@ public partial class AudioEditorViewModel : BaseViewModel
     ///</summary>
     [ObservableProperty]
     public partial AudioClip? LoadedClip { get; set; }
+
+    ///<summary>
+    ///Length (seconds), taken from the start of the clip, used to estimate the noise profile for noise reduction.
+    ///Trim the clip to noise-only audio first for the best result.
+    ///</summary>
+    [ObservableProperty]
+    public partial double NoiseSampleSeconds { get; set; } = 0.5;
 
     ///<summary>
     ///End position (seconds) for trimming operations.
