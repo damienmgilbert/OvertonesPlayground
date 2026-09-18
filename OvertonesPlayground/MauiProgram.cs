@@ -29,6 +29,8 @@ public static class MauiProgram
         services.AddSingleton<IMixdownService, MixdownService>();
         services.AddSingleton<ISoundSynthesisService, SoundSynthesisService>();
         services.AddSingleton<IPublicStorageService, PublicStorageService>();
+        services.AddSingleton<ITextToSpeechService, TextToSpeechService>();
+        services.AddSingleton<ISpeechToTextService, SpeechToTextService>();
     }
 
     ///<summary>
@@ -50,6 +52,12 @@ public static class MauiProgram
         services.AddSingleton<MultiTrackViewModel>();
         services.AddSingleton<MultiTrackPage>();
 
+        // Speech-to-Text keeps listening/transcript state across flyout navigation (e.g. flipping to another tab
+        // mid-listen), and a Transient view model would leak a subscriber on the singleton service's events every
+        // time the page is revisited, so it lives in this "live session" bucket too.
+        services.AddSingleton<SpeechToTextViewModel>();
+        services.AddSingleton<SpeechToTextPage>();
+
         // Re-created fresh each time they're navigated to.
         services.AddTransient<LibraryViewModel>();
         services.AddTransient<LibraryPage>();
@@ -62,6 +70,9 @@ public static class MauiProgram
 
         services.AddTransient<DrumSynthViewModel>();
         services.AddTransient<DrumSynthPage>();
+
+        services.AddTransient<TextToSpeechViewModel>();
+        services.AddTransient<TextToSpeechPage>();
 
         services.AddTransient<AudioEditorViewModel>();
         services.AddTransient<AudioEditorPage>();

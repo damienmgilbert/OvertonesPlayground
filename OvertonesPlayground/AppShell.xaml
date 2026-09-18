@@ -39,6 +39,14 @@
         <ShellContent ContentTemplate="{DataTemplate views:DrumSynthPage}" Route="drumsynth" />
     </FlyoutItem>
 
+    <FlyoutItem Title="Text to Speech" Route="texttospeech">
+        <ShellContent ContentTemplate="{DataTemplate views:TextToSpeechPage}" Route="texttospeech" />
+    </FlyoutItem>
+
+    <FlyoutItem Title="Speech to Text" Route="speechtotext">
+        <ShellContent ContentTemplate="{DataTemplate views:SpeechToTextPage}" Route="speechtotext" />
+    </FlyoutItem>
+
     <FlyoutItem Title="Settings" Route="settings">
         <ShellContent ContentTemplate="{DataTemplate views:SettingsPage}" Route="settings" />
     </FlyoutItem>

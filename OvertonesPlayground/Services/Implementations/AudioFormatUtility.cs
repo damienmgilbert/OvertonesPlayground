@@ -43,34 +43,6 @@ internal static class AudioFormatUtility
         throw new NotSupportedException($"Cannot convert {sourceChannels}-channel audio to {targetChannels} channel(s); only mono/stereo conversion is supported.");
     }
 
-    ///<summary>
-    ///Resamples interleaved PCM samples from <paramref name="sourceRate"/> to <paramref name="targetRate"/> by
-    ///linearly interpolating between the nearest source samples, independently for each channel.
-    ///</summary>
-    private static short[] Resample(short[] samples, int channels, int sourceRate, int targetRate)
-    {
-        int sourceFrames = samples.Length / channels;
-        int targetFrames = (int)Math.Round((double)sourceFrames * targetRate / sourceRate);
-        short[] output = new short[targetFrames * channels];
-
-        double step = (double)sourceRate / targetRate;
-        for (int frame = 0; frame < targetFrames; frame++)
-        {
-            double sourcePosition = frame * step;
-            int index0 = (int)sourcePosition;
-            int index1 = Math.Min(index0 + 1, sourceFrames - 1);
-            double fraction = sourcePosition - index0;
-
-            for (int channel = 0; channel < channels; channel++)
-            {
-                short sample0 = samples[(index0 * channels) + channel];
-                short sample1 = samples[(index1 * channels) + channel];
-                output[(frame * channels) + channel] = PcmMath.ClampToShort(sample0 + ((sample1 - sample0) * fraction));
-            }
-        }
-
-        return output;
-    }
     #endregion
 
     #region Public methods
@@ -97,6 +69,38 @@ internal static class AudioFormatUtility
         }
 
         return samples;
+    }
+
+    ///<summary>
+    ///Resamples interleaved PCM samples from <paramref name="sourceRate"/> to <paramref name="targetRate"/> by
+    ///linearly interpolating between the nearest source samples, independently for each channel. Internal (not
+    ///private) because <c>AudioEditorService</c>'s resample-based pitch shift reuses it directly, the same
+    ///"treat the source as recorded at a different rate, then resample back to normal" trick used here for format
+    ///conversion.
+    ///</summary>
+    internal static short[] Resample(short[] samples, int channels, int sourceRate, int targetRate)
+    {
+        int sourceFrames = samples.Length / channels;
+        int targetFrames = (int)Math.Round((double)sourceFrames * targetRate / sourceRate);
+        short[] output = new short[targetFrames * channels];
+
+        double step = (double)sourceRate / targetRate;
+        for (int frame = 0; frame < targetFrames; frame++)
+        {
+            double sourcePosition = frame * step;
+            int index0 = (int)sourcePosition;
+            int index1 = Math.Min(index0 + 1, sourceFrames - 1);
+            double fraction = sourcePosition - index0;
+
+            for (int channel = 0; channel < channels; channel++)
+            {
+                short sample0 = samples[(index0 * channels) + channel];
+                short sample1 = samples[(index1 * channels) + channel];
+                output[(frame * channels) + channel] = PcmMath.ClampToShort(sample0 + ((sample1 - sample0) * fraction));
+            }
+        }
+
+        return output;
     }
     #endregion
 }

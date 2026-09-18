@@ -134,6 +134,25 @@ public class AudioEditorService : IAudioEditorService
     }
 
     ///<inheritdoc/>
+    public async Task<string> ApplyVoiceChangeAsync(string sourcePath, double semitones, string outputName)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
+        ArgumentException.ThrowIfNullOrWhiteSpace(outputName);
+
+        WavFile wav = await WavFile.ReadAsync(sourcePath);
+
+        // Treat the source as if it were recorded at a rate scaled by the pitch factor, then resample it back down
+        // to the file's own rate - the same trick Conform() uses for format conversion, just aimed at a musical
+        // ratio instead of a target device's rate. The output keeps wav.SampleRate, so playback speed (and with it,
+        // duration) shifts along with pitch - the "turntable at the wrong RPM" effect this is meant to be.
+        double pitchFactor = Math.Pow(2, semitones / 12.0);
+        int scaledSourceRate = Math.Max(1, (int)Math.Round(wav.SampleRate * pitchFactor));
+        short[] output = AudioFormatUtility.Resample(wav.Samples, wav.Channels, scaledSourceRate, wav.SampleRate);
+
+        return await SaveDerivedAsync(wav, output, outputName);
+    }
+
+    ///<inheritdoc/>
     public async Task<string> CutAsync(string sourcePath, TimeSpan start, TimeSpan end, string outputName)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);

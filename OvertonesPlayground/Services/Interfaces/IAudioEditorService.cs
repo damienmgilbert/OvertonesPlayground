@@ -38,6 +38,15 @@ public interface IAudioEditorService
     Task<string> ApplyGainAsync(string sourcePath, double gainDb, string outputName);
 
     ///<summary>
+    ///Shifts pitch by <paramref name="semitones"/> via a resample-based "turntable speed change" - the cheap v1 voice
+    ///changer. Playback speed and duration change along with pitch, since this reuses the same linear-interpolation
+    ///resampler <see cref="OvertonesPlayground.Services.Implementations.AudioFormatUtility"/> uses for format
+    ///conversion, rather than a duration-preserving algorithm (a phase vocoder would be the v2 that preserves it, if
+    ///quality ever demands the extra complexity).
+    ///</summary>
+    Task<string> ApplyVoiceChangeAsync(string sourcePath, double semitones, string outputName);
+
+    ///<summary>
     ///Removes the [<paramref name="start"/>, <paramref name="end"/>] range from the middle, splicing what's before and
     ///after it back together.
     ///</summary>

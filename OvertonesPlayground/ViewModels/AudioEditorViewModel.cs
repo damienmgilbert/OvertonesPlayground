@@ -64,6 +64,8 @@ public partial class AudioEditorViewModel : BaseViewModel
     private async Task ApplyFadeAsync() { await ApplyEditAsync("fade", clip => _editorService.ApplyFadeAsync(clip.FilePath, TimeSpan.FromSeconds(FadeInSeconds), TimeSpan.FromSeconds(FadeOutSeconds), "fade")); }
     [RelayCommand]
     private async Task ApplyGainAsync() { await ApplyEditAsync("gain", clip => _editorService.ApplyGainAsync(clip.FilePath, GainDb, "gain")); }
+    [RelayCommand]
+    private async Task ApplyVoiceChangeAsync() { await ApplyEditAsync("voice change", clip => _editorService.ApplyVoiceChangeAsync(clip.FilePath, VoiceChangeSemitones, "voice-change")); }
 
     private async Task LoadClipAsync(string clipId)
     {
@@ -269,6 +271,13 @@ public partial class AudioEditorViewModel : BaseViewModel
     ///</summary>
     [ObservableProperty]
     public partial double TrimStartSeconds { get; set; }
+
+    ///<summary>
+    ///Pitch shift (semitones) for the voice changer. Positive raises pitch and speeds playback up; negative lowers
+    ///pitch and slows it down - both together, since this is the resample-based "turntable speed" v1.
+    ///</summary>
+    [ObservableProperty]
+    public partial double VoiceChangeSemitones { get; set; }
 
     ///<summary>
     ///Preview waveform peaks used by the UI to draw an overview.

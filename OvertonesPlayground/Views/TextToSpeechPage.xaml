@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:OvertonesPlayground.ViewModels"
+             x:Class="OvertonesPlayground.Views.TextToSpeechPage"
+             x:DataType="vm:TextToSpeechViewModel"
+             Title="{Binding Title}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="24" Spacing="18">
+
+            <Label Text="🗣 Text to Speech" FontSize="20" FontAttributes="Bold" />
+            <Label Text="Type something, Generate &amp; Play to preview it, then Save to keep it in your library (and your device's Music folder)."
+                   FontSize="12" TextColor="{StaticResource Gray500}" />
+
+            <Editor Placeholder="Type the text to speak..." Text="{Binding Text}" AutoSize="TextChanges" MinimumHeightRequest="120" />
+
+            <HorizontalStackLayout Spacing="12">
+                <Button Text="▶ Generate &amp; Play" Command="{Binding GenerateCommand}" />
+                <Button Text="💾 Save" Command="{Binding SaveCommand}" IsEnabled="{Binding CanSave}" BackgroundColor="{StaticResource Tertiary}" />
+            </HorizontalStackLayout>
+
+            <GraphicsView x:Name="WaveformView" HeightRequest="120" BackgroundColor="{StaticResource Gray950}" />
+
+            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
+            <Label Text="{Binding StatusMessage}" TextColor="{StaticResource Gray500}" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

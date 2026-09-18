@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:OvertonesPlayground.ViewModels"
+             x:Class="OvertonesPlayground.Views.SpeechToTextPage"
+             x:DataType="vm:SpeechToTextViewModel"
+             Title="{Binding Title}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="24" Spacing="18">
+
+            <Label Text="🎤 Speech to Text" FontSize="20" FontAttributes="Bold" />
+            <Label Text="Listen live through the microphone and watch the transcript build up, then Copy or Share it. There's no reliable way to transcribe an existing recording - only live listening."
+                   FontSize="12" TextColor="{StaticResource Gray500}" />
+
+            <Button Text="🎤 Start Listening"
+                    Command="{Binding StartListeningCommand}"
+                    IsVisible="{Binding IsListening, Converter={StaticResource InvertedBool}}" />
+
+            <Button Text="⏹ Stop Listening"
+                    Command="{Binding StopListeningCommand}"
+                    IsVisible="{Binding IsListening}"
+                    BackgroundColor="{StaticResource Tertiary}" />
+
+            <ActivityIndicator IsRunning="{Binding IsListening}" IsVisible="{Binding IsListening}" />
+
+            <Editor Text="{Binding Transcript}"
+                    IsReadOnly="True"
+                    Placeholder="Your transcript will appear here as you speak..."
+                    AutoSize="TextChanges"
+                    MinimumHeightRequest="150" />
+
+            <HorizontalStackLayout Spacing="12">
+                <Button Text="📋 Copy" Command="{Binding CopyCommand}" />
+                <Button Text="📤 Share" Command="{Binding ShareCommand}" />
+            </HorizontalStackLayout>
+
+            <Label Text="{Binding StatusMessage}" TextColor="{StaticResource Gray500}" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

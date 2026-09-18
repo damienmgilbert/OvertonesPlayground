@@ -98,6 +98,17 @@
                 </VerticalStackLayout>
             </toolkit:Expander>
 
+            <toolkit:Expander IsExpanded="False">
+                <toolkit:Expander.Header>
+                    <Label Text="🎙 Voice Changer" FontAttributes="Bold" Padding="0,10" />
+                </toolkit:Expander.Header>
+                <VerticalStackLayout Spacing="12" Padding="0,4,0,12">
+                    <Label Text="Shifts pitch by changing playback speed - like a record played at the wrong RPM. Duration changes along with pitch." FontSize="12" TextColor="{StaticResource Gray500}" />
+                    <controls:LabeledSlider LabelText="Pitch (semitones)" Minimum="-12" Maximum="12" Digits="1" Value="{Binding VoiceChangeSemitones}" />
+                    <Button Text="Apply Voice Change" Command="{Binding ApplyVoiceChangeCommand}" />
+                </VerticalStackLayout>
+            </toolkit:Expander>
+
             <BoxView HeightRequest="1" Color="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource CardStrokeDark}}" />
 
             <HorizontalStackLayout Spacing="12">
