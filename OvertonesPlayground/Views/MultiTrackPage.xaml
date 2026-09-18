@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:OvertonesPlayground.ViewModels"
+             xmlns:controls="clr-namespace:OvertonesPlayground.Controls"
+             x:Class="OvertonesPlayground.Views.MultiTrackPage"
+             x:DataType="vm:MultiTrackViewModel"
+             Title="{Binding Title}">
+
+    <ContentPage.Resources>
+        <DataTemplate x:Key="TrackClipTemplate" x:DataType="vm:TrackClipViewModel">
+            <Border StrokeShape="RoundRectangle 8" Padding="10,8" Margin="0,0,0,8">
+                <VerticalStackLayout Spacing="6">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <VerticalStackLayout Grid.Column="0" VerticalOptions="Center">
+                            <Label Text="{Binding ClipName}" FontAttributes="Bold" FontSize="13" LineBreakMode="TailTruncation" />
+                            <Label Text="{Binding DurationText}" FontSize="10" TextColor="{StaticResource Gray500}" />
+                        </VerticalStackLayout>
+                        <Button Grid.Column="1" Text="✕" Padding="10,6" FontSize="12"
+                                BackgroundColor="{StaticResource Gray600}"
+                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:TrackViewModel}}, Path=RemoveClipCommand}"
+                                CommandParameter="{Binding .}" />
+                    </Grid>
+                    <controls:LabeledSlider LabelText="Start (s)" Minimum="0" Maximum="300" Digits="2" Value="{Binding StartOffsetSeconds}" />
+                    <controls:LabeledSlider LabelText="Gain (dB)" Minimum="-24" Maximum="24" Digits="1" Value="{Binding GainDb}" />
+                </VerticalStackLayout>
+            </Border>
+        </DataTemplate>
+
+        <DataTemplate x:Key="TrackTemplate" x:DataType="vm:TrackViewModel">
+            <Border StrokeShape="RoundRectangle 10" Padding="14" Margin="0,0,0,16">
+                <Border.Triggers>
+                    <DataTrigger TargetType="Border" Binding="{Binding IsDimmed}" Value="True">
+                        <Setter Property="Opacity" Value="0.45" />
+                    </DataTrigger>
+                </Border.Triggers>
+
+                <VerticalStackLayout Spacing="10">
+                    <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6">
+                        <Entry Grid.Column="0" Text="{Binding Name}" FontAttributes="Bold" FontSize="15" />
+                        <Button Grid.Column="1" Text="M" WidthRequest="36" HeightRequest="34" Padding="0" FontSize="12"
+                                BackgroundColor="{Binding IsMuted, Converter={StaticResource BoolToAccent}}"
+                                Command="{Binding ToggleMuteCommand}" />
+                        <Button Grid.Column="2" Text="S" WidthRequest="36" HeightRequest="34" Padding="0" FontSize="12"
+                                BackgroundColor="{Binding IsSoloed, Converter={StaticResource BoolToAccent}}"
+                                Command="{Binding ToggleSoloCommand}" />
+                    </Grid>
+
+                    <controls:LabeledSlider LabelText="Volume" Minimum="0" Maximum="1" Digits="2" Value="{Binding Volume}" />
+                    <controls:LabeledSlider LabelText="Pan" Minimum="-1" Maximum="1" Digits="2" Value="{Binding Pan}" />
+
+                    <VerticalStackLayout BindableLayout.ItemsSource="{Binding Clips}"
+                                         BindableLayout.ItemTemplate="{StaticResource TrackClipTemplate}" />
+
+                    <HorizontalStackLayout Spacing="10">
+                        <Button Text="+ Add Clip" Clicked="OnAddClipClicked" />
+                        <Button Text="🔗 Merge" Command="{Binding MergeClipsCommand}"
+                                BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardBackgroundDark}}"
+                                TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+                    </HorizontalStackLayout>
+                </VerticalStackLayout>
+            </Border>
+        </DataTemplate>
+    </ContentPage.Resources>
+
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="🎚 Mix All" Command="{Binding MixAllToStartCommand}" />
+        <ToolbarItem Text="⬇ Bounce" Command="{Binding BounceCommand}" />
+    </ContentPage.ToolbarItems>
+
+    <ScrollView>
+        <VerticalStackLayout Padding="16" Spacing="14">
+
+            <VerticalStackLayout Spacing="2">
+                <Label Text="Project name" FontSize="11" TextColor="{StaticResource Gray500}" />
+                <Entry Text="{Binding ProjectName}" FontAttributes="Bold" FontSize="16" Placeholder="Mix" />
+            </VerticalStackLayout>
+
+            <VerticalStackLayout BindableLayout.ItemsSource="{Binding Tracks}"
+                                 BindableLayout.ItemTemplate="{StaticResource TrackTemplate}" />
+
+            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
+            <Label Text="{Binding StatusMessage}" TextColor="{StaticResource Gray500}" IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBool}}" />
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

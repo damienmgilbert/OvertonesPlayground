@@ -179,6 +179,29 @@ public class AudioEditorService : IAudioEditorService
     }
 
     ///<inheritdoc/>
+    public async Task<string> InsertAsync(string sourcePath, string insertPath, TimeSpan at, string outputName)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
+        ArgumentException.ThrowIfNullOrWhiteSpace(insertPath);
+        ArgumentException.ThrowIfNullOrWhiteSpace(outputName);
+
+        WavFile source = await WavFile.ReadAsync(sourcePath);
+        WavFile insert = await WavFile.ReadAsync(insertPath);
+        short[] insertSamples = AudioFormatUtility.Conform(insert, source.Channels, source.SampleRate);
+
+        int frameCount = source.Channels * source.SampleRate;
+        int insertIndex = Math.Clamp((int)(at.TotalSeconds * frameCount), 0, source.Samples.Length);
+
+        short[] output = new short[source.Samples.Length + insertSamples.Length];
+        Array.Copy(source.Samples, 0, output, 0, insertIndex);
+        Array.Copy(insertSamples, 0, output, insertIndex, insertSamples.Length);
+        Array.Copy(source.Samples, insertIndex, output, insertIndex + insertSamples.Length, source.Samples.Length - insertIndex);
+
+        string outputPath = await SaveDerivedAsync(source, output, outputName);
+        return outputPath;
+    }
+
+    ///<inheritdoc/>
     public async Task<string> NormalizeAsync(string sourcePath, string outputName)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);

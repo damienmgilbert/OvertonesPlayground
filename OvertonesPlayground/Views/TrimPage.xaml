@@ -105,8 +105,11 @@
             </HorizontalStackLayout>
         </Grid>
 
-        <!-- Split at playhead -->
-        <Button Grid.Row="4" Text="✂ Split at Playhead" HorizontalOptions="Center" Command="{Binding SplitAtPlayheadCommand}" />
+        <!-- Split / insert at playhead -->
+        <HorizontalStackLayout Grid.Row="4" Spacing="10" HorizontalOptions="Center">
+            <Button Text="✂ Split at Playhead" Command="{Binding SplitAtPlayheadCommand}" />
+            <Button Text="📎 Insert Clip Here" Clicked="OnInsertClipClicked" />
+        </HorizontalStackLayout>
 
         <!-- Playback transport + bottom quick-action bar -->
         <VerticalStackLayout Grid.Row="5" Spacing="12">

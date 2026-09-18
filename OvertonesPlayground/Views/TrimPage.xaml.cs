@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using OvertonesPlayground.Models;
 using OvertonesPlayground.ViewModels;
 
 namespace OvertonesPlayground.Views;
@@ -70,6 +71,19 @@ public partial class TrimPage : ContentPage
         if (TryParseTime(input, out double seconds))
         {
             _viewModel.SetEndTime(seconds);
+        }
+    }
+
+    ///<summary>
+    ///Shows the library clip picker and, if a clip is chosen, inserts it into the loaded clip at the playhead.
+    ///</summary>
+    private async void OnInsertClipClicked(object? sender, EventArgs e)
+    {
+        IReadOnlyList<AudioClip> clips = await _viewModel.GetLibraryClipsAsync();
+        AudioClip? chosen = await LibraryClipPicker.PickAsync(this, clips, "Insert clip at playhead");
+        if (chosen is not null)
+        {
+            await _viewModel.InsertClipCommand.ExecuteAsync(chosen);
         }
     }
 

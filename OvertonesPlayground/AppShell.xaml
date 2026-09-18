@@ -23,6 +23,10 @@
         <ShellContent ContentTemplate="{DataTemplate views:MixerPage}" Route="mixer" />
     </FlyoutItem>
 
+    <FlyoutItem Title="Multi-Track" Route="multitrack">
+        <ShellContent ContentTemplate="{DataTemplate views:MultiTrackPage}" Route="multitrack" />
+    </FlyoutItem>
+
     <FlyoutItem Title="Audio Recorder" Route="soundcreator">
         <ShellContent ContentTemplate="{DataTemplate views:SoundCreatorPage}" Route="soundcreator" />
     </FlyoutItem>

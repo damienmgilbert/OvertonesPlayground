@@ -18,6 +18,12 @@ public class TrackClip
     public string ClipName { get; set; } = string.Empty;
 
     ///<summary>
+    ///The source clip's duration, captured when it's added to the track. Used to auto-stack clips end-to-end
+    ///(the Merge helper) without re-reading the source file.
+    ///</summary>
+    public TimeSpan Duration { get; set; }
+
+    ///<summary>
     ///Gain applied to this clip within the track, in decibels. Zero leaves it unchanged.
     ///</summary>
     public double GainDb { get; set; }

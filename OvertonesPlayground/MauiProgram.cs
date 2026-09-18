@@ -47,6 +47,9 @@ public static class MauiProgram
         services.AddSingleton<MixerViewModel>();
         services.AddSingleton<MixerPage>();
 
+        services.AddSingleton<MultiTrackViewModel>();
+        services.AddSingleton<MultiTrackPage>();
+
         // Re-created fresh each time they're navigated to.
         services.AddTransient<LibraryViewModel>();
         services.AddTransient<LibraryPage>();

@@ -97,6 +97,35 @@ public partial class TrimViewModel : BaseViewModel
     [RelayCommand]
     private void IncreaseStart() { TrimStartSeconds = Math.Clamp(TrimStartSeconds + NudgeStepSeconds, 0, TrimEndSeconds); }
 
+    [RelayCommand]
+    private async Task InsertClipAsync(AudioClip? clipToInsert)
+    {
+        if (LoadedClip is null || IsBusy || clipToInsert is null)
+        {
+            return;
+        }
+
+        IsBusy = true;
+        try
+        {
+            TimeSpan at = TimeSpan.FromSeconds(PositionSeconds);
+            string baseName = $"{LoadedClip.Name} (inserted)";
+            string outputPath = await _editorService.InsertAsync(LoadedClip.FilePath, clipToInsert.FilePath, at, baseName);
+            AudioClip saved = await _libraryService.AddClipAsync(outputPath, baseName, isUserRecording: true);
+            Log_Inserted(saved.Name);
+            await Shell.Current.GoToAsync("..");
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException or NotSupportedException)
+        {
+            Log_InsertFailed(ex, LoadedClip.Name);
+            StatusMessage = "Couldn't insert that clip.";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
     private async Task LoadClipAsync(string clipId)
     {
         IsBusy = true;
@@ -139,6 +168,12 @@ public partial class TrimViewModel : BaseViewModel
 
     [LoggerMessage(Level = LogLevel.Debug, Message = "Clip {ClipId} not found.")]
     private partial void Log_ClipNotFound(string clipId);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Inserted a clip into '{ClipName}'.")]
+    private partial void Log_Inserted(string clipName);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Failed to insert a clip into '{ClipName}'.")]
+    private partial void Log_InsertFailed(Exception exception, string clipName);
 
     [LoggerMessage(Level = LogLevel.Error, Message = "Failed to load clip {ClipId} into the trim editor.")]
     private partial void Log_LoadClipFailed(Exception exception, string clipId);
@@ -408,6 +443,11 @@ public partial class TrimViewModel : BaseViewModel
         UndoCommand.NotifyCanExecuteChanged();
         RedoCommand.NotifyCanExecuteChanged();
     }
+
+    ///<summary>
+    ///Every clip currently in the library, for the "Insert clip" picker.
+    ///</summary>
+    public Task<IReadOnlyList<AudioClip>> GetLibraryClipsAsync() => _libraryService.GetClipsAsync();
 
     ///<summary>
     ///Moves the preview playhead to the given position, in seconds.

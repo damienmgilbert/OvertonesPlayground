@@ -43,6 +43,15 @@ public interface IAudioEditorService
     Task<float[]> GetWaveformPeaksAsync(string filePath, int peakCount);
 
     ///<summary>
+    ///Splices <paramref name="insertPath"/>'s audio into <paramref name="sourcePath"/> at <paramref name="at"/>,
+    ///resampling/channel-converting the inserted clip to match the source first if they differ, and returns the new
+    ///file's path.
+    ///</summary>
+    ///<exception cref="NotSupportedException"><paramref name="insertPath"/>'s channel count can't be converted to
+    ///match <paramref name="sourcePath"/> (only mono/stereo conversion is supported).</exception>
+    Task<string> InsertAsync(string sourcePath, string insertPath, TimeSpan at, string outputName);
+
+    ///<summary>
     ///Scales the audio so its loudest sample reaches full scale.
     ///</summary>
     Task<string> NormalizeAsync(string sourcePath, string outputName);
