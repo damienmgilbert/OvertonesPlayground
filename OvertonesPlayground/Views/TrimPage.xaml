@@ -47,7 +47,7 @@
         </Grid>
 
         <!-- Waveform, with draggable start/end handles and a scrub-to-seek gesture -->
-        <Grid AutomationId="trim-waveform" Grid.Row="2" x:Name="WaveformContainer" SizeChanged="OnWaveformContainerSizeChanged" VerticalOptions="Center" IsClippedToBounds="True">
+        <Grid AutomationId="trim-waveform" Grid.Row="2" x:Name="WaveformContainer" SizeChanged="OnWaveformContainerSizeChanged" VerticalOptions="Center" IsClippedToBounds="True" Padding="24,0">
             <Grid.GestureRecognizers>
                 <TapGestureRecognizer Tapped="OnWaveformTapped" />
             </Grid.GestureRecognizers>
@@ -56,23 +56,33 @@
 
             <BoxView WidthRequest="2" Color="#0078D4" HorizontalOptions="Start" VerticalOptions="Fill" HeightRequest="240"
                      Margin="-1,0,0,0" TranslationX="{Binding StartHandleX}" InputTransparent="True" />
-            <Border SemanticProperties.Description="Trim start handle" SemanticProperties.Hint="Drag to move the start. The minus and plus buttons do the same" AutomationId="trim-start-handle" WidthRequest="32" HeightRequest="32" StrokeShape="RoundRectangle 16" Stroke="Transparent" BackgroundColor="#0078D4"
-                    HorizontalOptions="Start" VerticalOptions="Center" Margin="-16,0,0,0" TranslationX="{Binding StartHandleX}">
-                <Label Text="&#8249;" TextColor="White" FontAttributes="Bold" FontSize="16" HorizontalTextAlignment="Center" VerticalTextAlignment="Center" InputTransparent="True" />
-                <Border.GestureRecognizers>
+            <!-- A 48dp touch target (the recommended minimum) around the 32dp visual, so the handle is easy to grab. The
+                 gesture, id and semantics sit on the target; the margin is half of 48 so the center stays on the trim point. -->
+            <Grid SemanticProperties.Description="Trim start handle" SemanticProperties.Hint="Drag to move the start. The minus and plus buttons do the same" AutomationId="trim-start-handle" WidthRequest="48" HeightRequest="48" BackgroundColor="Transparent"
+                  HorizontalOptions="Start" VerticalOptions="Center" Margin="-24,0,0,0" TranslationX="{Binding StartHandleX}">
+                <Border WidthRequest="32" HeightRequest="32" StrokeShape="RoundRectangle 16" Stroke="Transparent" BackgroundColor="#0078D4"
+                        HorizontalOptions="Center" VerticalOptions="Center" InputTransparent="True">
+                    <Label Text="&#8249;" TextColor="White" FontAttributes="Bold" FontSize="16" HorizontalTextAlignment="Center" VerticalTextAlignment="Center" InputTransparent="True" />
+                </Border>
+                <Grid.GestureRecognizers>
                     <PanGestureRecognizer PanUpdated="OnStartHandlePanUpdated" />
-                </Border.GestureRecognizers>
-            </Border>
+                </Grid.GestureRecognizers>
+            </Grid>
 
             <BoxView WidthRequest="2" Color="#0078D4" HorizontalOptions="Start" VerticalOptions="Fill" HeightRequest="240"
                      Margin="-1,0,0,0" TranslationX="{Binding EndHandleX}" InputTransparent="True" />
-            <Border SemanticProperties.Description="Trim end handle" SemanticProperties.Hint="Drag to move the end. The minus and plus buttons do the same" AutomationId="trim-end-handle" WidthRequest="32" HeightRequest="32" StrokeShape="RoundRectangle 16" Stroke="Transparent" BackgroundColor="#0078D4"
-                    HorizontalOptions="Start" VerticalOptions="Center" Margin="-16,0,0,0" TranslationX="{Binding EndHandleX}">
-                <Label Text="&#8250;" TextColor="White" FontAttributes="Bold" FontSize="16" HorizontalTextAlignment="Center" VerticalTextAlignment="Center" InputTransparent="True" />
-                <Border.GestureRecognizers>
+            <!-- A 48dp touch target (the recommended minimum) around the 32dp visual, so the handle is easy to grab. The
+                 gesture, id and semantics sit on the target; the margin is half of 48 so the center stays on the trim point. -->
+            <Grid SemanticProperties.Description="Trim end handle" SemanticProperties.Hint="Drag to move the end. The minus and plus buttons do the same" AutomationId="trim-end-handle" WidthRequest="48" HeightRequest="48" BackgroundColor="Transparent"
+                  HorizontalOptions="Start" VerticalOptions="Center" Margin="-24,0,0,0" TranslationX="{Binding EndHandleX}">
+                <Border WidthRequest="32" HeightRequest="32" StrokeShape="RoundRectangle 16" Stroke="Transparent" BackgroundColor="#0078D4"
+                        HorizontalOptions="Center" VerticalOptions="Center" InputTransparent="True">
+                    <Label Text="&#8250;" TextColor="White" FontAttributes="Bold" FontSize="16" HorizontalTextAlignment="Center" VerticalTextAlignment="Center" InputTransparent="True" />
+                </Border>
+                <Grid.GestureRecognizers>
                     <PanGestureRecognizer PanUpdated="OnEndHandlePanUpdated" />
-                </Border.GestureRecognizers>
-            </Border>
+                </Grid.GestureRecognizers>
+            </Grid>
         </Grid>
 
         <!-- Trim mode toggle + zoom/pan controls -->

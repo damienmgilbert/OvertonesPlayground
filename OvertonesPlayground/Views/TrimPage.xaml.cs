@@ -32,6 +32,14 @@ public partial class TrimPage : ContentPage
     }
     #endregion
 
+    #region Private properties
+    ///<summary>
+    ///Width of the waveform itself: the container minus the padding that keeps the end handles' touch targets inside its
+    ///clip bounds.
+    ///</summary>
+    private double WaveformWidth => WaveformContainer.Width - WaveformContainer.Padding.HorizontalThickness;
+    #endregion
+
     #region Private methods
     ///<summary>
     ///Applies a completed (or in-progress) end-handle drag to the view model, clamped against the start handle, then
@@ -174,9 +182,9 @@ public partial class TrimPage : ContentPage
     ///</summary>
     private void OnWaveformContainerSizeChanged(object? sender, EventArgs e)
     {
-        if (WaveformContainer.Width > 0)
+        if (WaveformWidth > 0)
         {
-            _viewModel.ViewportWidth = WaveformContainer.Width;
+            _viewModel.ViewportWidth = WaveformWidth;
         }
     }
 
@@ -186,10 +194,10 @@ public partial class TrimPage : ContentPage
     private void OnWaveformTapped(object? sender, TappedEventArgs e)
     {
         Point? position = e.GetPosition(WaveformContainer);
-        bool hasPosition = position is not null && WaveformContainer.Width > 0;
+        bool hasPosition = position is not null && WaveformWidth > 0;
         if (hasPosition)
         {
-            double fraction = Math.Clamp(position!.Value.X / WaveformContainer.Width, 0, 1);
+            double fraction = Math.Clamp((position!.Value.X - WaveformContainer.Padding.Left) / WaveformWidth, 0, 1);
             double seconds = _viewModel.WindowStartSeconds + (fraction * _viewModel.VisibleSeconds);
             _viewModel.SeekToPosition(seconds);
         }
