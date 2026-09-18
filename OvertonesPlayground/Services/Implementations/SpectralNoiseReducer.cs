@@ -1,3 +1,5 @@
+using System.Buffers;
+
 namespace OvertonesPlayground.Services.Implementations;
 
 ///<summary>
@@ -42,42 +44,60 @@ internal static class SpectralNoiseReducer
         double[] magnitudeSum = new double[FftSize];
         int windowCount = 0;
 
-        for (int start = 0; start + FftSize <= noiseFrameCount; start += HopSize)
+        double[] realBuffer = ArrayPool<double>.Shared.Rent(FftSize);
+        double[] imaginaryBuffer = ArrayPool<double>.Shared.Rent(FftSize);
+        try
         {
-            double[] real = new double[FftSize];
-            double[] imaginary = new double[FftSize];
-            for (int i = 0; i < FftSize; i++)
+            // Rent()'s array may be longer than FftSize (pool buckets are sized in powers of two, not exact
+            // matches), so every use is through a fixed-length slice rather than the raw buffer.
+            Span<double> real = realBuffer.AsSpan(0, FftSize);
+            Span<double> imaginary = imaginaryBuffer.AsSpan(0, FftSize);
+
+            for (int start = 0; start + FftSize <= noiseFrameCount; start += HopSize)
             {
-                real[i] = samples[start + i] * window[i];
+                for (int i = 0; i < FftSize; i++)
+                {
+                    real[i] = samples[start + i] * window[i];
+                }
+
+                // Rented buffers aren't zeroed, and Forward() expects a fresh (all-zero) imaginary input each call.
+                imaginary.Clear();
+
+                FastFourierTransform.Forward(real, imaginary);
+                for (int i = 0; i < FftSize; i++)
+                {
+                    magnitudeSum[i] += Math.Sqrt((real[i] * real[i]) + (imaginary[i] * imaginary[i]));
+                }
+
+                windowCount++;
             }
 
-            FastFourierTransform.Forward(real, imaginary);
-            for (int i = 0; i < FftSize; i++)
+            bool hasNoFullWindow = windowCount == 0;
+            if (hasNoFullWindow)
             {
-                magnitudeSum[i] += Math.Sqrt((real[i] * real[i]) + (imaginary[i] * imaginary[i]));
-            }
+                // The main loop above never ran, so these buffers may still hold another caller's stale data -
+                // clear fully before writing only the first `available` samples, same as a fresh `new double[]`.
+                real.Clear();
+                imaginary.Clear();
+                int available = Math.Min(noiseFrameCount, FftSize);
+                for (int i = 0; i < available; i++)
+                {
+                    real[i] = samples[i] * window[i];
+                }
 
-            windowCount++;
+                FastFourierTransform.Forward(real, imaginary);
+                for (int i = 0; i < FftSize; i++)
+                {
+                    magnitudeSum[i] = Math.Sqrt((real[i] * real[i]) + (imaginary[i] * imaginary[i]));
+                }
+
+                windowCount = 1;
+            }
         }
-
-        bool hasNoFullWindow = windowCount == 0;
-        if (hasNoFullWindow)
+        finally
         {
-            double[] real = new double[FftSize];
-            double[] imaginary = new double[FftSize];
-            int available = Math.Min(noiseFrameCount, FftSize);
-            for (int i = 0; i < available; i++)
-            {
-                real[i] = samples[i] * window[i];
-            }
-
-            FastFourierTransform.Forward(real, imaginary);
-            for (int i = 0; i < FftSize; i++)
-            {
-                magnitudeSum[i] = Math.Sqrt((real[i] * real[i]) + (imaginary[i] * imaginary[i]));
-            }
-
-            windowCount = 1;
+            ArrayPool<double>.Shared.Return(realBuffer);
+            ArrayPool<double>.Shared.Return(imaginaryBuffer);
         }
 
         for (int i = 0; i < FftSize; i++)
@@ -115,39 +135,51 @@ internal static class SpectralNoiseReducer
         double[] output = new double[samples.Length];
         double[] windowSum = new double[samples.Length];
 
-        for (int start = 0; start + FftSize <= samples.Length; start += HopSize)
+        double[] realBuffer = ArrayPool<double>.Shared.Rent(FftSize);
+        double[] imaginaryBuffer = ArrayPool<double>.Shared.Rent(FftSize);
+        try
         {
-            double[] real = new double[FftSize];
-            double[] imaginary = new double[FftSize];
-            for (int i = 0; i < FftSize; i++)
+            Span<double> real = realBuffer.AsSpan(0, FftSize);
+            Span<double> imaginary = imaginaryBuffer.AsSpan(0, FftSize);
+
+            for (int start = 0; start + FftSize <= samples.Length; start += HopSize)
             {
-                real[i] = samples[start + i] * window[i];
+                for (int i = 0; i < FftSize; i++)
+                {
+                    real[i] = samples[start + i] * window[i];
+                }
+
+                imaginary.Clear();
+                FastFourierTransform.Forward(real, imaginary);
+
+                for (int i = 0; i < FftSize; i++)
+                {
+                    double magnitude = Math.Sqrt((real[i] * real[i]) + (imaginary[i] * imaginary[i]));
+                    bool hasMagnitude = magnitude > 0;
+                    double phaseReal = hasMagnitude ? real[i] / magnitude : 0;
+                    double phaseImag = hasMagnitude ? imaginary[i] / magnitude : 0;
+
+                    double subtracted = magnitude - (OverSubtractionFactor * noiseProfile[i]);
+                    double floor = NoiseFloorRatio * magnitude;
+                    double newMagnitude = Math.Max(subtracted, floor);
+
+                    real[i] = newMagnitude * phaseReal;
+                    imaginary[i] = newMagnitude * phaseImag;
+                }
+
+                FastFourierTransform.Inverse(real, imaginary);
+
+                for (int i = 0; i < FftSize; i++)
+                {
+                    output[start + i] += real[i] * window[i];
+                    windowSum[start + i] += window[i] * window[i];
+                }
             }
-
-            FastFourierTransform.Forward(real, imaginary);
-
-            for (int i = 0; i < FftSize; i++)
-            {
-                double magnitude = Math.Sqrt((real[i] * real[i]) + (imaginary[i] * imaginary[i]));
-                bool hasMagnitude = magnitude > 0;
-                double phaseReal = hasMagnitude ? real[i] / magnitude : 0;
-                double phaseImag = hasMagnitude ? imaginary[i] / magnitude : 0;
-
-                double subtracted = magnitude - (OverSubtractionFactor * noiseProfile[i]);
-                double floor = NoiseFloorRatio * magnitude;
-                double newMagnitude = Math.Max(subtracted, floor);
-
-                real[i] = newMagnitude * phaseReal;
-                imaginary[i] = newMagnitude * phaseImag;
-            }
-
-            FastFourierTransform.Inverse(real, imaginary);
-
-            for (int i = 0; i < FftSize; i++)
-            {
-                output[start + i] += real[i] * window[i];
-                windowSum[start + i] += window[i] * window[i];
-            }
+        }
+        finally
+        {
+            ArrayPool<double>.Shared.Return(realBuffer);
+            ArrayPool<double>.Shared.Return(imaginaryBuffer);
         }
 
         for (int i = 0; i < output.Length; i++)

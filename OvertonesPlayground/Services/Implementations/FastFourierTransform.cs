@@ -12,7 +12,7 @@ internal static class FastFourierTransform
     ///Reorders <paramref name="real"/>/<paramref name="imaginary"/> into bit-reversed index order, the standard
     ///first pass of an in-place iterative FFT.
     ///</summary>
-    private static void BitReverse(double[] real, double[] imaginary)
+    private static void BitReverse(Span<double> real, Span<double> imaginary)
     {
         int n = real.Length;
         for (int i = 1, j = 0; i < n; i++)
@@ -35,7 +35,7 @@ internal static class FastFourierTransform
     ///<summary>
     ///Runs the forward or inverse transform, in place. <paramref name="real"/>.Length must be a power of two.
     ///</summary>
-    private static void Transform(double[] real, double[] imaginary, bool inverse)
+    private static void Transform(Span<double> real, Span<double> imaginary, bool inverse)
     {
         int n = real.Length;
         BitReverse(real, imaginary);
@@ -89,11 +89,11 @@ internal static class FastFourierTransform
     ///<summary>
     ///Transforms a time-domain signal into its frequency-domain spectrum, in place.
     ///</summary>
-    public static void Forward(double[] real, double[] imaginary) => Transform(real, imaginary, inverse: false);
+    public static void Forward(Span<double> real, Span<double> imaginary) => Transform(real, imaginary, inverse: false);
 
     ///<summary>
     ///Transforms a frequency-domain spectrum back into a time-domain signal, in place.
     ///</summary>
-    public static void Inverse(double[] real, double[] imaginary) => Transform(real, imaginary, inverse: true);
+    public static void Inverse(Span<double> real, Span<double> imaginary) => Transform(real, imaginary, inverse: true);
     #endregion
 }
