@@ -90,6 +90,7 @@
 		<PackageReference Include="Microsoft.Extensions.Logging.Console" Version="10.0.12" />
 		<PackageReference Include="Microsoft.Maui.Controls" Version="10.0.101" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.12" />
+		<PackageReference Include="Microsoft.Maui.DevFlow.Agent" Version="0.1.0-preview.12.26421.1" />
 		<PackageReference Include="Plugin.Maui.Audio" Version="4.0.0" />
 		<PackageReference Include="SkiaSharp.Views.Maui.Controls" Version="4.152.0" />
 	</ItemGroup>

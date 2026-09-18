@@ -1,4 +1,5 @@
 using CommunityToolkit.Maui;
+using Microsoft.Maui.DevFlow.Agent;
 using OvertonesPlayground.Platforms.Android.Services;
 using OvertonesPlayground.Services.Implementations;
 using OvertonesPlayground.Services.Interfaces;
@@ -114,6 +115,10 @@ public static class MauiProgram
         builder.Logging.AddDebug();
         builder.Logging.AddConsole();
         builder.Logging.SetMinimumLevel(LogLevel.Debug);
+        builder.AddMauiDevFlowAgent(options =>
+        {
+            options.EnableLayoutDiagnostics = true;
+        });
 #endif
 
         return builder.Build();
