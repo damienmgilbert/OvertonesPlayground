@@ -95,6 +95,10 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <Using Include="CommunityToolkit.Common" />
+	  <Using Include="CommunityToolkit.Diagnostics" />
+	  <Using Include="CommunityToolkit.HighPerformance" />
+	  <Using Include="CommunityToolkit.Mvvm" />
 	  <Using Include="Microsoft.Extensions.Logging" />
 	</ItemGroup>
 
