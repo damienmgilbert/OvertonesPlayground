@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using OvertonesPlayground.Models;
@@ -11,6 +12,32 @@ namespace OvertonesPlayground.ViewModels;
 ///</summary>
 public partial class ToneGeneratorViewModel : BaseViewModel
 {
+    #region Constants
+    // The manual controls' ranges. The page binds its sliders to these, and every preset must fit inside them: a slider
+    // clamps whatever it is given and writes the clamped value back here, so a preset outside a range would silently
+    // generate a different sound from the one it names (the "Click" preset once came out at 2000 Hz and 0.10 s).
+
+    ///<summary>
+    ///Highest frequency the Frequency control accepts, in Hz.
+    ///</summary>
+    public const double MaxFrequencyHz = 4000;
+
+    ///<summary>
+    ///Longest tone the Duration control accepts, in seconds.
+    ///</summary>
+    public const double MaxDurationSeconds = 3;
+
+    ///<summary>
+    ///Lowest frequency the Frequency control accepts, in Hz.
+    ///</summary>
+    public const double MinFrequencyHz = 20;
+
+    ///<summary>
+    ///Shortest tone the Duration control accepts, in seconds.
+    ///</summary>
+    public const double MinDurationSeconds = 0.05;
+    #endregion
+
     #region Fields
     private readonly IAudioEditorService _editorService;
     private readonly IAudioLibraryService _libraryService;
@@ -33,10 +60,14 @@ public partial class ToneGeneratorViewModel : BaseViewModel
         _playbackService = playbackService;
         _libraryService = libraryService;
         Title = "Tone Generator";
+
+        AssertPresetsFitControls();
     }
     #endregion
 
     #region Private methods
+    partial void OnSelectedWaveformChanged(WaveformType value) => OnPropertyChanged(nameof(IsFrequencyRelevant));
+
     ///<summary>
     ///Synthesizes the current settings, previews the result, and enables Save.
     ///</summary>
@@ -51,7 +82,7 @@ public partial class ToneGeneratorViewModel : BaseViewModel
         IsBusy = true;
         try
         {
-            string name = $"{SelectedWaveform} {FrequencyHz:0}Hz";
+            string name = IsFrequencyRelevant ? $"{SelectedWaveform} {FrequencyHz:0}Hz" : $"{SelectedWaveform}";
             Log_GeneratingTone(name, DurationSeconds, Amplitude);
             _pendingClip = await _synthesisService.GenerateToneAsync(SelectedWaveform, FrequencyHz, DurationSeconds, Amplitude, name);
 
@@ -70,6 +101,23 @@ public partial class ToneGeneratorViewModel : BaseViewModel
         finally
         {
             IsBusy = false;
+        }
+    }
+
+    ///<summary>
+    ///Debug builds only: fails loudly if a preset doesn't fit the manual controls' ranges, so a future preset can't be
+    ///silently clamped the way "Click" once was.
+    ///</summary>
+    [Conditional("DEBUG")]
+    private static void AssertPresetsFitControls()
+    {
+        foreach (TonePreset preset in TonePreset.All)
+        {
+            bool isNoise = preset.Waveform is WaveformType.WhiteNoise or WaveformType.PinkNoise;
+            bool frequencyFits = isNoise || preset.FrequencyHz is >= MinFrequencyHz and <= MaxFrequencyHz;
+            bool durationFits = preset.DurationSeconds is >= MinDurationSeconds and <= MaxDurationSeconds;
+            bool amplitudeFits = preset.Amplitude is >= 0 and <= 1;
+            Debug.Assert(frequencyFits && durationFits && amplitudeFits, $"Preset '{preset.Name}' is outside the slider ranges, so the sliders would clamp it.");
         }
     }
 
@@ -120,7 +168,11 @@ public partial class ToneGeneratorViewModel : BaseViewModel
     {
         Log_SelectedPreset(preset.Name);
         SelectedWaveform = preset.Waveform;
-        FrequencyHz = preset.FrequencyHz;
+        if (IsFrequencyRelevant)
+        {
+            FrequencyHz = preset.FrequencyHz;
+        }
+
         DurationSeconds = preset.DurationSeconds;
         Amplitude = preset.Amplitude;
     }
@@ -150,6 +202,11 @@ public partial class ToneGeneratorViewModel : BaseViewModel
     ///</summary>
     [ObservableProperty]
     public partial double FrequencyHz { get; set; } = 440;
+
+    ///<summary>
+    ///False for the noise waveforms, which have no pitch, so the Frequency control has no effect on them.
+    ///</summary>
+    public bool IsFrequencyRelevant => SelectedWaveform is not (WaveformType.WhiteNoise or WaveformType.PinkNoise);
 
     ///<summary>
     ///Quick-select presets shown above the manual controls.

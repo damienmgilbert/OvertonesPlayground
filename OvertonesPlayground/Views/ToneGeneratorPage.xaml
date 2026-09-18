@@ -36,8 +36,8 @@
                         SelectedItem="{Binding SelectedWaveform}" />
             </Grid>
 
-            <controls:LabeledSlider AutomationId="tonegenerator-frequency" LabelText="Frequency" Minimum="20" Maximum="2000" Digits="0" Value="{Binding FrequencyHz}" />
-            <controls:LabeledSlider AutomationId="tonegenerator-duration" LabelText="Duration" Minimum="0.1" Maximum="3" Digits="2" Value="{Binding DurationSeconds}" />
+            <controls:LabeledSlider AutomationId="tonegenerator-frequency" LabelText="Frequency" Minimum="{x:Static vm:ToneGeneratorViewModel.MinFrequencyHz}" Maximum="{x:Static vm:ToneGeneratorViewModel.MaxFrequencyHz}" Digits="0" IsEnabled="{Binding IsFrequencyRelevant}" Value="{Binding FrequencyHz}" />
+            <controls:LabeledSlider AutomationId="tonegenerator-duration" LabelText="Duration" Minimum="{x:Static vm:ToneGeneratorViewModel.MinDurationSeconds}" Maximum="{x:Static vm:ToneGeneratorViewModel.MaxDurationSeconds}" Digits="2" Value="{Binding DurationSeconds}" />
             <controls:LabeledSlider AutomationId="tonegenerator-level" LabelText="Level" Minimum="0" Maximum="1" Digits="2" Value="{Binding Amplitude}" />
 
             <HorizontalStackLayout Spacing="12">
