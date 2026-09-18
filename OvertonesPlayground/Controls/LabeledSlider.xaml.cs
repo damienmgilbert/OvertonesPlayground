@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace OvertonesPlayground.Controls;
 
 /// <summary>
@@ -63,7 +65,7 @@ public partial class LabeledSlider : ContentView
 
     private void SyncEntryText()
     {
-        var formatted = Value.ToString($"F{Digits}");
+        string formatted = Value.ToString($"F{Digits}", CultureInfo.CurrentCulture);
         if (ValueEntry.Text != formatted)
         {
             ValueEntry.Text = formatted;
@@ -72,7 +74,11 @@ public partial class LabeledSlider : ContentView
 
     private void OnEntryTextChanged(object? sender, TextChangedEventArgs e)
     {
-        if (double.TryParse(e.NewTextValue, out var parsed) && parsed >= Minimum && parsed <= Maximum)
+        if (double.TryParse(e.NewTextValue,
+                            NumberStyles.Float | NumberStyles.AllowThousands,
+                            CultureInfo.CurrentCulture,
+                            out double parsed) &&
+            parsed >= Minimum && parsed <= Maximum)
         {
             Value = parsed;
         }

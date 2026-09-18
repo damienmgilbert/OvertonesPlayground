@@ -27,7 +27,7 @@ public partial class LaunchpadViewModel : BaseViewModel
     ///<summary>
     ///Colors assigned round-robin to pads as they're given a sample.
     ///</summary>
-    private static readonly string[] PadPalette = ["#512BD4", "#D600AA", "#2B9348", "#F77F00", "#0077B6", "#9D4EDD", "#E5383B", "#FFB703", ];
+    private static readonly string[] PadPalette = ["#512BD4", "#D600AA", "#2B9348", "#F77F00", "#0077B6", "#9D4EDD", "#E5383B", "#FFB703",];
     private readonly IAudioLibraryService _libraryService;
     private readonly IAudioPlaybackService _playbackService;
     #endregion

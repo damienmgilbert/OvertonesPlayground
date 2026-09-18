@@ -36,9 +36,9 @@ public partial class DrumSynthPage : ContentPage
     [LoggerMessage(Level = LogLevel.Debug, Message = "Page disappeared.")]
     private partial void Log_PageDisappeared();
 
-        ///<summary>
-///Redraws the waveform whenever the view model generates a new preview.
-///</summary>
+    ///<summary>
+    ///Redraws the waveform whenever the view model generates a new preview.
+    ///</summary>
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(DrumSynthViewModel.WaveformPeaks))

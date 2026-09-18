@@ -31,9 +31,9 @@ public partial class PlayerPage : ContentPage
     [LoggerMessage(Level = LogLevel.Debug, Message = "Page disappeared.")]
     private partial void Log_PageDisappeared();
 
-        ///<summary>
-///Applies the seek slider's dropped position to the playback service.
-///</summary>
+    ///<summary>
+    ///Applies the seek slider's dropped position to the playback service.
+    ///</summary>
     private void OnSeekCompleted(object? sender, EventArgs e) => _viewModel.SeekCommand.Execute(PositionSlider.Value);
     #endregion
 

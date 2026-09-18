@@ -83,9 +83,9 @@ public class PublicStorageService : IPublicStorageService
             return null;
         }
 
-        var targetDir = Path.Combine(musicDir.AbsolutePath, SubFolder);
+        string targetDir = Path.Combine(musicDir.AbsolutePath, SubFolder);
         Directory.CreateDirectory(targetDir);
-        var targetPath = Path.Combine(targetDir, displayFileName);
+        string targetPath = Path.Combine(targetDir, displayFileName);
 
         await using (FileStream input = File.OpenRead(sourceFilePath))
         await using (FileStream output = File.Create(targetPath))

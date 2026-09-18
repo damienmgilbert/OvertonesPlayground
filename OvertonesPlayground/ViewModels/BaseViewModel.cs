@@ -4,6 +4,7 @@ namespace OvertonesPlayground.ViewModels;
 
 ///<summary>
 ///Base view model that exposes common properties used by pages, such as Title, busy state and a status message, plus a
+///</summary>
 public partial class BaseViewModel : ObservableObject
 {
     #region Fields

@@ -5,6 +5,7 @@ namespace OvertonesPlayground.Services.Implementations;
 ///<summary>
 ///Small library of classic drum-machine one-shots, synthesized from scratch (sine sweeps and shaped noise) rather than
 ///sampled - so the Tone Generator can produce a full kit with no bundled audio assets. Every parameter is driven by
+///</summary>
 internal static class DrumSynthesizer
 {
     #region Private methods

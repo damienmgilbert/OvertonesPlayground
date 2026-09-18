@@ -80,7 +80,7 @@ public class AudioFocusService : Java.Lang.Object, IAudioFocusService, AudioMana
     /// <summary>Android's callback for focus gain/loss; raises <see cref="FocusChanged"/> for the rest of the app.</summary>
     public void OnAudioFocusChange(AudioFocus focusChange)
     {
-        var haveFocus = focusChange == AudioFocus.Gain;
+        bool haveFocus = focusChange == AudioFocus.Gain;
         FocusChanged?.Invoke(this, haveFocus);
     }
 }

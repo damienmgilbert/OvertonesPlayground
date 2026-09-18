@@ -643,7 +643,9 @@ public partial class TrimViewModel : BaseViewModel
     [ObservableProperty]
     public partial double ZoomLevel { get; set; } = 1;
 
-    ///<summary>
+    /// <summary>
+    /// The current zoom level formatted as a string, e.g., "1x", "2x", "4x".
+    /// </summary>
     public string ZoomLevelText => $"{ZoomLevel:0.#}x";
     #endregion
 }
