@@ -19,7 +19,7 @@ public interface IMixdownService
     ///Mixes every clip on every included track of <paramref name="project"/> down to a single new WAV file and
     ///returns its path.
     ///</summary>
-    ///<exception cref="ArgumentNullException"><paramref name="project"/> is null.</exception>
+    ///<exception cref="System.ArgumentNullException"><paramref name="project"/> is null.</exception>
     ///<exception cref="ArgumentException"><paramref name="outputName"/> is null, empty, or whitespace.</exception>
     ///<exception cref="InvalidOperationException"><paramref name="project"/> has no audible clips to render.</exception>
     Task<string> RenderAsync(MixProject project, string outputName);
