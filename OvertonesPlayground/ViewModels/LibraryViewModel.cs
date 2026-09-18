@@ -63,15 +63,23 @@ public partial class LibraryViewModel : BaseViewModel
     private async Task ImportAsync()
     {
         Log_ImportingClip();
-        AudioClip? clip = await _libraryService.ImportFromPickerAsync();
-        if (clip is not null)
+        try
         {
-            Log_ImportedClip(clip.Name);
-            Clips.Insert(0, clip);
+            AudioClip? clip = await _libraryService.ImportFromPickerAsync();
+            if (clip is not null)
+            {
+                Log_ImportedClip(clip.Name);
+                Clips.Insert(0, clip);
+            }
+            else
+            {
+                Log_ImportCanceled();
+            }
         }
-        else
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException or NotSupportedException)
         {
-            Log_ImportCanceled();
+            Log_ImportFailed(ex);
+            StatusMessage = "Couldn't import that file.";
         }
     }
 
@@ -108,6 +116,9 @@ public partial class LibraryViewModel : BaseViewModel
 
     [LoggerMessage(Level = LogLevel.Debug, Message = "Imported clip '{ClipName}'.")]
     private partial void Log_ImportedClip(string clipName);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Failed to import a clip from the picker.")]
+    private partial void Log_ImportFailed(Exception exception);
 
     [LoggerMessage(Level = LogLevel.Debug, Message = "Importing a clip from the picker.")]
     private partial void Log_ImportingClip();

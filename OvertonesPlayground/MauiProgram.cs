@@ -25,6 +25,7 @@ public static class MauiProgram
         services.AddSingleton<IAudioRecorderService, AudioRecorderService>();
         services.AddSingleton<IAudioEditorService, AudioEditorService>();
         services.AddSingleton<IAudioFocusService, AudioFocusService>();
+        services.AddSingleton<IAudioFormatConverterService, AudioFormatConverterService>();
         services.AddSingleton<IMixdownService, MixdownService>();
         services.AddSingleton<ISoundSynthesisService, SoundSynthesisService>();
         services.AddSingleton<IPublicStorageService, PublicStorageService>();

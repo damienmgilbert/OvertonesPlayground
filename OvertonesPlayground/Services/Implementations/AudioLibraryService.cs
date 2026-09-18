@@ -16,6 +16,7 @@ public class AudioLibraryService : IAudioLibraryService
     private static readonly string[] value = ["audio/*"];
     private readonly IAudioManager _audioManager;
     private List<AudioClip>? _cache;
+    private readonly IAudioFormatConverterService _formatConverterService;
     private readonly SemaphoreSlim _lock = new(1, 1);
     private readonly IPublicStorageService _publicStorageService;
     #endregion
@@ -25,10 +26,13 @@ public class AudioLibraryService : IAudioLibraryService
     ///Creates the library service.
     ///</summary>
     ///<param fileName="audioManager">Used to probe a clip's duration when it's added.</param>
+    ///<param fileName="formatConverterService">Used to decode a picked non-WAV file (e.g. MP3) before it's added, so
+    ///the app's WAV-only pipeline can read it.</param>
     ///<param fileName="publicStorageService">Used to export user-created clips into the shared Music folder.</param>
-    public AudioLibraryService(IAudioManager audioManager, IPublicStorageService publicStorageService)
+    public AudioLibraryService(IAudioManager audioManager, IAudioFormatConverterService formatConverterService, IPublicStorageService publicStorageService)
     {
         _audioManager = audioManager;
+        _formatConverterService = formatConverterService;
         _publicStorageService = publicStorageService;
     }
     #endregion
@@ -186,7 +190,22 @@ public class AudioLibraryService : IAudioLibraryService
         }
 
         string fileName = Path.GetFileNameWithoutExtension(result.FileName);
-        AudioClip audioClip = await AddClipAsync(destination, fileName);
+        string clipPath = destination;
+
+        if (_formatConverterService.NeedsConversion(destination))
+        {
+            clipPath = await _formatConverterService.ConvertToWavAsync(destination, fileName);
+            try
+            {
+                File.Delete(destination);
+            }
+            catch (IOException)
+            {
+                // Best-effort cleanup; the converted WAV is what matters, not removing the original compressed copy.
+            }
+        }
+
+        AudioClip audioClip = await AddClipAsync(clipPath, fileName);
         return audioClip;
     }
 

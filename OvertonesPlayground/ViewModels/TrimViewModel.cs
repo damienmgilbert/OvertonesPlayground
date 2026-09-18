@@ -18,19 +18,17 @@ public partial class TrimViewModel : BaseViewModel
     ///How far each tap of a start/end stepper button moves that handle.
     ///</summary>
     private const double NudgeStepSeconds = 0.1;
+    #endregion
 
-    ///<summary>
-    ///The zoom levels the Zoom In/Out commands step through.
-    ///</summary>
-    private static readonly double[] ZoomSteps = [1, 2, 4, 8, 16];
-
+    #region Fields
     ///<summary>
     ///How far, in each direction, to search for a zero crossing when a handle drag completes.
     ///</summary>
     private static readonly TimeSpan ZeroCrossingSearchWindow = TimeSpan.FromSeconds(0.01);
-    #endregion
-
-    #region Fields
+    ///<summary>
+    ///The zoom levels the Zoom In/Out commands step through.
+    ///</summary>
+    private static readonly double[] ZoomSteps = [1, 2, 4, 8, 16];
     private readonly IAudioEditorService _editorService;
     private readonly IAudioLibraryService _libraryService;
     private readonly IAudioPlaybackService _playbackService;
@@ -58,6 +56,30 @@ public partial class TrimViewModel : BaseViewModel
     private void DecreaseEnd() { TrimEndSeconds = Math.Clamp(TrimEndSeconds - NudgeStepSeconds, TrimStartSeconds, DurationSeconds); }
     [RelayCommand]
     private void DecreaseStart() { TrimStartSeconds = Math.Clamp(TrimStartSeconds - NudgeStepSeconds, 0, TrimEndSeconds); }
+
+    ///<summary>
+    ///Shifts the zoom window so it keeps including <paramref name="focusSeconds"/>, e.g. while dragging a handle near
+    ///the edge of a zoomed-in view.
+    ///</summary>
+    private void FollowWindowIfNeeded(double focusSeconds)
+    {
+        if (!IsZoomed)
+        {
+            return;
+        }
+
+        double margin = VisibleSeconds * 0.1;
+        double maxWindowStart = Math.Max(0, DurationSeconds - VisibleSeconds);
+
+        if (focusSeconds < WindowStartSeconds + margin)
+        {
+            WindowStartSeconds = Math.Clamp(focusSeconds - margin, 0, maxWindowStart);
+        }
+        else if (focusSeconds > WindowStartSeconds + VisibleSeconds - margin)
+        {
+            WindowStartSeconds = Math.Clamp(focusSeconds - VisibleSeconds + margin, 0, maxWindowStart);
+        }
+    }
 
     ///<summary>
     ///Formats a seconds value as "mm:ss.f", matching the stepper/total time labels.
@@ -124,11 +146,11 @@ public partial class TrimViewModel : BaseViewModel
     [LoggerMessage(Level = LogLevel.Debug, Message = "Loading clip '{ClipName}' ({ClipId}) into the trim editor.")]
     private partial void Log_LoadingClip(string clipName, string clipId);
 
-    [LoggerMessage(Level = LogLevel.Error, Message = "Failed to save the trimmed clip from '{ClipName}'.")]
-    private partial void Log_SaveFailed(Exception exception, string clipName);
-
     [LoggerMessage(Level = LogLevel.Debug, Message = "Saved trimmed clip '{ClipName}'.")]
     private partial void Log_SavedTrim(string clipName);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Failed to save the trimmed clip from '{ClipName}'.")]
+    private partial void Log_SaveFailed(Exception exception, string clipName);
 
     [LoggerMessage(Level = LogLevel.Error, Message = "Failed to snap a handle to a zero crossing for clip '{ClipName}'.")]
     private partial void Log_SnapFailed(Exception exception, string clipName);
@@ -168,30 +190,6 @@ public partial class TrimViewModel : BaseViewModel
     partial void OnWindowStartSecondsChanged(double value) => RaiseGeometryChanged();
 
     partial void OnZoomLevelChanged(double value) => RaiseGeometryChanged();
-
-    ///<summary>
-    ///Shifts the zoom window so it keeps including <paramref name="focusSeconds"/>, e.g. while dragging a handle
-    ///near the edge of a zoomed-in view.
-    ///</summary>
-    private void FollowWindowIfNeeded(double focusSeconds)
-    {
-        if (!IsZoomed)
-        {
-            return;
-        }
-
-        double margin = VisibleSeconds * 0.1;
-        double maxWindowStart = Math.Max(0, DurationSeconds - VisibleSeconds);
-
-        if (focusSeconds < WindowStartSeconds + margin)
-        {
-            WindowStartSeconds = Math.Clamp(focusSeconds - margin, 0, maxWindowStart);
-        }
-        else if (focusSeconds > WindowStartSeconds + VisibleSeconds - margin)
-        {
-            WindowStartSeconds = Math.Clamp(focusSeconds - VisibleSeconds + margin, 0, maxWindowStart);
-        }
-    }
 
     [RelayCommand]
     private void PanEarlier()
@@ -239,9 +237,9 @@ public partial class TrimViewModel : BaseViewModel
     }
 
     ///<summary>
-    ///Re-raises every property derived from <see cref="ViewportWidth"/>/<see cref="DurationSeconds"/>/
-    ///<see cref="ZoomLevel"/>/<see cref="WindowStartSeconds"/>, and recomputes the ruler spacing for the now-visible
-    ///window.
+    ///Re-raises every property derived from <see cref="ViewportWidth"/>/<see cref="DurationSeconds"/>/ ///<see
+    ///cref="ZoomLevel"/>/<see cref="WindowStartSeconds"/>, and recomputes the ruler spacing for the now-visible window.
+    ///
     ///</summary>
     private void RaiseGeometryChanged()
     {
@@ -286,7 +284,15 @@ public partial class TrimViewModel : BaseViewModel
             TimeSpan end = TimeSpan.FromSeconds(TrimEndSeconds);
             string baseName = $"{LoadedClip.Name} (trimmed)";
 
-            string outputPath = Mode == TrimMode.TrimMiddle ? await _editorService.CutAsync(LoadedClip.FilePath, start, end, baseName) : await _editorService.TrimAsync(LoadedClip.FilePath, start, end, baseName);
+            string outputPath;
+            if (Mode == TrimMode.TrimMiddle)
+            {
+                outputPath = await _editorService.CutAsync(LoadedClip.FilePath, start, end, baseName);
+            }
+            else
+            {
+                outputPath = await _editorService.TrimAsync(LoadedClip.FilePath, start, end, baseName);
+            }
 
             bool hasFade = FadeInSeconds > 0 || FadeOutSeconds > 0;
             if (hasFade)
@@ -321,7 +327,6 @@ public partial class TrimViewModel : BaseViewModel
     private void SkipToEnd() { _playbackService.Seek(TimeSpan.FromSeconds(TrimEndSeconds)); }
     [RelayCommand]
     private void SkipToStart() { _playbackService.Seek(TimeSpan.FromSeconds(TrimStartSeconds)); }
-
     [RelayCommand]
     private async Task SplitAtPlayheadAsync()
     {
@@ -425,8 +430,8 @@ public partial class TrimViewModel : BaseViewModel
     public void SetStartTime(double seconds) => TrimStartSeconds = Math.Clamp(seconds, 0, TrimEndSeconds);
 
     ///<summary>
-    ///Snaps the end handle to the nearest zero crossing, if one is found nearby. Called after a drag completes so a
-    ///cut doesn't land mid-waveform and click audibly. Leaves the handle where it was dropped if snapping fails.
+    ///Snaps the end handle to the nearest zero crossing, if one is found nearby. Called after a drag completes so a cut
+    ///doesn't land mid-waveform and click audibly. Leaves the handle where it was dropped if snapping fails.
     ///</summary>
     public async Task SnapEndToZeroCrossingAsync()
     {
@@ -609,16 +614,16 @@ public partial class TrimViewModel : BaseViewModel
     public partial double TrimStartSeconds { get; set; }
 
     ///<summary>
-    ///How many seconds of the clip are currently visible across the waveform view's width, given the current zoom.
-    ///</summary>
-    public double VisibleSeconds => ZoomLevel > 0 ? DurationSeconds / ZoomLevel : DurationSeconds;
-
-    ///<summary>
     ///Rendered width, in device-independent pixels, of the waveform view - set from the page once its container is
     ///measured.
     ///</summary>
     [ObservableProperty]
     public partial double ViewportWidth { get; set; } = 360;
+
+    ///<summary>
+    ///How many seconds of the clip are currently visible across the waveform view's width, given the current zoom.
+    ///</summary>
+    public double VisibleSeconds => ZoomLevel > 0 ? DurationSeconds / ZoomLevel : DurationSeconds;
 
     ///<summary>
     ///Normalized amplitude peaks (0 to 1) for the loaded clip's waveform.
@@ -639,8 +644,6 @@ public partial class TrimViewModel : BaseViewModel
     public partial double ZoomLevel { get; set; } = 1;
 
     ///<summary>
-    ///<see cref="ZoomLevel"/>, formatted for display (e.g. "4x").
-    ///</summary>
     public string ZoomLevelText => $"{ZoomLevel:0.#}x";
     #endregion
 }
