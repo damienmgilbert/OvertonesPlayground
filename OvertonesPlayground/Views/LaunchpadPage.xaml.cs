@@ -1,23 +1,26 @@
 using OvertonesPlayground.ViewModels;
+#if ANDROID
+using Microsoft.Maui.Platform;
+#endif
 
 namespace OvertonesPlayground.Views;
 
 ///<summary>
 ///Code-behind for the Launchpad page. Behavior lives in <see cref="LaunchpadViewModel"/>; this hosts what needs native UI (the
-///pad menu, the Setup and Projects menus, the project-name prompt and the guide), and sizes the device to fit the screen.
+///pad menu, the Setup and Projects menus, the project-name prompt and the guide), and scales the device's text to the screen.
 ///</summary>
 public partial class LaunchpadPage : ContentPage
 {
     #region Constants
     ///<summary>
-    ///Below this width (in device-independent units) the hint and message can need two lines.
+    ///The number of columns of cells in the device (the width of the middle eight pad columns plus a column at each side).
     ///</summary>
-    private const double NarrowWidth = 700;
+    private const double DeviceColumns = 10;
 
     ///<summary>
-    ///The height reserved for one line of the hint or message.
+    ///The height of the device's rows added up in units of one pad row, matching the row definitions of the device's grid.
     ///</summary>
-    private const double LineHeight = 17;
+    private const double DeviceRowUnits = 10.05;
 
     private const string AssignSampleChoice = "Assign sample...";
     private const string ClearPadChoice = "Clear pad";
@@ -59,13 +62,15 @@ public partial class LaunchpadPage : ContentPage
 
         SETUP
         Scale for Note and Chord, reset the mixer, clear a bank or the sequencer.
+
+        TOP BAR
+        Eye: hides or shows the hints and messages floating over the pads. Pencil: edit mode. Square: stops every sound.
         """;
     #endregion
 
     #region Fields
     private readonly ILogger<LaunchpadPage> _logger;
     private readonly LaunchpadViewModel _viewModel;
-    private bool _isLandscape;
     private bool _isMenuOpen;
     #endregion
 
@@ -93,8 +98,57 @@ public partial class LaunchpadPage : ContentPage
     private partial void Log_PageDisappeared();
 
     ///<summary>
-    ///Sizes the device to the largest square that fits, and scales its gaps and text with it, so it looks the same on a phone and a
-    ///tablet.
+    ///Lines the tip's anchor up with the top bar's show/hide button. That button is a toolbar item, which has no element for the
+    ///tip to point at, so on Android its native view is found by the name it announces. Where it can't be found the anchor stays
+    ///where the button usually is.
+    ///</summary>
+    private void AlignTipAnchor()
+    {
+#if ANDROID
+        if (Platform.CurrentActivity?.Window?.DecorView is not { } decor
+            || FindByDescription(decor, _viewModel.TextPanelText) is not { } button
+            || TipAnchor.Handler?.PlatformView is not Android.Views.View anchor
+            || anchor.Context is not { } context)
+        {
+            return;
+        }
+
+        int[] buttonAt = new int[2];
+        int[] anchorAt = new int[2];
+        button.GetLocationInWindow(buttonAt);
+        anchor.GetLocationInWindow(anchorAt);
+        TipAnchor.TranslationX += context.FromPixels(buttonAt[0] + (button.Width / 2)) - context.FromPixels(anchorAt[0] + (anchor.Width / 2));
+#endif
+    }
+
+#if ANDROID
+    private static Android.Views.View? FindByDescription(Android.Views.View view, string description)
+    {
+        if (string.Equals(view.ContentDescription, description, StringComparison.Ordinal))
+        {
+            return view;
+        }
+
+        if (view is Android.Views.ViewGroup group)
+        {
+            for (int index = 0; index < group.ChildCount; index++)
+            {
+                if (group.GetChildAt(index) is { } child && FindByDescription(child, description) is { } found)
+                {
+                    return found;
+                }
+            }
+        }
+
+        return null;
+    }
+#endif
+
+    ///<summary>
+    ///<summary>
+    ///Scales the device's gaps and text to the size of its cells, so it looks the same on a phone and a tablet. The device fills
+    ///the page, so its cells are rectangles: the text is sized from the middle of a cell's width and height, then held to what
+    ///fits the cell's width (long words such as Sequencer break otherwise) and its height.
     ///</summary>
     private void OnDeviceHostSizeChanged(object? sender, EventArgs e)
     {
@@ -103,22 +157,22 @@ public partial class LaunchpadPage : ContentPage
             return;
         }
 
-        double side = Math.Floor(Math.Min(DeviceHost.Width, DeviceHost.Height));
-        DeviceBody.WidthRequest = side;
-        DeviceBody.HeightRequest = side;
+        // The size of a square device whose cells are as big as these (their geometric mean); the scale below was worked out for one.
+        double side = Math.Floor(Math.Sqrt((DeviceHost.Width / DeviceColumns) * (DeviceHost.Height / DeviceRowUnits)) * DeviceColumns);
         DeviceBody.Padding = new Thickness(side * 0.014);
 
         double gap = Math.Max(1, side * 0.0045);
         Resources["KeyGap"] = new Thickness(gap);
         Resources["PadGap"] = new Thickness(gap);
 
-        // The text has to fit the width of a key, or long words (Sequencer, Probability) break in the middle: about 6.8 ems for
-        // the longest main label and 5.5 for the longest word of a second label.
-        double keyWidth = (side / 10) - (2 * gap) - 2;
-        Resources["KeyFontSize"] = Math.Clamp(Math.Min(side / 80, keyWidth / 6.8), 4, 12);
-        Resources["KeySubFontSize"] = Math.Clamp(Math.Min(side / 118, keyWidth / 5.5), 3.5, 8);
-        Resources["KeyIconSize"] = Math.Clamp(side / 26, 12, 30);
-        Resources["KeyChevronSize"] = Math.Clamp(side / 48, 8, 16);
+        // A key must fit its text: about 6.8 ems across for the longest main label and 5.5 for the longest word of a second label,
+        // and a labeled key one row tall holds an icon or two lines.
+        double keyWidth = ((DeviceHost.Width - (2 * DeviceBody.Padding.Left)) / DeviceColumns) - (2 * gap) - 2;
+        double keyHeight = ((DeviceHost.Height - (2 * DeviceBody.Padding.Top)) / DeviceRowUnits) - (2 * gap) - 2;
+        Resources["KeyFontSize"] = Math.Clamp(Math.Min(Math.Min(side / 80, keyWidth / 6.8), keyHeight / 6), 4, 12);
+        Resources["KeySubFontSize"] = Math.Clamp(Math.Min(Math.Min(side / 118, keyWidth / 5.5), keyHeight / 9), 3.5, 8);
+        Resources["KeyIconSize"] = Math.Clamp(Math.Min(side / 26, keyHeight * 0.45), 12, 30);
+        Resources["KeyChevronSize"] = Math.Clamp(Math.Min(side / 48, keyHeight * 0.3), 8, 16);
         Resources["PadFontSize"] = Math.Clamp(side / 85, 5, 10);
     }
 
@@ -272,65 +326,17 @@ public partial class LaunchpadPage : ContentPage
     #endregion
 
     #region Protected methods
-    ///<summary>
-    ///Lays the page out for its shape. In landscape the hint, status and message go in a column beside the device, so the device
-    ///gets the full height; otherwise they sit above it, with room reserved even for an empty line, so the device doesn't change
-    ///size as the text changes (one line each on a wide screen, two on a narrow one).
-    ///</summary>
-    protected override void OnSizeAllocated(double width, double height)
-    {
-        base.OnSizeAllocated(width, height);
-        if (width <= 0 || height <= 0)
-        {
-            return;
-        }
-
-        bool isLandscape = width >= height * 1.25;
-        if (isLandscape != _isLandscape || Root.RowDefinitions.Count == 0)
-        {
-            _isLandscape = isLandscape;
-            Root.RowDefinitions.Clear();
-            Root.ColumnDefinitions.Clear();
-            if (isLandscape)
-            {
-                Root.RowDefinitions.Add(new RowDefinition(GridLength.Star));
-                Root.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(1, GridUnitType.Star)));
-                Root.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(3.4, GridUnitType.Star)));
-                Grid.SetRow(TextPanel, 0);
-                Grid.SetColumn(TextPanel, 0);
-                Grid.SetRow(DeviceHost, 0);
-                Grid.SetColumn(DeviceHost, 1);
-                TextPanel.Padding = new Thickness(0, 0, 12, 0);
-                TextPanel.VerticalOptions = LayoutOptions.Start;
-            }
-            else
-            {
-                Root.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
-                Root.RowDefinitions.Add(new RowDefinition(GridLength.Star));
-                Root.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
-                Grid.SetRow(TextPanel, 0);
-                Grid.SetColumn(TextPanel, 0);
-                Grid.SetRow(DeviceHost, 1);
-                Grid.SetColumn(DeviceHost, 0);
-                TextPanel.Padding = new Thickness(0, 0, 0, 6);
-                TextPanel.VerticalOptions = LayoutOptions.Fill;
-            }
-        }
-
-        int lines = isLandscape ? 8 : width >= NarrowWidth ? 1 : 2;
-        HintLabel.MaxLines = lines;
-        MessageLabel.MaxLines = isLandscape ? 4 : lines;
-        HintLabel.MinimumHeightRequest = isLandscape ? LineHeight : lines * LineHeight;
-        MessageLabel.MinimumHeightRequest = isLandscape ? LineHeight : lines * LineHeight;
-    }
-
     protected override void OnAppearing()
     {
         base.OnAppearing();
         Log_PageAppeared();
 
         // Show the one-time tip once the page has settled in (its entrance animation is 250 ms).
-        _ = Dispatcher.DispatchDelayed(TimeSpan.FromMilliseconds(500), () => _ = LaunchpadTip.ShowOnceAsync());
+        _ = Dispatcher.DispatchDelayed(TimeSpan.FromMilliseconds(500), () =>
+        {
+            AlignTipAnchor();
+            _ = LaunchpadTip.ShowOnceAsync();
+        });
     }
 
     protected override void OnDisappearing()

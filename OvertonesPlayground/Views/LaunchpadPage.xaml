@@ -6,7 +6,7 @@
              xmlns:shapes="clr-namespace:Microsoft.Maui.Controls.Shapes;assembly=Microsoft.Maui.Controls"
              xmlns:themes="clr-namespace:OvertonesPlayground.Themes"
              xmlns:vm="clr-namespace:OvertonesPlayground.ViewModels"
-             x:Class="OvertonesPlayground.Views.LaunchpadPage" AutomationId="launchpad-page"
+             x:Class="OvertonesPlayground.Views.LaunchpadPage" AutomationId="launchpad-page" SafeAreaEdges="All"
              x:DataType="vm:LaunchpadViewModel"
              Title="{Binding Title}">
 
@@ -112,28 +112,20 @@
     </ContentPage.Resources>
 
     <ContentPage.ToolbarItems>
+        <ToolbarItem AutomationId="launchpad-toggle-info" Text="{Binding TextPanelText}" controls:Icon.Glyph="{Binding TextPanelGlyph}" controls:Icon.Size="24" Command="{Binding ToggleTextPanelCommand}" />
         <ToolbarItem AutomationId="launchpad-edit" Text="{Binding EditModeText}" controls:Icon.Glyph="{Binding EditModeGlyph}" controls:Icon.Size="24" Command="{Binding ToggleEditModeCommand}" />
         <ToolbarItem AutomationId="launchpad-stop-all" Text="Stop All" controls:Icon.Glyph="{x:Static models:IconFont.Stop}" controls:Icon.Size="24" Command="{Binding StopAllCommand}" />
     </ContentPage.ToolbarItems>
 
-    <!-- The rows and columns of Root are set by the code-behind: in portrait the text sits above the device; in landscape it sits in a
-         column beside it, so the device gets the full height. -->
-    <Grid x:Name="Root" Margin="12">
+    <!-- One cell, the page's safe area: the device fills all of it, and the tip's anchor sits on top. -->
+    <Grid x:Name="Root">
 
-        <VerticalStackLayout x:Name="TextPanel" Grid.Row="0" Grid.Column="0" Spacing="2">
-            <Label x:Name="HintLabel" HorizontalOptions="Start" Style="{StaticResource CaptionTextBlockStyle}" AutomationId="launchpad-hint" TextColor="{DynamicResource TextFillColorSecondary}"
-                   Text="{Binding HintText}" MaxLines="1" LineBreakMode="TailTruncation" MinimumHeightRequest="17" />
-            <Label AutomationId="launchpad-status" Style="{StaticResource CaptionTextBlockStyle}" Text="{Binding StatusText}" TextColor="{DynamicResource TextFillColorTertiary}"
-                   MaxLines="2" LineBreakMode="TailTruncation" MinimumHeightRequest="17" />
-            <Label x:Name="MessageLabel" AutomationId="launchpad-message" Style="{StaticResource CaptionTextBlockStyle}" Text="{Binding StatusMessage}" TextColor="{DynamicResource AccentTextFillColorPrimary}"
-                   MaxLines="1" LineBreakMode="TailTruncation" MinimumHeightRequest="17" />
-        </VerticalStackLayout>
-
-        <!-- The Launchpad Pro: a square, ten columns by eleven rows of cells. The middle eight columns and rows are the pads; around
-             them are the shift key and mode row above, the two side columns, and the two rows of keys below (the short row of
-             track buttons, and the labeled function buttons). The code-behind sizes the square to fit and scales its text. -->
-        <Grid x:Name="DeviceHost" Grid.Row="1" Grid.Column="0" SizeChanged="OnDeviceHostSizeChanged">
-            <Border x:Name="DeviceBody" Style="{StaticResource DeviceBodyStyle}" HorizontalOptions="Center" VerticalOptions="Center" Padding="6">
+        <!-- The Launchpad Pro: ten columns by eleven rows of cells. The middle eight columns and rows are the pads; around them are
+             the shift key and mode row above, the two side columns, and the two rows of keys below (the short row of track
+             buttons, and the labeled function buttons). It is stretched to fill the safe area, so on a phone the pads are
+             rectangles, tall in portrait and wide in landscape. The code-behind scales the gaps and text to the size of a cell. -->
+        <Grid x:Name="DeviceHost" SizeChanged="OnDeviceHostSizeChanged">
+            <Border x:Name="DeviceBody" Style="{StaticResource DeviceBodyStyle}" Padding="6">
                 <Grid x:Name="Surface" ColumnDefinitions="*,*,*,*,*,*,*,*,*,*" RowDefinitions="0.9*,*,*,*,*,*,*,*,*,0.45*,0.7*">
 
                     <FlexLayout Grid.Row="0" Grid.Column="0" Direction="Row"
@@ -170,13 +162,35 @@
                                 BindableLayout.ItemsSource="{Binding SetupKeys}" BindableLayout.ItemTemplate="{StaticResource KeyTemplate}" />
                     <FlexLayout Grid.Row="10" Grid.Column="1" Grid.ColumnSpan="8" Direction="Row"
                                 BindableLayout.ItemsSource="{Binding FunctionKeys}" BindableLayout.ItemTemplate="{StaticResource KeyTemplate}" />
+
+                    <!-- The hint, status and message: a card floating over the top of the pads, so every button stays in view. It never
+                         takes a touch (a pad or key under it still works), and the eye button in the top bar hides it. -->
+                    <Border x:Name="TextPanel" AutomationId="launchpad-text-panel" IsVisible="{Binding IsTextPanelVisible}" InputTransparent="True"
+                            Grid.Row="1" Grid.RowSpan="8" Grid.Column="1" Grid.ColumnSpan="8"
+                            HorizontalOptions="Center" VerticalOptions="Start" MaximumWidthRequest="420" Margin="8" Padding="10,6"
+                            Background="{DynamicResource SolidBackgroundFillColorTertiaryBrush}" Stroke="{DynamicResource CardStrokeColorDefaultBrush}"
+                            StrokeShape="RoundRectangle 8" StrokeThickness="1">
+                        <VerticalStackLayout Spacing="2">
+                            <Label AutomationId="launchpad-hint" Style="{StaticResource CaptionTextBlockStyle}" TextColor="{DynamicResource TextFillColorSecondary}"
+                                   Text="{Binding HintText}" MaxLines="4" LineBreakMode="TailTruncation" />
+                            <Label AutomationId="launchpad-status" Style="{StaticResource CaptionTextBlockStyle}" Text="{Binding StatusText}" TextColor="{DynamicResource TextFillColorTertiary}"
+                                   MaxLines="3" LineBreakMode="TailTruncation" />
+                            <Label AutomationId="launchpad-message" Style="{StaticResource CaptionTextBlockStyle}" Text="{Binding StatusMessage}" TextColor="{DynamicResource AccentTextFillColorPrimary}"
+                                   MaxLines="4" LineBreakMode="TailTruncation" />
+                        </VerticalStackLayout>
+                    </Border>
                 </Grid>
             </Border>
         </Grid>
 
-        <controls:TeachingPopover x:Name="LaunchpadTip" Grid.RowSpan="2" Grid.ColumnSpan="2" Target="{x:Reference HintLabel}" TipKey="launchpad" Glyph="{x:Static models:IconFont.Lightbulb}"
+        <!-- Where the tip points: a hairline under the top bar's eye button. The button is a toolbar item, which a tip can't target,
+             so the code-behind lines this up with it once the page has appeared. Until then it rests where the button usually is. -->
+        <BoxView x:Name="TipAnchor" AutomationId="launchpad-tip-anchor" HorizontalOptions="End" VerticalOptions="Start" WidthRequest="40" HeightRequest="1"
+                 Margin="0,0,96,0" Color="Transparent" InputTransparent="True" />
+
+        <controls:TeachingPopover x:Name="LaunchpadTip" Target="{x:Reference TipAnchor}" TipKey="launchpad" Glyph="{x:Static models:IconFont.Lightbulb}"
                                   Title="Play the pads"
-                                  Message="Tap a pad to play its sample. To give a pad a sample, loop it or clear it, turn on edit mode with the pencil in the top bar, or press and hold the pad. The buttons around the pads work like the ones on a Launchpad Pro: tap the logo for a guide to each." />
+                                  Message="Tap a pad to play its sample. To give a pad a sample, loop it or clear it, turn on edit mode with the pencil in the top bar, or press and hold the pad. The eye in the top bar hides the hints and messages. The buttons around the pads work like the ones on a Launchpad Pro: tap the logo for a guide to each." />
     </Grid>
 
 </ContentPage>

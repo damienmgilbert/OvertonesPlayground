@@ -29,6 +29,7 @@ public partial class LaunchpadViewModel : BaseViewModel
 
     private const string EditHint = "Edit mode: tap a pad to assign a sample, turn looping on or off, stop it, or clear it";
     private const string PlayHint = "Tap a pad to play it • Long-press it, or use the pencil, to assign a sample, loop or clear it";
+    private const string TextPanelVisibleKey = "launchpad_text_panel_visible";
     #endregion
 
     #region Fields
@@ -67,6 +68,7 @@ public partial class LaunchpadViewModel : BaseViewModel
         _synthesisService = synthesisService;
         _mixdownService = mixdownService;
         Title = "Launchpad";
+        IsTextPanelVisible = Preferences.Default.Get(TextPanelVisibleKey, true);
 
         _banks = [.. Enumerable.Range(0, LaunchpadProject.BankCount).Select(bank => Enumerable.Range(0, LaunchpadProject.PadsPerBank).Select(index => new LaunchpadPad { Bank = bank, Index = index }).ToArray())];
         foreach (LaunchpadPad pad in _banks[0])
@@ -97,6 +99,14 @@ public partial class LaunchpadViewModel : BaseViewModel
     partial void OnIsPlayingChanged(bool value) => RefreshAll();
 
     partial void OnIsShiftLatchedChanged(bool value) => RefreshKeys();
+
+    partial void OnIsTextPanelVisibleChanged(bool value)
+    {
+        Log_TextPanelChanged(value);
+        Preferences.Default.Set(TextPanelVisibleKey, value);
+        OnPropertyChanged(nameof(TextPanelGlyph));
+        OnPropertyChanged(nameof(TextPanelText));
+    }
 
     partial void OnLayerChanged(LaunchpadLayer value) => RefreshAll();
 
@@ -250,6 +260,9 @@ public partial class LaunchpadViewModel : BaseViewModel
     [LoggerMessage(Level = LogLevel.Debug, Message = "Edit mode set to {IsEditMode}.")]
     private partial void Log_EditModeChanged(bool isEditMode);
 
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Text panel visible set to {IsVisible}.")]
+    private partial void Log_TextPanelChanged(bool isVisible);
+
     [LoggerMessage(Level = LogLevel.Debug, Message = "Launchpad key {Control} pressed (shifted: {Shifted}).")]
     private partial void Log_KeyPressed(LaunchpadControl control, bool shifted);
 
@@ -343,6 +356,12 @@ public partial class LaunchpadViewModel : BaseViewModel
     private bool IsGateActive => Mode == LaunchpadMode.Custom && Tool == LaunchpadTool.None && !IsEditMode && ShowsSamples;
 
     ///<summary>
+    ///Shows or hides the hint, status and message panel that floats over the device. The choice is remembered.
+    ///</summary>
+    [RelayCommand]
+    private void ToggleTextPanel() => IsTextPanelVisible = !IsTextPanelVisible;
+
+    ///<summary>
     ///Which of the four pad banks (0 to 3) is on screen.
     ///</summary>
     [ObservableProperty]
@@ -378,6 +397,12 @@ public partial class LaunchpadViewModel : BaseViewModel
     public partial bool IsShiftLatched { get; set; }
 
     ///<summary>
+    ///Whether the hint, status and message panel is showing. Hiding it leaves only the device on screen.
+    ///</summary>
+    [ObservableProperty]
+    public partial bool IsTextPanelVisible { get; set; } = true;
+
+    ///<summary>
     ///The button layer on top of the mode: a column function, a shifted function or a sequencer layer.
     ///</summary>
     [ObservableProperty]
@@ -405,6 +430,17 @@ public partial class LaunchpadViewModel : BaseViewModel
     ///</summary>
     [ObservableProperty]
     public partial int SelectedTrack { get; set; }
+
+    ///<summary>
+    ///Icon of the toolbar button that shows or hides the text panel: an eye with a line through it while the panel is showing.
+    ///</summary>
+    public string TextPanelGlyph => IsTextPanelVisible ? IconFont.Visibility_off : IconFont.Visibility;
+
+    ///<summary>
+    ///Name of the toolbar button that shows or hides the text panel. The button shows only its icon, so this is what a screen
+    ///reader announces.
+    ///</summary>
+    public string TextPanelText => IsTextPanelVisible ? "Hide info" : "Show info";
 
     ///<summary>
     ///The edit tool armed from the left-hand buttons.
