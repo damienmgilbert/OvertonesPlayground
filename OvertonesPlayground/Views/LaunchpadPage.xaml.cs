@@ -19,6 +19,7 @@ public partial class LaunchpadPage : ContentPage
     #region Fields
     private readonly ILogger<LaunchpadPage> _logger;
     private readonly LaunchpadViewModel _viewModel;
+    private bool _isMenuOpen;
     #endregion
 
     #region Constructors
@@ -43,6 +44,17 @@ public partial class LaunchpadPage : ContentPage
     private partial void Log_PageDisappeared();
 
     ///<summary>
+    ///Plays the tapped pad (or, in edit mode, opens its menu). The pad is the tap gesture's command parameter.
+    ///</summary>
+    private void OnPadTapped(object? sender, TappedEventArgs e)
+    {
+        if (e.Parameter is LaunchpadPadViewModel pad)
+        {
+            _viewModel.TriggerCommand.Execute(pad);
+        }
+    }
+
+    ///<summary>
     ///Opens the pad menu when a pad is long-pressed. The sender is the pad's border, whose binding context is the pad.
     ///</summary>
     private void OnPadLongPressed(object? sender, EventArgs e)
@@ -54,12 +66,34 @@ public partial class LaunchpadPage : ContentPage
     }
 
     ///<summary>
-    ///Shows the action sheet for a pad and runs the chosen action. Only the actions that apply are offered: an empty pad can
-    ///only be assigned.
+    ///Shows the pad menu, unless one is already showing. In edit mode a long-press opens the menu and then releasing the finger
+    ///is also a tap, which asks for the menu again; without this the second request would queue a second, stale menu behind the
+    ///first.
     ///</summary>
     private async void OnPadMenuRequested(object? sender, LaunchpadPadEventArgs e)
     {
-        LaunchpadPadViewModel pad = e.Pad;
+        if (_isMenuOpen)
+        {
+            return;
+        }
+
+        _isMenuOpen = true;
+        try
+        {
+            await ShowPadMenuAsync(e.Pad).ConfigureAwait(true);
+        }
+        finally
+        {
+            _isMenuOpen = false;
+        }
+    }
+
+    ///<summary>
+    ///Shows the action sheet for a pad and runs the chosen action. Only the actions that apply are offered: an empty pad can
+    ///only be assigned.
+    ///</summary>
+    private async Task ShowPadMenuAsync(LaunchpadPadViewModel pad)
+    {
         string title = pad.HasClip ? $"Pad {pad.Index + 1}: {pad.Label}" : $"Pad {pad.Index + 1} (empty)";
 
         List<string> choices = [AssignSampleChoice];

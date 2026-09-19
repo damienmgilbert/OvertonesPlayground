@@ -25,7 +25,11 @@ namespace OvertonesPlayground;
 internal static class SystemBars
 {
     #region Fields
-    private static bool _isAttached;
+    // Every Shell that has been hooked. Backing out of the app finishes the activity but keeps the process, and reopening it
+    // builds a new window with a brand-new Shell; a single "already attached" flag would leave that Shell unhooked, and its
+    // app bar would keep the theme's default accent color.
+    private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<Shell, object> HookedShells = [];
+    private static bool _isThemeHooked;
     #endregion
 
     #region Private methods
@@ -95,15 +99,19 @@ internal static class SystemBars
     ///</summary>
     public static void Attach(Shell shell)
     {
-        if (_isAttached)
+        ArgumentNullException.ThrowIfNull(shell);
+        if (HookedShells.TryGetValue(shell, out _))
         {
             return;
         }
 
-        _isAttached = true;
+        HookedShells.Add(shell, new object());
         shell.Navigated += (_, _) => Refresh();
-        if (Application.Current is { } app)
+
+        // The theme event belongs to the Application, which outlives every window, so it is hooked once.
+        if (!_isThemeHooked && Application.Current is { } app)
         {
+            _isThemeHooked = true;
             app.RequestedThemeChanged += (_, _) => Refresh();
         }
 

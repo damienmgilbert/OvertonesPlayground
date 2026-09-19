@@ -26,7 +26,7 @@ public partial class LaunchpadViewModel : BaseViewModel
 
     private const string LayoutFileName = "launchpad.json";
     private const string EditHint = "Edit mode: tap a pad to assign a sample, turn looping on or off, stop it, or clear it";
-    private const string PlayHint = "Tap a pad to trigger it \u2022 Double-tap to assign a sample \u2022 Triple-tap to toggle looping \u2022 Long-press for more";
+    private const string PlayHint = "Tap a pad to play it \u2022 Long-press it, or use the pencil, to assign a sample, loop or clear it";
     #endregion
 
     #region Fields
@@ -64,6 +64,11 @@ public partial class LaunchpadViewModel : BaseViewModel
     partial void OnIsEditModeChanged(bool value)
     {
         Log_EditModeChanged(value);
+        foreach (LaunchpadPadViewModel pad in Pads)
+        {
+            pad.IsEditMode = value;
+        }
+
         OnPropertyChanged(nameof(EditModeText));
         OnPropertyChanged(nameof(EditModeGlyph));
         OnPropertyChanged(nameof(HintText));

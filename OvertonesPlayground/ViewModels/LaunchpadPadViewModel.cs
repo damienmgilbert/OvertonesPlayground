@@ -50,6 +50,13 @@ public partial class LaunchpadPadViewModel : ObservableObject
 
     #region Public properties
     ///<summary>
+    ///Mirrors the Launchpad's edit mode, so a pad can show its edit badge without a binding that reaches up to the page's view
+    ///model (that kind of binding fails once for every pad created before it is attached to the page).
+    ///</summary>
+    [ObservableProperty]
+    public partial bool IsEditMode { get; set; }
+
+    ///<summary>
     ///Name announced by a screen reader, for example "Pad 3, Kick, looping".
     ///</summary>
     public string AccessibleName => $"Pad {Index + 1}, {Label}{(IsLooping ? ", looping" : string.Empty)}";
