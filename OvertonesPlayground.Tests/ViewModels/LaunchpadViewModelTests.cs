@@ -70,7 +70,7 @@ public sealed class LaunchpadViewModelTests : IDisposable
         }
 
         Assert.Equal(Enumerable.Range(0, 8), viewModel.TrackKeys.Select(key => key.Column));
-        Assert.Equal(viewModel.AllKeys.Count(), viewModel.AllKeys.Select(key => key.Id).Distinct().Count() + viewModel.TrackKeys.Count - 1);
+        Assert.Equal(viewModel.AllKeys.Count(), viewModel.AllKeys.Select(key => key.Id).Distinct().Count()); // ids double as automation ids
     }
     #endregion
 

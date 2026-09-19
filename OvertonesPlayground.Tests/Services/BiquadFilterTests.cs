@@ -1,7 +1,7 @@
 using OvertonesPlayground.Models;
 using OvertonesPlayground.Services.Implementations;
 
-namespace OvertonesPlayground.Tests;
+namespace OvertonesPlayground.Tests.Services;
 
 public sealed class BiquadFilterTests
 {

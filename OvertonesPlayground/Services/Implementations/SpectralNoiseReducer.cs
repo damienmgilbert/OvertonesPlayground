@@ -132,8 +132,16 @@ internal static class SpectralNoiseReducer
         double[] window = BuildHannWindow(FftSize);
         double[] noiseProfile = BuildNoiseProfile(samples, noiseFrameCount, window);
 
-        double[] output = new double[samples.Length];
-        double[] windowSum = new double[samples.Length];
+        // Pad with silence so the windows reach the end of the clip. Windows only ever cover whole 2048-sample stretches, so without
+        // this the last partial one is never analysed and the end of the clip (up to 46 ms) comes out silent, and a clip shorter
+        // than one window comes out silent altogether.
+        int windowCount = samples.Length <= FftSize ? 1 : ((samples.Length - FftSize + HopSize - 1) / HopSize) + 1;
+        int paddedLength = ((windowCount - 1) * HopSize) + FftSize;
+        double[] padded = new double[paddedLength];
+        samples.CopyTo(padded, 0);
+
+        double[] output = new double[paddedLength];
+        double[] windowSum = new double[paddedLength];
 
         double[] realBuffer = ArrayPool<double>.Shared.Rent(FftSize);
         double[] imaginaryBuffer = ArrayPool<double>.Shared.Rent(FftSize);
@@ -142,11 +150,11 @@ internal static class SpectralNoiseReducer
             Span<double> real = realBuffer.AsSpan(0, FftSize);
             Span<double> imaginary = imaginaryBuffer.AsSpan(0, FftSize);
 
-            for (int start = 0; start + FftSize <= samples.Length; start += HopSize)
+            for (int start = 0; start + FftSize <= paddedLength; start += HopSize)
             {
                 for (int i = 0; i < FftSize; i++)
                 {
-                    real[i] = samples[start + i] * window[i];
+                    real[i] = padded[start + i] * window[i];
                 }
 
                 imaginary.Clear();
@@ -182,16 +190,16 @@ internal static class SpectralNoiseReducer
             ArrayPool<double>.Shared.Return(imaginaryBuffer);
         }
 
-        for (int i = 0; i < output.Length; i++)
+        double[] result = new double[samples.Length];
+        for (int i = 0; i < result.Length; i++)
         {
+            // The first few samples are all but outside the first window, so there is nothing to divide by: they pass through as
+            // they were rather than dropping to silence.
             bool hasWeight = windowSum[i] > 1e-6;
-            if (hasWeight)
-            {
-                output[i] /= windowSum[i];
-            }
+            result[i] = hasWeight ? output[i] / windowSum[i] : samples[i];
         }
 
-        return output;
+        return result;
     }
     #endregion
 

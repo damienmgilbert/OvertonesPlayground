@@ -466,6 +466,23 @@ public sealed class TrimViewModelTests
         await _editor.DidNotReceiveWithAnyArgs().ApplyGainAsync(default!, default, default!);
     }
 
+    [Theory]
+    [InlineData(0.02)]
+    [InlineData(-0.02)]
+    [InlineData(0.3)]
+    public async Task Save_GainOfEvenAFewHundredthsOfADecibel_IsApplied(double gainDb)
+    {
+        TrimViewModel viewModel = Loaded(seconds: 10);
+        viewModel.GainDb = gainDb;
+        _editor.TrimAsync(default!, default, default, default!).ReturnsForAnyArgs("trimmed.wav");
+        _editor.ApplyGainAsync(default!, default, default!).ReturnsForAnyArgs("gained.wav");
+        _library.AddClipAsync(default!, default!, default).ReturnsForAnyArgs(TestData.Clip());
+
+        await viewModel.SaveCommand.ExecuteAsync(null);
+
+        await _editor.Received(1).ApplyGainAsync("trimmed.wav", gainDb, Arg.Any<string>());
+    }
+
     [Fact]
     public async Task Save_OnlyAFadeOut_StillAppliesTheFade()
     {

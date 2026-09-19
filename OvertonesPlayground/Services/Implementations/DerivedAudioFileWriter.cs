@@ -9,13 +9,22 @@ internal static class DerivedAudioFileWriter
     #region Private methods
     ///<summary>
     ///Builds a timestamped, filename-sanitized path for <paramref name="outputName"/> inside <paramref name="directory"/>
-    ///(created if missing).
+    ///(created if missing). The path is never one that already exists.
     ///</summary>
     private static string BuildPath(string directory, string outputName, string extension)
     {
         Directory.CreateDirectory(directory);
-        string fileName = $"{SanitizeFileNameSegment(outputName)}_{DateTime.Now:yyyyMMdd_HHmmss}.{extension}";
-        return Path.Combine(directory, fileName);
+        string stem = $"{SanitizeFileNameSegment(outputName)}_{DateTime.Now:yyyyMMdd_HHmmss}";
+        string path = Path.Combine(directory, $"{stem}.{extension}");
+
+        // The time is only to the second, so the same edit made twice in a row would name the same file, and the first result may
+        // already be a clip in the library that would then play the second one's audio.
+        for (int copy = 2; File.Exists(path); copy++)
+        {
+            path = Path.Combine(directory, $"{stem}_{copy}.{extension}");
+        }
+
+        return path;
     }
 
     ///<summary>

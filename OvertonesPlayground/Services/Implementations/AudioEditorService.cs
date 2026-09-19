@@ -44,6 +44,17 @@ public class AudioEditorService : IAudioEditorService
 
     #region Private methods
     ///<summary>
+    ///The index, into <paramref name="wav"/>'s interleaved samples, of the frame at <paramref name="time"/>, clamped to
+    ///[<paramref name="min"/>, <paramref name="max"/>]. It is always the first sample of a frame: an index that landed on a later
+    ///channel would start the output on the wrong channel, swapping left and right for everything after it.
+    ///</summary>
+    private static int FrameAlignedIndex(WavFile wav, TimeSpan time, int min, int max)
+    {
+        int frame = (int)(time.TotalSeconds * wav.SampleRate);
+        return Math.Clamp(frame * wav.Channels, min, max);
+    }
+
+    ///<summary>
     ///Writes <paramref name="samples"/> as a new WAV file alongside <paramref name="source"/>'s format and returns its
     ///path.
     ///</summary>
@@ -174,10 +185,9 @@ public class AudioEditorService : IAudioEditorService
         ArgumentException.ThrowIfNullOrWhiteSpace(outputName);
 
         WavFile wav = await WavFile.ReadAsync(sourcePath);
-        int frameCount = wav.Channels * wav.SampleRate;
 
-        int startIndex = Math.Clamp((int)(start.TotalSeconds * frameCount), 0, wav.Samples.Length);
-        int endIndex = Math.Clamp((int)(end.TotalSeconds * frameCount), startIndex, wav.Samples.Length);
+        int startIndex = FrameAlignedIndex(wav, start, 0, wav.Samples.Length);
+        int endIndex = FrameAlignedIndex(wav, end, startIndex, wav.Samples.Length);
 
         short[] output = new short[wav.Samples.Length - (endIndex - startIndex)];
         Array.Copy(wav.Samples, 0, output, 0, startIndex);
@@ -247,17 +257,18 @@ public class AudioEditorService : IAudioEditorService
         {
             int start = i * samplesPerPeak;
             int end = Math.Min(start + samplesPerPeak, wav.Samples.Length);
-            short max = 0;
+            int max = 0;
             for (int j = start; j < end; j++)
             {
+                // In an int: the absolute value of -32768 doesn't fit in a short, and would come out negative.
                 int abs = Math.Abs((int)wav.Samples[j]);
                 if (abs > max)
                 {
-                    max = (short)abs;
+                    max = abs;
                 }
             }
 
-            peaks[i] = max / (float)short.MaxValue;
+            peaks[i] = Math.Min(max, short.MaxValue) / (float)short.MaxValue;
         }
 
         return peaks;
@@ -274,8 +285,7 @@ public class AudioEditorService : IAudioEditorService
         WavFile insert = await WavFile.ReadAsync(insertPath);
         short[] insertSamples = AudioFormatUtility.Conform(insert, source.Channels, source.SampleRate);
 
-        int frameCount = source.Channels * source.SampleRate;
-        int insertIndex = Math.Clamp((int)(at.TotalSeconds * frameCount), 0, source.Samples.Length);
+        int insertIndex = FrameAlignedIndex(source, at, 0, source.Samples.Length);
 
         short[] output = new short[source.Samples.Length + insertSamples.Length];
         Array.Copy(source.Samples, 0, output, 0, insertIndex);
@@ -299,10 +309,11 @@ public class AudioEditorService : IAudioEditorService
             return await SaveDerivedAsync(wav, wav.Samples, outputName);
         }
 
-        short peak = 1;
+        int peak = 1;
         foreach (short sample in wav.Samples)
         {
-            short abs = (short)Math.Abs((int)sample);
+            // In an int: the absolute value of -32768 doesn't fit in a short, so a full-scale negative sample would be missed.
+            int abs = Math.Abs((int)sample);
             if (abs > peak)
             {
                 peak = abs;
@@ -392,8 +403,7 @@ public class AudioEditorService : IAudioEditorService
         ArgumentException.ThrowIfNullOrWhiteSpace(outputNameAfter);
 
         WavFile wav = await WavFile.ReadAsync(sourcePath);
-        int frameCount = wav.Channels * wav.SampleRate;
-        int splitIndex = Math.Clamp((int)(at.TotalSeconds * frameCount), 0, wav.Samples.Length);
+        int splitIndex = FrameAlignedIndex(wav, at, 0, wav.Samples.Length);
 
         short[] before = wav.Samples[..splitIndex];
         short[] after = wav.Samples[splitIndex..];
@@ -410,10 +420,9 @@ public class AudioEditorService : IAudioEditorService
         ArgumentException.ThrowIfNullOrWhiteSpace(outputName);
 
         WavFile wav = await WavFile.ReadAsync(sourcePath);
-        int frameCount = wav.Channels * wav.SampleRate;
 
-        int startIndex = Math.Clamp((int)(start.TotalSeconds * frameCount), 0, wav.Samples.Length);
-        int endIndex = Math.Clamp((int)(end.TotalSeconds * frameCount), startIndex, wav.Samples.Length);
+        int startIndex = FrameAlignedIndex(wav, start, 0, wav.Samples.Length);
+        int endIndex = FrameAlignedIndex(wav, end, startIndex, wav.Samples.Length);
 
         short[] trimmed = wav.Samples[startIndex..endIndex];
         string outputPath = await SaveDerivedAsync(wav, trimmed, outputName);

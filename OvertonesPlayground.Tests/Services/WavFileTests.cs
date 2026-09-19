@@ -1,7 +1,7 @@
 using System.Text;
 using OvertonesPlayground.Services.Implementations;
 
-namespace OvertonesPlayground.Tests;
+namespace OvertonesPlayground.Tests.Services;
 
 public sealed class WavFileTests : IDisposable
 {

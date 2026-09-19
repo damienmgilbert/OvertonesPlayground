@@ -1,4 +1,4 @@
-namespace OvertonesPlayground.Tests;
+namespace OvertonesPlayground.Tests.TestSupport;
 
 /// <summary>
 /// Builds and measures 16-bit PCM test signals, so each test states what it feeds in and reads out rather than

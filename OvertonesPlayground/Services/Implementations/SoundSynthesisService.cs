@@ -33,8 +33,9 @@ public class SoundSynthesisService : ISoundSynthesisService
     {
         WavFile wav = new() { Channels = 1, SampleRate = sampleRate, BitsPerSample = 16, Samples = samples, };
 
-        string path = Path.Combine(SynthDirectory, $"{prefix}_{DateTime.Now:yyyyMMdd_HHmmssfff}.wav");
-        await wav.WriteAsync(path);
+        // Through the shared writer, which never reuses a name: a millisecond timestamp alone is not unique, and two sounds
+        // generated back to back would otherwise be written to the same file.
+        string path = await DerivedAudioFileWriter.SaveAsync(wav, SynthDirectory, prefix);
 
         AudioClip audioClip = new() { Name = name, FilePath = path, Duration = wav.Duration, IsUserRecording = true, };
         return audioClip;

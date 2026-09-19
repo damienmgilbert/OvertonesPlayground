@@ -239,6 +239,13 @@ public class AudioLibraryService : IAudioLibraryService
         string? folder = Path.GetDirectoryName(fullPath);
         while (!string.IsNullOrEmpty(folder))
         {
+            // A drive or filesystem root is never a link, and on Windows asking one to resolve throws.
+            bool isRoot = string.Equals(folder, Path.GetPathRoot(folder), StringComparison.Ordinal);
+            if (isRoot)
+            {
+                break;
+            }
+
             FileSystemInfo? target = new DirectoryInfo(folder).ResolveLinkTarget(returnFinalTarget: true);
             if (target is not null)
             {

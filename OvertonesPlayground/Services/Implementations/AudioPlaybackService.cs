@@ -17,6 +17,12 @@ public class AudioPlaybackService : IAudioPlaybackService
     private readonly Dictionary<string, IAudioPlayer> _channelPlayers = [];
     private IAudioPlayer? _mainPlayer;
     private readonly Dictionary<int, List<IAudioPlayer>> _padVoices = [];
+
+    ///<summary>
+    ///The main transport's volume. Kept here because each loaded clip gets a new player, which would otherwise start at full
+    ///volume however the user had set the slider.
+    ///</summary>
+    private double _volume = 1.0;
     #endregion
 
     #region Constructors
@@ -97,6 +103,7 @@ public class AudioPlaybackService : IAudioPlaybackService
         _mainPlayer?.Dispose();
 
         _mainPlayer = _audioManager.CreatePlayer(clip.FilePath);
+        _mainPlayer.Volume = _volume;
         _mainPlayer.PlaybackEnded += OnMainPlaybackEnded;
         CurrentClip = clip;
         PlaybackStateChanged?.Invoke(this, EventArgs.Empty);
@@ -280,6 +287,14 @@ public class AudioPlaybackService : IAudioPlaybackService
     public TimeSpan Position => TimeSpan.FromSeconds(_mainPlayer?.CurrentPosition ?? 0);
 
     ///<inheritdoc/>
-    public double Volume { get => _mainPlayer?.Volume ?? 1.0; set => _mainPlayer?.Volume = value; }
+    public double Volume
+    {
+        get => _volume;
+        set
+        {
+            _volume = value;
+            _mainPlayer?.Volume = value;
+        }
+    }
     #endregion
 }
