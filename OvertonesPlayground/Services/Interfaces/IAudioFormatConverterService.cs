@@ -21,13 +21,14 @@ public interface IAudioFormatConverterService
     Task<string> ConvertFromWavAsync(string sourcePath, AudioExportFormat format, string outputName);
 
     ///<summary>
-    ///Decodes <paramref name="sourcePath"/> into a new 16-bit PCM WAV file and returns its path.
+    ///Decodes <paramref name="sourcePath"/> into a new 16-bit PCM WAV file and returns its path. <paramref name="progress"/>
+    ///receives the fraction decoded (0 to 1), from a background thread; it isn't called if the source's length is unknown.
     ///</summary>
     ///<exception cref="ArgumentException"><paramref name="sourcePath"/> or <paramref name="outputName"/> is null,
     ///empty, or whitespace.</exception>
     ///<exception cref="NotSupportedException">The platform has no decoder for <paramref name="sourcePath"/>'s
     ///format, or it carries no audio track.</exception>
-    Task<string> ConvertToWavAsync(string sourcePath, string outputName);
+    Task<string> ConvertToWavAsync(string sourcePath, string outputName, IProgress<double>? progress = null);
 
     ///<summary>
     ///Returns whether <paramref name="filePath"/> needs decoding before <c>WavFile</c> can read it, based on its

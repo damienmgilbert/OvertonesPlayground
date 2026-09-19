@@ -59,27 +59,42 @@ public partial class LibraryViewModel : BaseViewModel
         await Shell.Current.GoToAsync($"editor?clipId={clip.Id}");
     }
 
+    ///<summary>
+    ///Picks an audio file and imports it, showing progress while it does. The command can't be started again while it is
+    ///running.
+    ///</summary>
     [RelayCommand]
     private async Task ImportAsync()
     {
         Log_ImportingClip();
+        StatusMessage = null;
+        ImportFraction = 0;
+        ImportStatus = "Preparing the file...";
+        IsImporting = true;
         try
         {
-            AudioClip? clip = await _libraryService.ImportFromPickerAsync();
+            Progress<ImportProgress> progress = new(OnImportProgress);
+            AudioClip? clip = await _libraryService.ImportFromPickerAsync(progress);
             if (clip is not null)
             {
                 Log_ImportedClip(clip.Name);
-                Clips.Insert(0, clip);
+
+                // Rebuild the list the same way the page does when it appears, rather than inserting the one clip.
+                await RefreshClipsAsync();
             }
             else
             {
                 Log_ImportCanceled();
             }
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException or NotSupportedException)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException or NotSupportedException or OutOfMemoryException)
         {
             Log_ImportFailed(ex);
             StatusMessage = "Couldn't import that file.";
+        }
+        finally
+        {
+            IsImporting = false;
         }
     }
 
@@ -94,17 +109,48 @@ public partial class LibraryViewModel : BaseViewModel
         IsBusy = true;
         try
         {
-            IReadOnlyList<AudioClip> clips = await _libraryService.GetClipsAsync();
-            Log_LoadedClips(clips.Count);
-            Clips.Clear();
-            foreach (AudioClip clip in clips)
-            {
-                Clips.Add(clip);
-            }
+            await RefreshClipsAsync();
         }
         finally
         {
             IsBusy = false;
+        }
+    }
+
+    ///<summary>
+    ///Shows an import's progress. Reports arrive on the UI thread but slightly after they are made, so one can land once the
+    ///import is over; that one is ignored.
+    ///</summary>
+    private void OnImportProgress(ImportProgress progress)
+    {
+        if (!IsImporting)
+        {
+            return;
+        }
+
+        string stage = progress.Stage switch
+        {
+            ImportStage.Copying => "Copying the file...",
+            ImportStage.Decoding => "Converting to WAV...",
+            ImportStage.Finishing => "Adding to your library...",
+            _ => string.Empty,
+        };
+
+        ImportFraction = progress.Fraction;
+        ImportStatus = $"{stage} {progress.Fraction:P0}";
+    }
+
+    ///<summary>
+    ///Replaces the contents of <see cref="Clips"/> with the library's clips, newest first.
+    ///</summary>
+    private async Task RefreshClipsAsync()
+    {
+        IReadOnlyList<AudioClip> clips = await _libraryService.GetClipsAsync();
+        Log_LoadedClips(clips.Count);
+        Clips.Clear();
+        foreach (AudioClip clip in clips)
+        {
+            Clips.Add(clip);
         }
     }
 
@@ -207,6 +253,24 @@ public partial class LibraryViewModel : BaseViewModel
     ///Observable collection of audio clips shown in the library UI.
     ///</summary>
     public ObservableCollection<AudioClip> Clips { get; } = [];
+
+    ///<summary>
+    ///How far through the current import it is, from 0 to 1. Meaningful while <see cref="IsImporting"/> is true.
+    ///</summary>
+    [ObservableProperty]
+    public partial double ImportFraction { get; set; }
+
+    ///<summary>
+    ///What the current import is doing, with its percentage. Meaningful while <see cref="IsImporting"/> is true.
+    ///</summary>
+    [ObservableProperty]
+    public partial string ImportStatus { get; set; } = string.Empty;
+
+    ///<summary>
+    ///True from when the user taps Import until the clip is in the library, the picker is canceled, or the import fails.
+    ///</summary>
+    [ObservableProperty]
+    public partial bool IsImporting { get; set; }
 
     ///<summary>
     ///How the library is currently laid out: list, detail cards, or tiles.

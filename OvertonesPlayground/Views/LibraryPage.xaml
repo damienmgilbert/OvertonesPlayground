@@ -12,7 +12,7 @@
         <ToolbarItem AutomationId="library-import" Text="Import" controls:Icon.Glyph="{x:Static models:IconFont.Upload}" controls:Icon.Size="24" Command="{Binding ImportCommand}" />
     </ContentPage.ToolbarItems>
 
-    <Grid RowDefinitions="Auto,*">
+    <Grid RowDefinitions="Auto,Auto,*">
 
         <HorizontalStackLayout x:Name="ViewModes" HorizontalOptions="Start" Grid.Row="0" Spacing="8" Padding="16,10">
             <Button AutomationId="library-view-list" ToolTipProperties.Text="Show the clips as a compact list" Text="List" controls:Icon.Glyph="{x:Static models:IconFont.View_list}" Padding="12,6" Command="{Binding SetViewModeCommand}" CommandParameter="{x:Static models:LibraryViewMode.List}" />
@@ -20,7 +20,17 @@
             <Button AutomationId="library-view-tile" ToolTipProperties.Text="Show the clips as a grid of tiles. Tap a tile to play it, double-tap to edit." Text="Tile" controls:Icon.Glyph="{x:Static models:IconFont.Grid_view}" Padding="12,6" Command="{Binding SetViewModeCommand}" CommandParameter="{x:Static models:LibraryViewMode.Tile}" />
         </HorizontalStackLayout>
 
-        <RefreshView AutomationId="library-refresh" Grid.Row="1" IsRefreshing="{Binding IsBusy}" Command="{Binding LoadCommand}">
+        <!-- Import progress and the outcome of the last import -->
+        <VerticalStackLayout Grid.Row="1">
+            <VerticalStackLayout AutomationId="library-import-progress-panel" IsVisible="{Binding IsImporting}" Padding="16,0,16,10" Spacing="6">
+                <Label AutomationId="library-import-status" Style="{StaticResource CaptionTextBlockStyle}" Text="{Binding ImportStatus}" TextColor="{DynamicResource TextFillColorSecondary}" />
+                <ProgressBar AutomationId="library-import-progress" Progress="{Binding ImportFraction}" SemanticProperties.Description="Import progress" />
+            </VerticalStackLayout>
+            <Label AutomationId="library-status" Padding="16,0,16,10" Text="{Binding StatusMessage}" TextColor="{DynamicResource TextFillColorSecondary}"
+                   IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBool}}" />
+        </VerticalStackLayout>
+
+        <RefreshView AutomationId="library-refresh" Grid.Row="2" IsRefreshing="{Binding IsBusy}" Command="{Binding LoadCommand}">
             <Grid>
 
                 <!-- List: compact single-column rows -->
@@ -138,7 +148,7 @@
             </Grid>
         </RefreshView>
 
-        <controls:TeachingPopover x:Name="LibraryTip" Grid.RowSpan="2" Target="{x:Reference ViewModes}" TipKey="library" Glyph="{x:Static models:IconFont.Lightbulb}"
+        <controls:TeachingPopover x:Name="LibraryTip" Grid.RowSpan="3" Target="{x:Reference ViewModes}" TipKey="library" Glyph="{x:Static models:IconFont.Lightbulb}"
                                   Title="Your clips"
                                   Message="Switch between the list, detail and tile views here. Play a clip with its play button, or tap a tile; edit it to trim, mix or change its sound. Import adds a file from your device." />
     </Grid>

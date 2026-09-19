@@ -32,9 +32,11 @@ public interface IAudioLibraryService
     Task<IReadOnlyList<AudioClip>> GetClipsAsync();
 
     ///<summary>
-    ///Opens the system file picker, copies the chosen audio file into app storage, and adds it to the library.
+    ///Opens the system file picker, copies the chosen audio file into app storage, and adds it to the library. Returns
+    ///null if the user cancels the picker. <paramref name="progress"/> is told how far along the import is once a file has
+    ///been picked.
     ///</summary>
-    Task<AudioClip?> ImportFromPickerAsync();
+    Task<AudioClip?> ImportFromPickerAsync(IProgress<ImportProgress>? progress = null);
 
     ///<summary>
     ///Renames a clip in place.

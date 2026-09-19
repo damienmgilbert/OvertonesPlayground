@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Android.Media;
 using Java.Nio;
 using OvertonesPlayground.Models;
@@ -27,6 +28,9 @@ public class AudioFormatConverterService : IAudioFormatConverterService
 
     private const long DequeueTimeoutUs = 10_000;
 
+    /// <summary>The fewest milliseconds between two decode progress reports.</summary>
+    private const long ProgressIntervalMs = 100;
+
     /// <summary>The 13 sample rates ADTS's 4-bit frequency-index field can represent, in index order - not an
     /// arbitrary app limitation, but what the AAC/ADTS spec itself supports.</summary>
     private static readonly int[] AdtsSampleRates = [96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000, 12000, 11025, 8000, 7350];
@@ -52,12 +56,12 @@ public class AudioFormatConverterService : IAudioFormatConverterService
     }
 
     /// <inheritdoc />
-    public Task<string> ConvertToWavAsync(string sourcePath, string outputName)
+    public Task<string> ConvertToWavAsync(string sourcePath, string outputName, IProgress<double>? progress = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
         ArgumentException.ThrowIfNullOrWhiteSpace(outputName);
 
-        return Task.Run(() => DecodeToWavAsync(sourcePath, outputName));
+        return Task.Run(() => DecodeToWavAsync(sourcePath, outputName, progress));
     }
 
     /// <inheritdoc />
@@ -67,8 +71,23 @@ public class AudioFormatConverterService : IAudioFormatConverterService
         return !string.Equals(Path.GetExtension(filePath), ".wav", StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <summary>Tells <paramref name="progress"/> how far <paramref name="positionUs"/> is through
+    /// <paramref name="durationUs"/>, but no more often than <see cref="ProgressIntervalMs"/> so a long decode doesn't flood
+    /// the UI thread with updates.</summary>
+    private static void ReportDecodeProgress(IProgress<double>? progress, long positionUs, long durationUs, Stopwatch clock)
+    {
+        bool cannotReport = progress is null || durationUs <= 0 || clock.ElapsedMilliseconds < ProgressIntervalMs;
+        if (cannotReport)
+        {
+            return;
+        }
+
+        clock.Restart();
+        progress!.Report(Math.Clamp((double)positionUs / durationUs, 0, 1));
+    }
+
     /// <summary>Runs the blocking extractor/decoder pump loop and writes the result as a WAV file.</summary>
-    private static async Task<string> DecodeToWavAsync(string sourcePath, string outputName)
+    private static async Task<string> DecodeToWavAsync(string sourcePath, string outputName, IProgress<double>? progress)
     {
         MediaExtractor extractor = new();
         MediaCodec? codec = null;
@@ -114,6 +133,8 @@ public class AudioFormatConverterService : IAudioFormatConverterService
 
             int channels = trackFormat.GetInteger(MediaFormat.KeyChannelCount);
             int sampleRate = trackFormat.GetInteger(MediaFormat.KeySampleRate);
+            long durationUs = trackFormat.ContainsKey(MediaFormat.KeyDuration) ? trackFormat.GetLong(MediaFormat.KeyDuration) : 0;
+            Stopwatch progressClock = Stopwatch.StartNew();
 
             using MemoryStream pcm = new();
             using MediaCodec.BufferInfo info = new();
@@ -137,8 +158,10 @@ public class AudioFormatConverterService : IAudioFormatConverterService
                         }
                         else
                         {
-                            codec.QueueInputBuffer(inputIndex, 0, sampleSize, extractor.SampleTime, MediaCodecBufferFlags.None);
+                            long sampleTimeUs = extractor.SampleTime;
+                            codec.QueueInputBuffer(inputIndex, 0, sampleSize, sampleTimeUs, MediaCodecBufferFlags.None);
                             extractor.Advance();
+                            ReportDecodeProgress(progress, sampleTimeUs, durationUs, progressClock);
                         }
                     }
                 }

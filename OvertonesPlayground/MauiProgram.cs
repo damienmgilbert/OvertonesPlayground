@@ -37,8 +37,8 @@ public static class MauiProgram
     }
 
     ///<summary>
-    ///Registers every page and view model: singletons for the live-session screens (Player/Launchpad/Mixer), transients
-    ///elsewhere.
+    ///Registers every page and view model: singletons for the live-session screens (Player/Launchpad/Mixer) and the Library
+    ///(which can be mid-import), transients elsewhere.
     ///</summary>
     private static void RegisterViewModelsAndPages(IServiceCollection services)
     {
@@ -61,10 +61,12 @@ public static class MauiProgram
         services.AddSingleton<SpeechToTextViewModel>();
         services.AddSingleton<SpeechToTextPage>();
 
-        // Re-created fresh each time they're navigated to.
-        services.AddTransient<LibraryViewModel>();
-        services.AddTransient<LibraryPage>();
+        // An import can run for minutes on a large file, so the page has to be the same one when the user comes back to it:
+        // a fresh view model would know nothing of the running import, which would finish into a list nobody is looking at.
+        services.AddSingleton<LibraryViewModel>();
+        services.AddSingleton<LibraryPage>();
 
+        // Re-created fresh each time they're navigated to.
         services.AddTransient<SoundCreatorViewModel>();
         services.AddTransient<SoundCreatorPage>();
 
