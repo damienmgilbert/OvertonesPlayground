@@ -8,23 +8,30 @@
 
     <VerticalStackLayout Padding="40" Spacing="20" VerticalOptions="Center" MaximumWidthRequest="600" HorizontalOptions="Center">
 
-        <Label Text="🎙 Audio Recorder" FontSize="24" FontAttributes="Bold" HorizontalTextAlignment="Center" />
-        <Label Text="Record a new sample to use in the Launchpad, Mixer, or Editor." HorizontalTextAlignment="Center" TextColor="{StaticResource Gray500}" />
+        <Label Style="{StaticResource SubtitleTextBlockStyle}" Text="🎙 Audio Recorder" HorizontalTextAlignment="Center" />
+        <Label Text="Record a new sample to use in the Launchpad, Mixer, or Editor." HorizontalTextAlignment="Center" TextColor="{DynamicResource TextFillColorSecondary}" />
 
         <Entry AutomationId="soundcreator-name" Placeholder="Recording name" Text="{Binding NewClipName}" IsEnabled="{Binding IsRecording, Converter={StaticResource InvertedBool}}" />
 
-        <Label AutomationId="soundcreator-elapsed" Text="{Binding ElapsedText}" FontSize="42" HorizontalTextAlignment="Center" />
+        <Label Style="{StaticResource TitleLargeTextBlockStyle}" AutomationId="soundcreator-elapsed" Text="{Binding ElapsedText}" HorizontalTextAlignment="Center" />
 
-        <Button AutomationId="soundcreator-record" Text="{Binding IsRecording, Converter={StaticResource RecordButtonLabel}}"
-                BackgroundColor="{Binding IsRecording, Converter={StaticResource BoolToAccent}}"
+<Button AutomationId="soundcreator-record" Style="{StaticResource AccentButtonStyle}" Text="{Binding IsRecording, Converter={StaticResource RecordButtonLabel}}"
                 HeightRequest="70"
-                Command="{Binding ToggleRecordingCommand}" />
+                Command="{Binding ToggleRecordingCommand}">
+            <Button.Triggers>
+                <DataTrigger TargetType="Button" Binding="{Binding IsRecording}" Value="True">
+                    <Setter Property="BackgroundColor" Value="{DynamicResource SystemFillColorCritical}" />
+                    <Setter Property="TextColor" Value="{DynamicResource TextOnAccentFillColorPrimary}" />
+                    <Setter Property="BorderColor" Value="{DynamicResource SystemFillColorCritical}" />
+                </DataTrigger>
+            </Button.Triggers>
+        </Button>
 
         <Button AutomationId="soundcreator-cancel" Text="✕ Cancel Recording"
                 IsVisible="{Binding IsRecording}"
                 Command="{Binding CancelRecordingCommand}" />
 
-        <Label AutomationId="soundcreator-status" Text="{Binding StatusMessage}" HorizontalTextAlignment="Center" TextColor="{StaticResource Gray500}" />
+        <Label AutomationId="soundcreator-status" Text="{Binding StatusMessage}" HorizontalTextAlignment="Center" TextColor="{DynamicResource TextFillColorSecondary}" />
 
     </VerticalStackLayout>
 

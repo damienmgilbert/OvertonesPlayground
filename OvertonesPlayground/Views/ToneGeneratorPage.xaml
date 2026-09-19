@@ -11,11 +11,11 @@
     <ScrollView>
         <VerticalStackLayout Padding="24" Spacing="18">
 
-            <Label Text="🎼 Synth Tone" FontSize="20" FontAttributes="Bold" />
-            <Label Text="Tune it, Generate &amp; Play to preview, then Save to keep it in your library (and your device's Music folder)."
-                   FontSize="12" TextColor="{StaticResource Gray500}" />
+            <Label Style="{StaticResource SubtitleTextBlockStyle}" Text="🎼 Synth Tone" />
+            <Label Style="{StaticResource CaptionTextBlockStyle}" Text="Tune it, Generate &amp; Play to preview, then Save to keep it in your library (and your device's Music folder)."
+                   TextColor="{DynamicResource TextFillColorSecondary}" />
 
-            <Label Text="Presets" FontAttributes="Bold" FontSize="14" />
+            <Label Style="{StaticResource BodyStrongTextBlockStyle}" Text="Presets" />
             <CollectionView AutomationId="tonegenerator-presets" ItemsSource="{Binding Presets}" HeightRequest="56">
                 <CollectionView.ItemsLayout>
                     <LinearItemsLayout Orientation="Horizontal" ItemSpacing="8" />
@@ -29,7 +29,7 @@
                 </CollectionView.ItemTemplate>
             </CollectionView>
 
-            <Grid ColumnDefinitions="Auto,*" RowSpacing="14">
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12" RowSpacing="14">
                 <Label Grid.Row="0" Grid.Column="0" Text="Wave" VerticalOptions="Center" />
                 <Picker AutomationId="tonegenerator-wave" Grid.Row="0" Grid.Column="1"
                         ItemsSource="{Binding WaveformOptions}"
@@ -41,14 +41,14 @@
             <controls:LabeledSlider AutomationId="tonegenerator-level" LabelText="Level" Minimum="0" Maximum="1" Digits="2" Value="{Binding Amplitude}" />
 
             <HorizontalStackLayout Spacing="12">
-                <Button AutomationId="tonegenerator-generate" Text="▶ Generate &amp; Play" Command="{Binding GenerateCommand}" />
-                <Button AutomationId="tonegenerator-save" Text="💾 Save" Command="{Binding SaveCommand}" IsEnabled="{Binding CanSave}" BackgroundColor="{StaticResource Tertiary}" />
+                <Button AutomationId="tonegenerator-generate" Style="{StaticResource AccentButtonStyle}" Text="▶ Generate &amp; Play" Command="{Binding GenerateCommand}" />
+                <Button AutomationId="tonegenerator-save" Style="{StaticResource AccentButtonStyle}" Text="💾 Save" Command="{Binding SaveCommand}" IsEnabled="{Binding CanSave}" />
             </HorizontalStackLayout>
 
-            <GraphicsView SemanticProperties.Description="Waveform preview of the generated tone" AutomationId="tonegenerator-waveform" x:Name="WaveformView" HeightRequest="120" BackgroundColor="{StaticResource Gray950}" />
+            <GraphicsView SemanticProperties.Description="Waveform preview of the generated tone" AutomationId="tonegenerator-waveform" x:Name="WaveformView" HeightRequest="120" BackgroundColor="{DynamicResource SolidBackgroundFillColorTertiary}" />
 
             <ActivityIndicator AutomationId="tonegenerator-busy" IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
-            <Label AutomationId="tonegenerator-status" Text="{Binding StatusMessage}" TextColor="{StaticResource Gray500}" />
+            <Label AutomationId="tonegenerator-status" Text="{Binding StatusMessage}" TextColor="{DynamicResource TextFillColorSecondary}" />
 
         </VerticalStackLayout>
     </ScrollView>

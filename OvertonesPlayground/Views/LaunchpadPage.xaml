@@ -13,7 +13,7 @@
     </ContentPage.ToolbarItems>
 
     <Grid RowDefinitions="Auto,*" Margin="12" RowSpacing="8">
-    <Label AutomationId="launchpad-hint" Grid.Row="0" FontSize="12" TextColor="{StaticResource Gray500}"
+    <Label Style="{StaticResource CaptionTextBlockStyle}" AutomationId="launchpad-hint" Grid.Row="0" TextColor="{DynamicResource TextFillColorSecondary}"
            Text="{Binding HintText}" />
     <CollectionView AutomationId="launchpad-pads" Grid.Row="1" ItemsSource="{Binding Pads}">
         <CollectionView.ItemsLayout>
@@ -23,10 +23,12 @@
             <DataTemplate x:DataType="vm:LaunchpadPadViewModel">
                 <!-- Long-press opens the pad menu (assign / loop / stop / clear): the alternative to the double- and triple-tap
                      gestures. LongPressBorder is used because a behavior declared in a template gets no binding context. -->
-                <controls:LongPressBorder AutomationId="{Binding Index, StringFormat='launchpad-pad-{0}'}" StrokeShape="RoundRectangle 10" LongPressed="OnPadLongPressed"
+                <controls:LongPressBorder AutomationId="{Binding Index, StringFormat='launchpad-pad-{0}'}" StrokeShape="RoundRectangle 8" LongPressed="OnPadLongPressed"
                         SemanticProperties.Description="{Binding AccessibleName}"
                         SemanticProperties.Hint="Plays this pad. Long-press, or turn on edit mode, for more options"
-                        BackgroundColor="{Binding ColorHex, Converter={StaticResource HexColor}}"
+                        BackgroundColor="{DynamicResource CardBackgroundFillColorDefault}"
+                        Stroke="{DynamicResource CardStrokeColorDefaultBrush}"
+                        StrokeThickness="1"
                         HeightRequest="90">
                     <Border.GestureRecognizers>
                         <TapGestureRecognizer
@@ -39,29 +41,47 @@
                             Command="{Binding Source={RelativeSource AncestorType={x:Type vm:LaunchpadViewModel}}, Path=ToggleLoopCommand}"
                             CommandParameter="{Binding .}" />
                     </Border.GestureRecognizers>
-                    <Grid RowDefinitions="*,Auto" Padding="6">
-                        <Label Grid.Row="0"
-                               Text="{Binding Label}"
-                               TextColor="White"
-                               FontSize="12"
-                               VerticalOptions="Center"
-                               HorizontalOptions="Center"
-                               LineBreakMode="TailTruncation" />
-                        <Label Grid.Row="1"
-                               Text="loop"
-                               FontSize="10"
-                               TextColor="White"
-                               HorizontalOptions="Center"
-                               IsVisible="{Binding IsLooping}" />
-                        <!-- Edit-mode badge: a plain tap opens the pad menu instead of playing the pad. -->
-                        <Label Grid.Row="0"
-                               Text="✎"
-                               FontSize="16"
-                               TextColor="White"
-                               HorizontalOptions="End"
-                               VerticalOptions="Start"
-                               InputTransparent="True"
-                               IsVisible="{Binding Source={RelativeSource AncestorType={x:Type vm:LaunchpadViewModel}}, Path=IsEditMode}" />
+                    <Grid>
+                        <!-- A filled pad is drawn in its sample's palette color, over the card. Empty pads show just the card, so
+                             they follow the light/dark theme; the color is a data value and stays the same in both themes. -->
+                        <BoxView Color="{Binding ColorHex, Converter={StaticResource HexColor}}" IsVisible="{Binding HasClip}" />
+                        <Grid RowDefinitions="*,Auto" Padding="6">
+                            <!-- Text on the palette color is white; on the empty card it takes the theme's text colors. -->
+                            <Label Grid.Row="0"
+                                   Text="{Binding Label}"
+                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                   TextColor="{DynamicResource TextFillColorSecondary}"
+                                   VerticalOptions="Center"
+                                   HorizontalOptions="Center"
+                                   LineBreakMode="TailTruncation">
+                                <Label.Triggers>
+                                    <DataTrigger TargetType="Label" Binding="{Binding HasClip}" Value="True">
+                                        <Setter Property="TextColor" Value="White" />
+                                    </DataTrigger>
+                                </Label.Triggers>
+                            </Label>
+                            <Label Grid.Row="1"
+                                   Text="loop"
+                                   FontSize="10"
+                                   TextColor="White"
+                                   HorizontalOptions="Center"
+                                   IsVisible="{Binding IsLooping}" />
+                            <!-- Edit-mode badge: a plain tap opens the pad menu instead of playing the pad. -->
+                            <Label Grid.Row="0"
+                                   Text="✎"
+                                   FontSize="16"
+                                   TextColor="{DynamicResource TextFillColorPrimary}"
+                                   HorizontalOptions="End"
+                                   VerticalOptions="Start"
+                                   InputTransparent="True"
+                                   IsVisible="{Binding Source={RelativeSource AncestorType={x:Type vm:LaunchpadViewModel}}, Path=IsEditMode}">
+                                <Label.Triggers>
+                                    <DataTrigger TargetType="Label" Binding="{Binding HasClip}" Value="True">
+                                        <Setter Property="TextColor" Value="White" />
+                                    </DataTrigger>
+                                </Label.Triggers>
+                            </Label>
+                        </Grid>
                     </Grid>
                 </controls:LongPressBorder>
             </DataTemplate>

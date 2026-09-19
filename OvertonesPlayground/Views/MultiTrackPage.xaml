@@ -13,11 +13,11 @@
                 <VerticalStackLayout Spacing="6">
                     <Grid ColumnDefinitions="*,Auto">
                         <VerticalStackLayout Grid.Column="0" VerticalOptions="Center">
-                            <Label Text="{Binding ClipName}" FontAttributes="Bold" FontSize="13" LineBreakMode="TailTruncation" />
-                            <Label Text="{Binding DurationText}" FontSize="10" TextColor="{StaticResource Gray500}" />
+                            <Label Style="{StaticResource BodyStrongTextBlockStyle}" Text="{Binding ClipName}" LineBreakMode="TailTruncation" />
+                            <Label Style="{StaticResource CaptionTextBlockStyle}" Text="{Binding DurationText}" TextColor="{DynamicResource TextFillColorSecondary}" />
                         </VerticalStackLayout>
                         <Button AutomationId="{Binding TrackClip.Id, StringFormat='multitrack-clip-{0}-remove'}" Grid.Column="1" Text="✕" Padding="10,6" FontSize="12"
-                                BackgroundColor="{StaticResource Gray600}"
+                                TextColor="{DynamicResource SystemFillColorCritical}"
                                 Command="{Binding Source={RelativeSource AncestorType={x:Type vm:TrackViewModel}}, Path=RemoveClipCommand}"
                                 CommandParameter="{Binding .}" />
                     </Grid>
@@ -38,12 +38,26 @@
                 <VerticalStackLayout Spacing="10">
                     <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6">
                         <Entry AutomationId="{Binding Number, StringFormat='multitrack-track-{0}-name'}" Grid.Column="0" Text="{Binding Name}" FontAttributes="Bold" FontSize="15" />
-                        <Button AutomationId="{Binding Number, StringFormat='multitrack-track-{0}-mute'}" Grid.Column="1" Text="M" WidthRequest="48" HeightRequest="48" Padding="0" FontSize="12"
-                                BackgroundColor="{Binding IsMuted, Converter={StaticResource BoolToAccent}}"
-                                Command="{Binding ToggleMuteCommand}" />
-                        <Button AutomationId="{Binding Number, StringFormat='multitrack-track-{0}-solo'}" Grid.Column="2" Text="S" WidthRequest="48" HeightRequest="48" Padding="0" FontSize="12"
-                                BackgroundColor="{Binding IsSoloed, Converter={StaticResource BoolToAccent}}"
-                                Command="{Binding ToggleSoloCommand}" />
+<Button AutomationId="{Binding Number, StringFormat='multitrack-track-{0}-mute'}" Grid.Column="1" Text="M" WidthRequest="48" HeightRequest="48" Padding="0" FontSize="12"
+                                Command="{Binding ToggleMuteCommand}">
+                            <Button.Triggers>
+                                <DataTrigger TargetType="Button" Binding="{Binding IsMuted}" Value="True">
+                                    <Setter Property="BackgroundColor" Value="{DynamicResource AccentFillColorDefault}" />
+                                    <Setter Property="TextColor" Value="{DynamicResource TextOnAccentFillColorPrimary}" />
+                                    <Setter Property="BorderColor" Value="{DynamicResource ControlStrokeColorOnAccentDefault}" />
+                                </DataTrigger>
+                            </Button.Triggers>
+                        </Button>
+<Button AutomationId="{Binding Number, StringFormat='multitrack-track-{0}-solo'}" Grid.Column="2" Text="S" WidthRequest="48" HeightRequest="48" Padding="0" FontSize="12"
+                                Command="{Binding ToggleSoloCommand}">
+                            <Button.Triggers>
+                                <DataTrigger TargetType="Button" Binding="{Binding IsSoloed}" Value="True">
+                                    <Setter Property="BackgroundColor" Value="{DynamicResource AccentFillColorDefault}" />
+                                    <Setter Property="TextColor" Value="{DynamicResource TextOnAccentFillColorPrimary}" />
+                                    <Setter Property="BorderColor" Value="{DynamicResource ControlStrokeColorOnAccentDefault}" />
+                                </DataTrigger>
+                            </Button.Triggers>
+                        </Button>
                     </Grid>
 
                     <controls:LabeledSlider AutomationId="{Binding Number, StringFormat='multitrack-track-{0}-volume'}" LabelText="Volume" Minimum="0" Maximum="1" Digits="2" Value="{Binding Volume}" />
@@ -54,9 +68,7 @@
 
                     <HorizontalStackLayout Spacing="10">
                         <Button AutomationId="{Binding Number, StringFormat='multitrack-track-{0}-add-clip'}" Text="+ Add Clip" Clicked="OnAddClipClicked" />
-                        <Button AutomationId="{Binding Number, StringFormat='multitrack-track-{0}-merge'}" Text="🔗 Merge" Command="{Binding MergeClipsCommand}"
-                                BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardBackgroundDark}}"
-                                TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+                        <Button AutomationId="{Binding Number, StringFormat='multitrack-track-{0}-merge'}" Text="🔗 Merge" Command="{Binding MergeClipsCommand}" />
                     </HorizontalStackLayout>
                 </VerticalStackLayout>
             </Border>
@@ -72,7 +84,7 @@
         <VerticalStackLayout Padding="16" Spacing="14">
 
             <VerticalStackLayout Spacing="2">
-                <Label Text="Project name" FontSize="11" TextColor="{StaticResource Gray500}" />
+                <Label Style="{StaticResource CaptionTextBlockStyle}" Text="Project name" TextColor="{DynamicResource TextFillColorSecondary}" />
                 <Entry AutomationId="multitrack-project-name" Text="{Binding ProjectName}" FontAttributes="Bold" FontSize="16" Placeholder="Mix" />
             </VerticalStackLayout>
 
@@ -80,7 +92,7 @@
                                  BindableLayout.ItemTemplate="{StaticResource TrackTemplate}" />
 
             <ActivityIndicator AutomationId="multitrack-busy" IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
-            <Label AutomationId="multitrack-status" Text="{Binding StatusMessage}" TextColor="{StaticResource Gray500}" IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBool}}" />
+            <Label AutomationId="multitrack-status" Text="{Binding StatusMessage}" TextColor="{DynamicResource TextFillColorSecondary}" IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBool}}" />
         </VerticalStackLayout>
     </ScrollView>
 

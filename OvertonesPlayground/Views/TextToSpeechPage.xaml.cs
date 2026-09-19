@@ -47,18 +47,25 @@ public partial class TextToSpeechPage : ContentPage
             WaveformView.Invalidate();
         }
     }
+
+    ///<summary>
+    ///Repaints the waveform when the theme changes: the drawable reads its colors from the Fluent tokens as it draws.
+    ///</summary>
+    private void OnRequestedThemeChanged(object? sender, AppThemeChangedEventArgs e) => WaveformView.Invalidate();
     #endregion
 
     #region Protected methods
     protected override void OnAppearing()
     {
         base.OnAppearing();
+        Application.Current!.RequestedThemeChanged += OnRequestedThemeChanged;
         Log_PageAppeared();
     }
 
     protected override void OnDisappearing()
     {
         base.OnDisappearing();
+        Application.Current!.RequestedThemeChanged -= OnRequestedThemeChanged;
         Log_PageDisappeared();
     }
     #endregion

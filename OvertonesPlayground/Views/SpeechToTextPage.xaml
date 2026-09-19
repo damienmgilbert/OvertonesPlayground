@@ -9,18 +9,17 @@
     <ScrollView>
         <VerticalStackLayout Padding="24" Spacing="18">
 
-            <Label Text="🎤 Speech to Text" FontSize="20" FontAttributes="Bold" />
-            <Label Text="Listen live through the microphone and watch the transcript build up, then Copy or Share it. There's no reliable way to transcribe an existing recording - only live listening."
-                   FontSize="12" TextColor="{StaticResource Gray500}" />
+            <Label Style="{StaticResource SubtitleTextBlockStyle}" Text="🎤 Speech to Text" />
+            <Label Style="{StaticResource CaptionTextBlockStyle}" Text="Listen live through the microphone and watch the transcript build up, then Copy or Share it. There's no reliable way to transcribe an existing recording - only live listening."
+                   TextColor="{DynamicResource TextFillColorSecondary}" />
 
-            <Button AutomationId="speechtotext-start" Text="🎤 Start Listening"
+            <Button AutomationId="speechtotext-start" Style="{StaticResource AccentButtonStyle}" Text="🎤 Start Listening"
                     Command="{Binding StartListeningCommand}"
                     IsVisible="{Binding IsListening, Converter={StaticResource InvertedBool}}" />
 
-            <Button AutomationId="speechtotext-stop" Text="⏹ Stop Listening"
+            <Button AutomationId="speechtotext-stop" Style="{StaticResource AccentButtonStyle}" Text="⏹ Stop Listening"
                     Command="{Binding StopListeningCommand}"
-                    IsVisible="{Binding IsListening}"
-                    BackgroundColor="{StaticResource Tertiary}" />
+                    IsVisible="{Binding IsListening}" />
 
             <ActivityIndicator AutomationId="speechtotext-listening" IsRunning="{Binding IsListening}" IsVisible="{Binding IsListening}" />
 
@@ -35,7 +34,7 @@
                 <Button AutomationId="speechtotext-share" Text="📤 Share" Command="{Binding ShareCommand}" />
             </HorizontalStackLayout>
 
-            <Label AutomationId="speechtotext-status" Text="{Binding StatusMessage}" TextColor="{StaticResource Gray500}" />
+            <Label AutomationId="speechtotext-status" Text="{Binding StatusMessage}" TextColor="{DynamicResource TextFillColorSecondary}" />
 
         </VerticalStackLayout>
     </ScrollView>

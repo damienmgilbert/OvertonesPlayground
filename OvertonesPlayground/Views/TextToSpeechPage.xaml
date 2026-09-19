@@ -9,21 +9,21 @@
     <ScrollView>
         <VerticalStackLayout Padding="24" Spacing="18">
 
-            <Label Text="🗣 Text to Speech" FontSize="20" FontAttributes="Bold" />
-            <Label Text="Type something, Generate &amp; Play to preview it, then Save to keep it in your library (and your device's Music folder)."
-                   FontSize="12" TextColor="{StaticResource Gray500}" />
+            <Label Style="{StaticResource SubtitleTextBlockStyle}" Text="🗣 Text to Speech" />
+            <Label Style="{StaticResource CaptionTextBlockStyle}" Text="Type something, Generate &amp; Play to preview it, then Save to keep it in your library (and your device's Music folder)."
+                   TextColor="{DynamicResource TextFillColorSecondary}" />
 
             <Editor AutomationId="texttospeech-text" Placeholder="Type the text to speak..." Text="{Binding Text}" AutoSize="TextChanges" MinimumHeightRequest="120" />
 
             <HorizontalStackLayout Spacing="12">
-                <Button AutomationId="texttospeech-generate" Text="▶ Generate &amp; Play" Command="{Binding GenerateCommand}" />
-                <Button AutomationId="texttospeech-save" Text="💾 Save" Command="{Binding SaveCommand}" IsEnabled="{Binding CanSave}" BackgroundColor="{StaticResource Tertiary}" />
+                <Button AutomationId="texttospeech-generate" Style="{StaticResource AccentButtonStyle}" Text="▶ Generate &amp; Play" Command="{Binding GenerateCommand}" />
+                <Button AutomationId="texttospeech-save" Style="{StaticResource AccentButtonStyle}" Text="💾 Save" Command="{Binding SaveCommand}" IsEnabled="{Binding CanSave}" />
             </HorizontalStackLayout>
 
-            <GraphicsView SemanticProperties.Description="Waveform preview of the generated speech" AutomationId="texttospeech-waveform" x:Name="WaveformView" HeightRequest="120" BackgroundColor="{StaticResource Gray950}" />
+            <GraphicsView SemanticProperties.Description="Waveform preview of the generated speech" AutomationId="texttospeech-waveform" x:Name="WaveformView" HeightRequest="120" BackgroundColor="{DynamicResource SolidBackgroundFillColorTertiary}" />
 
             <ActivityIndicator AutomationId="texttospeech-busy" IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
-            <Label AutomationId="texttospeech-status" Text="{Binding StatusMessage}" TextColor="{StaticResource Gray500}" />
+            <Label AutomationId="texttospeech-status" Text="{Binding StatusMessage}" TextColor="{DynamicResource TextFillColorSecondary}" />
 
         </VerticalStackLayout>
     </ScrollView>

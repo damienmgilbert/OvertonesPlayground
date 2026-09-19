@@ -1,3 +1,5 @@
+using OvertonesPlayground.Themes;
+
 namespace OvertonesPlayground.Views;
 
 ///<summary>
@@ -13,13 +15,14 @@ public class TrimWaveformDrawable : IDrawable
 
     #region Fields
     // Draw runs on every playhead tick (10 Hz) and on every handle-drag update, and paints one bar per peak, so nothing
-    // in it may parse strings or allocate: colors are parsed once here, and ruler labels are cached by second.
-    private static readonly Color DiscardedBarColor = Color.FromArgb("#4D4D4D");
-    private static readonly Color KeptBarColor = Color.FromArgb("#0078D4");
-    private static readonly Color PlayheadColor = Color.FromArgb("#FFB900");
-    private static readonly Color RulerTextColor = Color.FromArgb("#A3A3A3");
-    private static readonly Color RulerTickColor = Color.FromArgb("#3D3D3D");
+    // in it may parse strings or allocate. The five colors are looked up once at the start of each Draw (a drawable can't
+    // bind to a resource, and this is what lets a theme swap restyle it), and ruler labels are cached by second.
+    private Color _discardedBarColor = Colors.Transparent;
+    private Color _keptBarColor = Colors.Transparent;
+    private Color _playheadColor = Colors.Transparent;
     private readonly Dictionary<int, string> _rulerLabels = [];
+    private Color _rulerTextColor = Colors.Transparent;
+    private Color _rulerTickColor = Colors.Transparent;
     #endregion
 
     #region Private methods
@@ -35,8 +38,8 @@ public class TrimWaveformDrawable : IDrawable
         }
 
         canvas.FontSize = 11;
-        canvas.FontColor = RulerTextColor;
-        canvas.StrokeColor = RulerTickColor;
+        canvas.FontColor = _rulerTextColor;
+        canvas.StrokeColor = _rulerTickColor;
         canvas.StrokeSize = 1;
 
         double windowEnd = WindowStartSeconds + VisibleSeconds;
@@ -83,7 +86,7 @@ public class TrimWaveformDrawable : IDrawable
             float x = (i - firstPeak) * stepX;
             bool isInsideSelection = x >= selStartX && x <= selEndX;
             bool isKept = IsTrimMiddleMode ? !isInsideSelection : isInsideSelection;
-            Color barColor = isKept ? KeptBarColor : DiscardedBarColor;
+            Color barColor = isKept ? _keptBarColor : _discardedBarColor;
             if (!ReferenceEquals(barColor, currentColor))
             {
                 canvas.StrokeColor = barColor;
@@ -93,6 +96,18 @@ public class TrimWaveformDrawable : IDrawable
             float barHeight = Peaks[i] * (waveHeight / 2);
             canvas.DrawLine(x, midY - barHeight, x, midY + barHeight);
         }
+    }
+
+    ///<summary>
+    ///Reads this frame's colors from the active Fluent theme.
+    ///</summary>
+    private void RefreshColors()
+    {
+        _keptBarColor = FluentTheme.GetColor("AccentFillColorDefault");
+        _discardedBarColor = FluentTheme.GetColor("ControlStrongFillColorDisabled");
+        _playheadColor = FluentTheme.GetColor("SystemFillColorCaution");
+        _rulerTextColor = FluentTheme.GetColor("TextFillColorSecondary");
+        _rulerTickColor = FluentTheme.GetColor("DividerStrokeColorDefault");
     }
 
     ///<summary>
@@ -123,6 +138,7 @@ public class TrimWaveformDrawable : IDrawable
     ///</summary>
     public void Draw(ICanvas canvas, RectF dirtyRect)
     {
+        RefreshColors();
         canvas.FillColor = Colors.Transparent;
         canvas.FillRectangle(dirtyRect);
 
@@ -136,7 +152,7 @@ public class TrimWaveformDrawable : IDrawable
             bool isPlayheadVisible = playX >= 0 && playX <= dirtyRect.Width;
             if (isPlayheadVisible)
             {
-                canvas.StrokeColor = PlayheadColor;
+                canvas.StrokeColor = _playheadColor;
                 canvas.StrokeSize = 2;
                 canvas.DrawLine(playX, RulerHeight, playX, dirtyRect.Height);
             }

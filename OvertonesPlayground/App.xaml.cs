@@ -1,4 +1,5 @@
-﻿using OvertonesPlayground.ViewModels;
+﻿using OvertonesPlayground.Themes;
+using OvertonesPlayground.ViewModels;
 
 namespace OvertonesPlayground;
 
@@ -23,6 +24,11 @@ public partial class App : Application
         _logger = logger;
         Log_AppConstructed();
         SettingsViewModel.ApplyTheme(SettingsViewModel.LoadSavedThemePreference());
+
+        // The Fluent tokens are a light and a dark dictionary that are swapped, so apply the right one now (before any page
+        // exists) and again whenever the theme changes: the user's Light/Dark/System choice, or the system's own switch.
+        FluentTheme.Apply(RequestedTheme);
+        RequestedThemeChanged += (_, e) => FluentTheme.Apply(e.RequestedTheme);
 
         AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
         AppDomain.CurrentDomain.FirstChanceException += CurrentDomain_FirstChanceException;

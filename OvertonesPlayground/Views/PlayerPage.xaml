@@ -10,13 +10,11 @@
     <Grid RowDefinitions="*,Auto">
 
         <VerticalStackLayout Grid.Row="0" VerticalOptions="Center" HorizontalOptions="Center" Spacing="16" Padding="40">
-            <Label Text="🎵" FontSize="88" HorizontalTextAlignment="Center" TextColor="{StaticResource Gray300}" />
-            <Label AutomationId="player-clip-name" Text="{Binding ClipName}" FontSize="26" FontAttributes="Bold" HorizontalTextAlignment="Center" />
+            <Label Text="🎵" FontSize="88" HorizontalTextAlignment="Center" TextColor="{DynamicResource TextFillColorTertiary}" />
+            <Label Style="{StaticResource TitleTextBlockStyle}" AutomationId="player-clip-name" Text="{Binding ClipName}" HorizontalTextAlignment="Center" />
         </VerticalStackLayout>
 
-        <Border Grid.Row="1" StrokeShape="Rectangle"
-                Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardStrokeDark}}"
-                BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource CardBackgroundDark}}">
+        <Border Grid.Row="1" StrokeShape="Rectangle">
             <VerticalStackLayout Padding="24,18" Spacing="14">
 
                 <Slider AutomationId="player-position-slider" x:Name="PositionSlider"
@@ -26,12 +24,12 @@
                         DragCompleted="OnSeekCompleted" />
 
                 <Grid ColumnDefinitions="*,*">
-                    <Label AutomationId="player-position-text" Grid.Column="0" Text="{Binding PositionText}" FontSize="12" TextColor="{StaticResource Gray500}" />
-                    <Label AutomationId="player-duration-text" Grid.Column="1" Text="{Binding DurationText}" FontSize="12" TextColor="{StaticResource Gray500}" HorizontalTextAlignment="End" />
+                    <Label Style="{StaticResource CaptionTextBlockStyle}" AutomationId="player-position-text" Grid.Column="0" Text="{Binding PositionText}" TextColor="{DynamicResource TextFillColorSecondary}" />
+                    <Label Style="{StaticResource CaptionTextBlockStyle}" AutomationId="player-duration-text" Grid.Column="1" Text="{Binding DurationText}" TextColor="{DynamicResource TextFillColorSecondary}" HorizontalTextAlignment="End" />
                 </Grid>
 
                 <HorizontalStackLayout Spacing="20" HorizontalOptions="Center">
-                    <Button AutomationId="player-play-pause" Text="{Binding IsPlaying, Converter={StaticResource PlayPauseIcon}}"
+                    <Button AutomationId="player-play-pause" Style="{StaticResource AccentButtonStyle}" Text="{Binding IsPlaying, Converter={StaticResource PlayPauseIcon}}"
                             FontSize="28"
                             WidthRequest="90"
                             HeightRequest="90"

@@ -34,8 +34,8 @@
                         <Entry AutomationId="{Binding Number, StringFormat='mixer-channel-{0}-name'}" Grid.Row="1" Text="{Binding Name}" FontAttributes="Bold" FontSize="13"
                                HorizontalTextAlignment="Center" />
 
-                        <Label AutomationId="{Binding Number, StringFormat='mixer-channel-{0}-source'}" Grid.Row="2" Text="{Binding SourceLabel}" FontSize="10"
-                               TextColor="{StaticResource Gray500}" HorizontalTextAlignment="Center"
+                        <Label Style="{StaticResource CaptionTextBlockStyle}" AutomationId="{Binding Number, StringFormat='mixer-channel-{0}-source'}" Grid.Row="2" Text="{Binding SourceLabel}"
+                               TextColor="{DynamicResource TextFillColorSecondary}" HorizontalTextAlignment="Center"
                                LineBreakMode="TailTruncation" />
 
                         <!-- Vertical fader: Rotation is a render-only transform, so the Slider still lays out at its
@@ -49,21 +49,35 @@
                                 Minimum="0" Maximum="1"
                                 Value="{Binding Volume}" />
 
-                        <Label AutomationId="{Binding Number, StringFormat='mixer-channel-{0}-volume-text'}" Grid.Row="4" Text="{Binding Volume, StringFormat='{0:P0}'}" FontSize="10"
-                               TextColor="{StaticResource Gray500}" HorizontalTextAlignment="Center" />
+                        <Label Style="{StaticResource CaptionTextBlockStyle}" AutomationId="{Binding Number, StringFormat='mixer-channel-{0}-volume-text'}" Grid.Row="4" Text="{Binding Volume, StringFormat='{0:P0}'}"
+                               TextColor="{DynamicResource TextFillColorSecondary}" HorizontalTextAlignment="Center" />
 
                         <Slider AutomationId="{Binding Number, StringFormat='mixer-channel-{0}-pan-slider'}" Grid.Row="5" Minimum="-1" Maximum="1" Value="{Binding Pan}" />
 
-                        <Label AutomationId="{Binding Number, StringFormat='mixer-channel-{0}-pan-text'}" Grid.Row="6" Text="{Binding Pan, StringFormat='Pan {0:+0.00;-0.00;C}'}" FontSize="10"
-                               TextColor="{StaticResource Gray500}" HorizontalTextAlignment="Center" />
+                        <Label Style="{StaticResource CaptionTextBlockStyle}" AutomationId="{Binding Number, StringFormat='mixer-channel-{0}-pan-text'}" Grid.Row="6" Text="{Binding Pan, StringFormat='Pan {0:+0.00;-0.00;C}'}"
+                               TextColor="{DynamicResource TextFillColorSecondary}" HorizontalTextAlignment="Center" />
 
                         <HorizontalStackLayout Grid.Row="7" Spacing="6" HorizontalOptions="Center">
-                            <Button AutomationId="{Binding Number, StringFormat='mixer-channel-{0}-mute'}" Text="M" WidthRequest="48" HeightRequest="48" Padding="0" FontSize="12"
-                                    BackgroundColor="{Binding IsMuted, Converter={StaticResource BoolToAccent}}"
-                                    Command="{Binding ToggleMuteCommand}" />
-                            <Button AutomationId="{Binding Number, StringFormat='mixer-channel-{0}-solo'}" Text="S" WidthRequest="48" HeightRequest="48" Padding="0" FontSize="12"
-                                    BackgroundColor="{Binding IsSoloed, Converter={StaticResource BoolToAccent}}"
-                                    Command="{Binding ToggleSoloCommand}" />
+<Button AutomationId="{Binding Number, StringFormat='mixer-channel-{0}-mute'}" Text="M" WidthRequest="48" HeightRequest="48" Padding="0" FontSize="12"
+                                    Command="{Binding ToggleMuteCommand}">
+                                <Button.Triggers>
+                                    <DataTrigger TargetType="Button" Binding="{Binding IsMuted}" Value="True">
+                                        <Setter Property="BackgroundColor" Value="{DynamicResource AccentFillColorDefault}" />
+                                        <Setter Property="TextColor" Value="{DynamicResource TextOnAccentFillColorPrimary}" />
+                                        <Setter Property="BorderColor" Value="{DynamicResource ControlStrokeColorOnAccentDefault}" />
+                                    </DataTrigger>
+                                </Button.Triggers>
+                            </Button>
+<Button AutomationId="{Binding Number, StringFormat='mixer-channel-{0}-solo'}" Text="S" WidthRequest="48" HeightRequest="48" Padding="0" FontSize="12"
+                                    Command="{Binding ToggleSoloCommand}">
+                                <Button.Triggers>
+                                    <DataTrigger TargetType="Button" Binding="{Binding IsSoloed}" Value="True">
+                                        <Setter Property="BackgroundColor" Value="{DynamicResource AccentFillColorDefault}" />
+                                        <Setter Property="TextColor" Value="{DynamicResource TextOnAccentFillColorPrimary}" />
+                                        <Setter Property="BorderColor" Value="{DynamicResource ControlStrokeColorOnAccentDefault}" />
+                                    </DataTrigger>
+                                </Button.Triggers>
+                            </Button>
                         </HorizontalStackLayout>
 
                         <HorizontalStackLayout Grid.Row="8" Spacing="6" HorizontalOptions="Center">

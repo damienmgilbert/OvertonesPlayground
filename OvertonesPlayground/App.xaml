@@ -9,13 +9,12 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="Resources/Styles/Colors.xaml" />
+                <ResourceDictionary Source="Themes/FluentMetrics.xaml" />
                 <ResourceDictionary Source="Resources/Styles/Styles.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
             <conv:HexColorConverter x:Key="HexColor" />
             <conv:BoolToPlayPauseIconConverter x:Key="PlayPauseIcon" />
-            <conv:BoolToAccentColorConverter x:Key="BoolToAccent" />
             <conv:InvertedBoolConverter x:Key="InvertedBool" />
             <conv:RecordButtonLabelConverter x:Key="RecordButtonLabel" />
             <conv:StringToBoolConverter x:Key="StringToBool" />

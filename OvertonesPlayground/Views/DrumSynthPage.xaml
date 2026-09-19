@@ -12,9 +12,9 @@
     <ScrollView>
         <VerticalStackLayout Padding="24" Spacing="18">
 
-            <Label Text="🥁 Drum &amp; Bass Synth" FontSize="20" FontAttributes="Bold" />
-            <Label Text="Pick a type to load its defaults, tune every knob, Generate &amp; Play to preview, then Save to keep it in your library (and your device's Music folder) for the Launchpad and Mixer."
-                   FontSize="12" TextColor="{StaticResource Gray500}" />
+            <Label Style="{StaticResource SubtitleTextBlockStyle}" Text="🥁 Drum &amp; Bass Synth" />
+            <Label Style="{StaticResource CaptionTextBlockStyle}" Text="Pick a type to load its defaults, tune every knob, Generate &amp; Play to preview, then Save to keep it in your library (and your device's Music folder) for the Launchpad and Mixer."
+                   TextColor="{DynamicResource TextFillColorSecondary}" />
 
             <CollectionView AutomationId="drumsynth-types" ItemsSource="{Binding DrumOptions}" HeightRequest="150">
                 <CollectionView.ItemsLayout>
@@ -29,15 +29,15 @@
                 </CollectionView.ItemTemplate>
             </CollectionView>
 
-            <GraphicsView SemanticProperties.Description="Waveform preview of the generated drum sound" AutomationId="drumsynth-waveform" x:Name="WaveformView" HeightRequest="120" BackgroundColor="{StaticResource Gray950}" />
+            <GraphicsView SemanticProperties.Description="Waveform preview of the generated drum sound" AutomationId="drumsynth-waveform" x:Name="WaveformView" HeightRequest="120" BackgroundColor="{DynamicResource SolidBackgroundFillColorTertiary}" />
 
             <VerticalStackLayout BindingContext="{Binding SelectedDrumParams}"
                                   x:DataType="vm:DrumSynthParametersViewModel"
                                   Spacing="12">
 
-                <Label AutomationId="drumsynth-editing" Text="{Binding DrumType, StringFormat='🎚 Editing: {0}'}" FontAttributes="Bold" TextColor="{StaticResource Secondary}" />
+                <Label Style="{StaticResource BodyStrongTextBlockStyle}" AutomationId="drumsynth-editing" Text="{Binding DrumType, StringFormat='🎚 Editing: {0}'}" TextColor="{DynamicResource AccentTextFillColorPrimary}" />
 
-                <Grid ColumnDefinitions="Auto,*" RowSpacing="12">
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12" RowSpacing="12">
                     <Label Grid.Row="0" Grid.Column="0" Text="Sample rate" VerticalOptions="Center" />
                     <Picker AutomationId="drumsynth-sample-rate" Grid.Row="0" Grid.Column="1"
                             ItemsSource="{x:Static vm:DrumSynthParametersViewModel.SampleRateOptions}"
@@ -50,7 +50,7 @@
 
                 <toolkit:Expander IsVisible="{Binding ShowPitchSweep}" IsExpanded="True">
                     <toolkit:Expander.Header>
-                        <Label AutomationId="drumsynth-pitch-sweep-header" Text="📈 Pitch Sweep" FontAttributes="Bold" FontSize="14" Padding="0,10" />
+                        <Label Style="{StaticResource BodyStrongTextBlockStyle}" AutomationId="drumsynth-pitch-sweep-header" Text="📈 Pitch Sweep" Padding="0,10" />
                     </toolkit:Expander.Header>
                     <VerticalStackLayout Spacing="12" Padding="0,4,0,12">
                         <controls:LabeledSlider AutomationId="drumsynth-sweep-start" LabelText="Start" Minimum="20" Maximum="2000" Digits="0" Value="{Binding StartFrequencyHz}" />
@@ -61,7 +61,7 @@
 
                 <toolkit:Expander IsVisible="{Binding ShowSnareControls}" IsExpanded="True">
                     <toolkit:Expander.Header>
-                        <Label AutomationId="drumsynth-snare-header" Text="🥁 Snare Body" FontAttributes="Bold" FontSize="14" Padding="0,10" />
+                        <Label Style="{StaticResource BodyStrongTextBlockStyle}" AutomationId="drumsynth-snare-header" Text="🥁 Snare Body" Padding="0,10" />
                     </toolkit:Expander.Header>
                     <VerticalStackLayout Spacing="12" Padding="0,4,0,12">
                         <controls:LabeledSlider AutomationId="drumsynth-snare-tone" LabelText="Tone" Minimum="50" Maximum="1000" Digits="0" Value="{Binding ToneFrequencyHz}" />
@@ -73,7 +73,7 @@
 
                 <toolkit:Expander IsVisible="{Binding ShowClapControls}" IsExpanded="True">
                     <toolkit:Expander.Header>
-                        <Label AutomationId="drumsynth-clap-header" Text="👏 Clap Bursts" FontAttributes="Bold" FontSize="14" Padding="0,10" />
+                        <Label Style="{StaticResource BodyStrongTextBlockStyle}" AutomationId="drumsynth-clap-header" Text="👏 Clap Bursts" Padding="0,10" />
                     </toolkit:Expander.Header>
                     <VerticalStackLayout Spacing="12" Padding="0,4,0,12">
                         <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
@@ -87,10 +87,10 @@
 
                 <toolkit:Expander IsExpanded="False">
                     <toolkit:Expander.Header>
-                        <Label AutomationId="drumsynth-filter-header" Text="🎛 Filter" FontAttributes="Bold" FontSize="14" Padding="0,10" />
+                        <Label Style="{StaticResource BodyStrongTextBlockStyle}" AutomationId="drumsynth-filter-header" Text="🎛 Filter" Padding="0,10" />
                     </toolkit:Expander.Header>
                     <VerticalStackLayout Spacing="12" Padding="0,4,0,12">
-                        <Grid ColumnDefinitions="Auto,*" RowSpacing="12">
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12" RowSpacing="12">
                             <Label Grid.Row="0" Grid.Column="0" Text="Type" VerticalOptions="Center" />
                             <Picker AutomationId="drumsynth-filter-type" Grid.Row="0" Grid.Column="1"
                                     ItemsSource="{x:Static vm:DrumSynthParametersViewModel.FilterOptions}"
@@ -103,12 +103,12 @@
             </VerticalStackLayout>
 
             <HorizontalStackLayout Spacing="12">
-                <Button AutomationId="drumsynth-generate" Text="▶ Generate &amp; Play" Command="{Binding GenerateCommand}" />
-                <Button AutomationId="drumsynth-save" Text="💾 Save" Command="{Binding SaveCommand}" IsEnabled="{Binding CanSave}" BackgroundColor="{StaticResource Tertiary}" />
+                <Button AutomationId="drumsynth-generate" Style="{StaticResource AccentButtonStyle}" Text="▶ Generate &amp; Play" Command="{Binding GenerateCommand}" />
+                <Button AutomationId="drumsynth-save" Style="{StaticResource AccentButtonStyle}" Text="💾 Save" Command="{Binding SaveCommand}" IsEnabled="{Binding CanSave}" />
             </HorizontalStackLayout>
 
             <ActivityIndicator AutomationId="drumsynth-busy" IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
-            <Label AutomationId="drumsynth-status" Text="{Binding StatusMessage}" TextColor="{StaticResource Gray500}" />
+            <Label AutomationId="drumsynth-status" Text="{Binding StatusMessage}" TextColor="{DynamicResource TextFillColorSecondary}" />
 
         </VerticalStackLayout>
     </ScrollView>

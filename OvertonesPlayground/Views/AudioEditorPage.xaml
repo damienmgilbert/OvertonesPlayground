@@ -11,105 +11,105 @@
     <ScrollView>
         <VerticalStackLayout Padding="24" Spacing="18">
 
-            <Label AutomationId="audioeditor-clip-name" Text="{Binding LoadedClip.Name}" FontSize="22" FontAttributes="Bold" />
+            <Label Style="{StaticResource SubtitleTextBlockStyle}" AutomationId="audioeditor-clip-name" Text="{Binding LoadedClip.Name}" />
 
-            <GraphicsView SemanticProperties.Description="Waveform of the clip being edited" AutomationId="audioeditor-waveform" x:Name="WaveformView" HeightRequest="160" BackgroundColor="{StaticResource Gray950}" />
+            <GraphicsView SemanticProperties.Description="Waveform of the clip being edited" AutomationId="audioeditor-waveform" x:Name="WaveformView" HeightRequest="160" BackgroundColor="{DynamicResource SolidBackgroundFillColorTertiary}" />
 
             <HorizontalStackLayout Spacing="12">
-                <Button AutomationId="audioeditor-preview" Text="▶ Preview" Command="{Binding PreviewCommand}" />
+                <Button AutomationId="audioeditor-preview" Style="{StaticResource AccentButtonStyle}" Text="▶ Preview" Command="{Binding PreviewCommand}" />
                 <Button AutomationId="audioeditor-open-trim" Text="✂ Open Trim Editor" Command="{Binding OpenTrimEditorCommand}" />
             </HorizontalStackLayout>
 
             <toolkit:Expander IsExpanded="True">
                 <toolkit:Expander.Header>
-                    <Label AutomationId="audioeditor-trim-header" Text="✂ Trim" FontAttributes="Bold" Padding="0,10" />
+                    <Label Style="{StaticResource BodyStrongTextBlockStyle}" AutomationId="audioeditor-trim-header" Text="✂ Trim" Padding="0,10" />
                 </toolkit:Expander.Header>
                 <VerticalStackLayout Spacing="12" Padding="0,4,0,12">
                     <controls:LabeledSlider AutomationId="audioeditor-trim-start" LabelText="Start (s)" Minimum="0" Maximum="{Binding DurationSeconds}" Digits="2" Value="{Binding TrimStartSeconds}" />
                     <controls:LabeledSlider AutomationId="audioeditor-trim-end" LabelText="End (s)" Minimum="0" Maximum="{Binding DurationSeconds}" Digits="2" Value="{Binding TrimEndSeconds}" />
-                    <Button AutomationId="audioeditor-trim-apply" Text="Apply Trim" Command="{Binding TrimCommand}" />
+                    <Button AutomationId="audioeditor-trim-apply" Style="{StaticResource AccentButtonStyle}" Text="Apply Trim" Command="{Binding TrimCommand}" />
                 </VerticalStackLayout>
             </toolkit:Expander>
 
             <toolkit:Expander IsExpanded="True">
                 <toolkit:Expander.Header>
-                    <Label AutomationId="audioeditor-gain-header" Text="🔊 Gain" FontAttributes="Bold" Padding="0,10" />
+                    <Label Style="{StaticResource BodyStrongTextBlockStyle}" AutomationId="audioeditor-gain-header" Text="🔊 Gain" Padding="0,10" />
                 </toolkit:Expander.Header>
                 <VerticalStackLayout Spacing="12" Padding="0,4,0,12">
                     <controls:LabeledSlider AutomationId="audioeditor-gain" LabelText="Gain (dB)" Minimum="-24" Maximum="24" Digits="1" Value="{Binding GainDb}" />
-                    <Button AutomationId="audioeditor-gain-apply" Text="Apply Gain" Command="{Binding ApplyGainCommand}" />
+                    <Button AutomationId="audioeditor-gain-apply" Style="{StaticResource AccentButtonStyle}" Text="Apply Gain" Command="{Binding ApplyGainCommand}" />
                 </VerticalStackLayout>
             </toolkit:Expander>
 
             <toolkit:Expander IsExpanded="False">
                 <toolkit:Expander.Header>
-                    <Label AutomationId="audioeditor-fade-header" Text="📉 Fade In / Out" FontAttributes="Bold" Padding="0,10" />
+                    <Label Style="{StaticResource BodyStrongTextBlockStyle}" AutomationId="audioeditor-fade-header" Text="📉 Fade In / Out" Padding="0,10" />
                 </toolkit:Expander.Header>
                 <VerticalStackLayout Spacing="12" Padding="0,4,0,12">
                     <controls:LabeledSlider AutomationId="audioeditor-fade-in" LabelText="Fade in" Minimum="0" Maximum="5" Digits="2" Value="{Binding FadeInSeconds}" />
                     <controls:LabeledSlider AutomationId="audioeditor-fade-out" LabelText="Fade out" Minimum="0" Maximum="5" Digits="2" Value="{Binding FadeOutSeconds}" />
-                    <Button AutomationId="audioeditor-fade-apply" Text="Apply Fade" Command="{Binding ApplyFadeCommand}" />
+                    <Button AutomationId="audioeditor-fade-apply" Style="{StaticResource AccentButtonStyle}" Text="Apply Fade" Command="{Binding ApplyFadeCommand}" />
                 </VerticalStackLayout>
             </toolkit:Expander>
 
             <toolkit:Expander IsExpanded="False">
                 <toolkit:Expander.Header>
-                    <Label AutomationId="audioeditor-eq-header" Text="🎚 Equalizer" FontAttributes="Bold" Padding="0,10" />
+                    <Label Style="{StaticResource BodyStrongTextBlockStyle}" AutomationId="audioeditor-eq-header" Text="🎚 Equalizer" Padding="0,10" />
                 </toolkit:Expander.Header>
                 <VerticalStackLayout Spacing="12" Padding="0,4,0,12">
                     <controls:LabeledSlider AutomationId="audioeditor-eq-low" LabelText="Low (dB)" Minimum="-12" Maximum="12" Digits="1" Value="{Binding EqLowGainDb}" />
                     <controls:LabeledSlider AutomationId="audioeditor-eq-mid" LabelText="Mid (dB)" Minimum="-12" Maximum="12" Digits="1" Value="{Binding EqMidGainDb}" />
                     <controls:LabeledSlider AutomationId="audioeditor-eq-high" LabelText="High (dB)" Minimum="-12" Maximum="12" Digits="1" Value="{Binding EqHighGainDb}" />
-                    <Button AutomationId="audioeditor-eq-apply" Text="Apply EQ" Command="{Binding ApplyEqualizerCommand}" />
+                    <Button AutomationId="audioeditor-eq-apply" Style="{StaticResource AccentButtonStyle}" Text="Apply EQ" Command="{Binding ApplyEqualizerCommand}" />
                 </VerticalStackLayout>
             </toolkit:Expander>
 
             <toolkit:Expander IsExpanded="False">
                 <toolkit:Expander.Header>
-                    <Label AutomationId="audioeditor-compression-header" Text="🗜 Compression" FontAttributes="Bold" Padding="0,10" />
+                    <Label Style="{StaticResource BodyStrongTextBlockStyle}" AutomationId="audioeditor-compression-header" Text="🗜 Compression" Padding="0,10" />
                 </toolkit:Expander.Header>
                 <VerticalStackLayout Spacing="12" Padding="0,4,0,12">
                     <controls:LabeledSlider AutomationId="audioeditor-compression-threshold" LabelText="Threshold (dB)" Minimum="-60" Maximum="0" Digits="1" Value="{Binding CompressionThresholdDb}" />
                     <controls:LabeledSlider AutomationId="audioeditor-compression-ratio" LabelText="Ratio" Minimum="1" Maximum="20" Digits="1" Value="{Binding CompressionRatio}" />
                     <controls:LabeledSlider AutomationId="audioeditor-compression-attack" LabelText="Attack (ms)" Minimum="1" Maximum="200" Digits="0" Value="{Binding CompressionAttackMs}" />
                     <controls:LabeledSlider AutomationId="audioeditor-compression-release" LabelText="Release (ms)" Minimum="10" Maximum="1000" Digits="0" Value="{Binding CompressionReleaseMs}" />
-                    <Button AutomationId="audioeditor-compression-apply" Text="Apply Compression" Command="{Binding ApplyCompressionCommand}" />
+                    <Button AutomationId="audioeditor-compression-apply" Style="{StaticResource AccentButtonStyle}" Text="Apply Compression" Command="{Binding ApplyCompressionCommand}" />
                 </VerticalStackLayout>
             </toolkit:Expander>
 
             <toolkit:Expander IsExpanded="False">
                 <toolkit:Expander.Header>
-                    <Label AutomationId="audioeditor-noise-header" Text="🧹 Remove Noise" FontAttributes="Bold" Padding="0,10" />
+                    <Label Style="{StaticResource BodyStrongTextBlockStyle}" AutomationId="audioeditor-noise-header" Text="🧹 Remove Noise" Padding="0,10" />
                 </toolkit:Expander.Header>
                 <VerticalStackLayout Spacing="12" Padding="0,4,0,12">
-                    <Label Text="Uses the first stretch of the clip as its noise sample - trim to hum/hiss-only audio before running this for the best result." FontSize="12" TextColor="{StaticResource Gray500}" />
+                    <Label Style="{StaticResource CaptionTextBlockStyle}" Text="Uses the first stretch of the clip as its noise sample - trim to hum/hiss-only audio before running this for the best result." TextColor="{DynamicResource TextFillColorSecondary}" />
                     <controls:LabeledSlider AutomationId="audioeditor-noise-sample" LabelText="Noise sample (s)" Minimum="0.1" Maximum="5" Digits="2" Value="{Binding NoiseSampleSeconds}" />
-                    <Button AutomationId="audioeditor-noise-apply" Text="Reduce Noise" Command="{Binding ReduceNoiseCommand}" />
+                    <Button AutomationId="audioeditor-noise-apply" Style="{StaticResource AccentButtonStyle}" Text="Reduce Noise" Command="{Binding ReduceNoiseCommand}" />
                 </VerticalStackLayout>
             </toolkit:Expander>
 
             <toolkit:Expander IsExpanded="False">
                 <toolkit:Expander.Header>
-                    <Label AutomationId="audioeditor-vocals-header" Text="🎤 Remove Vocals" FontAttributes="Bold" Padding="0,10" />
+                    <Label Style="{StaticResource BodyStrongTextBlockStyle}" AutomationId="audioeditor-vocals-header" Text="🎤 Remove Vocals" Padding="0,10" />
                 </toolkit:Expander.Header>
                 <VerticalStackLayout Spacing="12" Padding="0,4,0,12">
-                    <Label Text="Cancels audio that's identical in both channels - works best on true-stereo tracks with a centered vocal. Mono clips aren't supported." FontSize="12" TextColor="{StaticResource Gray500}" />
-                    <Button AutomationId="audioeditor-vocals-apply" Text="Remove Vocals" Command="{Binding RemoveVocalsCommand}" />
+                    <Label Style="{StaticResource CaptionTextBlockStyle}" Text="Cancels audio that's identical in both channels - works best on true-stereo tracks with a centered vocal. Mono clips aren't supported." TextColor="{DynamicResource TextFillColorSecondary}" />
+                    <Button AutomationId="audioeditor-vocals-apply" Style="{StaticResource AccentButtonStyle}" Text="Remove Vocals" Command="{Binding RemoveVocalsCommand}" />
                 </VerticalStackLayout>
             </toolkit:Expander>
 
             <toolkit:Expander IsExpanded="False">
                 <toolkit:Expander.Header>
-                    <Label AutomationId="audioeditor-voice-header" Text="🎙 Voice Changer" FontAttributes="Bold" Padding="0,10" />
+                    <Label Style="{StaticResource BodyStrongTextBlockStyle}" AutomationId="audioeditor-voice-header" Text="🎙 Voice Changer" Padding="0,10" />
                 </toolkit:Expander.Header>
                 <VerticalStackLayout Spacing="12" Padding="0,4,0,12">
-                    <Label Text="Shifts pitch by changing playback speed - like a record played at the wrong RPM. Duration changes along with pitch." FontSize="12" TextColor="{StaticResource Gray500}" />
+                    <Label Style="{StaticResource CaptionTextBlockStyle}" Text="Shifts pitch by changing playback speed - like a record played at the wrong RPM. Duration changes along with pitch." TextColor="{DynamicResource TextFillColorSecondary}" />
                     <controls:LabeledSlider AutomationId="audioeditor-voice-pitch" LabelText="Pitch (semitones)" Minimum="-12" Maximum="12" Digits="1" Value="{Binding VoiceChangeSemitones}" />
-                    <Button AutomationId="audioeditor-voice-apply" Text="Apply Voice Change" Command="{Binding ApplyVoiceChangeCommand}" />
+                    <Button AutomationId="audioeditor-voice-apply" Style="{StaticResource AccentButtonStyle}" Text="Apply Voice Change" Command="{Binding ApplyVoiceChangeCommand}" />
                 </VerticalStackLayout>
             </toolkit:Expander>
 
-            <BoxView HeightRequest="1" Color="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource CardStrokeDark}}" />
+            <BoxView HeightRequest="1" />
 
             <HorizontalStackLayout Spacing="12">
                 <Button AutomationId="audioeditor-reverse" Text="⏪ Reverse" Command="{Binding ReverseCommand}" />
@@ -117,7 +117,7 @@
             </HorizontalStackLayout>
 
             <ActivityIndicator AutomationId="audioeditor-busy" IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
-            <Label AutomationId="audioeditor-status" Text="{Binding StatusMessage}" TextColor="{StaticResource Gray500}" />
+            <Label AutomationId="audioeditor-status" Text="{Binding StatusMessage}" TextColor="{DynamicResource TextFillColorSecondary}" />
 
         </VerticalStackLayout>
     </ScrollView>

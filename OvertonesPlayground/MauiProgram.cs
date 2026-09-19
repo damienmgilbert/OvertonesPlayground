@@ -108,6 +108,10 @@ public static class MauiProgram
 
         builder.AddAudio();
 
+#if ANDROID
+        FluentTextInputs.Register();
+#endif
+
         RegisterServices(builder.Services);
         RegisterViewModelsAndPages(builder.Services);
 
