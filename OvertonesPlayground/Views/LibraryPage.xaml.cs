@@ -1,3 +1,4 @@
+using System.Windows.Input;
 using OvertonesPlayground.Models;
 using OvertonesPlayground.ViewModels;
 
@@ -27,6 +28,34 @@ public partial class LibraryPage : ContentPage
     #endregion
 
     #region Private methods
+    ///<summary>
+    ///Runs <paramref name="command"/> for the clip of the row that was tapped, as <see cref="Button.Command"/> would. The
+    ///sender is the row's button or, in the tile view, its tap gesture; either way it inherits the row's clip as its binding context.
+    ///</summary>
+    ///<remarks>
+    ///The row buttons used to bind their commands to the view model with an ancestor <c>RelativeSource</c>. When a row is
+    ///recycled (on scrolling, and all at once when the list is reloaded, e.g. on coming back from the editor) MAUI re-evaluates
+    ///that binding with no ancestor, which throws a <see cref="NullReferenceException"/> that it then swallows: a burst of
+    ///first-chance exceptions, one per row, every time. Forwarding the click here has no binding to re-evaluate.
+    ///</remarks>
+    private static void RunRowCommand(object? sender, ICommand command)
+    {
+        if (sender is BindableObject { BindingContext: AudioClip clip } && command.CanExecute(clip))
+        {
+            command.Execute(clip);
+        }
+    }
+
+    private void OnDeleteClicked(object? sender, EventArgs e) => RunRowCommand(sender, _viewModel.DeleteCommand);
+
+    private void OnEditClicked(object? sender, EventArgs e) => RunRowCommand(sender, _viewModel.EditCommand);
+
+    private void OnEditTapped(object? sender, TappedEventArgs e) => RunRowCommand(sender, _viewModel.EditCommand);
+
+    private void OnPlayClicked(object? sender, EventArgs e) => RunRowCommand(sender, _viewModel.PlayCommand);
+
+    private void OnPlayTapped(object? sender, TappedEventArgs e) => RunRowCommand(sender, _viewModel.PlayCommand);
+
     [LoggerMessage(Level = LogLevel.Debug, Message = "Page appeared.")]
     private partial void Log_PageAppeared();
 
