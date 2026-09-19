@@ -1,4 +1,5 @@
 using CommunityToolkit.Maui;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Maui.DevFlow.Agent;
 using OvertonesPlayground.Controls;
 using OvertonesPlayground.Platforms.Android.Services;
@@ -22,6 +23,20 @@ public static class MauiProgram
     ///</summary>
     private static void RegisterServices(IServiceCollection services)
     {
+        // The platform APIs the services and view models use, registered by interface so unit tests can substitute them.
+        // MAUI may already register these; TryAdd leaves any existing registration alone.
+        services.TryAddSingleton<IAppInfo>(AppInfo.Current);
+        services.TryAddSingleton<IClipboard>(Clipboard.Default);
+        services.TryAddSingleton<IDeviceDisplay>(DeviceDisplay.Current);
+        services.TryAddSingleton<IFilePicker>(FilePicker.Default);
+        services.TryAddSingleton<IFileSystem>(FileSystem.Current);
+        services.TryAddSingleton<IPreferences>(Preferences.Default);
+        services.TryAddSingleton<IShare>(Share.Default);
+
+        services.AddSingleton<INavigationService, ShellNavigationService>();
+        services.AddSingleton<ITeachingTipsService, TeachingTipsService>();
+        services.AddSingleton<IThemeService, AppThemeService>();
+
         services.AddSingleton<IPermissionsService, PermissionsService>();
         services.AddSingleton<IAudioLibraryService, AudioLibraryService>();
         services.AddSingleton<IAudioPlaybackService, AudioPlaybackService>();

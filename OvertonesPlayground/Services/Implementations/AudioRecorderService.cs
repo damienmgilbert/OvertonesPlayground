@@ -11,6 +11,7 @@ public class AudioRecorderService : IAudioRecorderService, IDisposable
     #region Fields
     private readonly IAudioManager _audioManager;
     private string? _currentFilePath;
+    private readonly IFileSystem _fileSystem;
     private readonly IAudioRecorder _recorder;
     private readonly Stopwatch _stopwatch = new();
     private readonly System.Timers.Timer _tickTimer;
@@ -20,9 +21,10 @@ public class AudioRecorderService : IAudioRecorderService, IDisposable
     ///<summary>
     ///Creates the recorder service and its underlying platform recorder.
     ///</summary>
-    public AudioRecorderService(IAudioManager audioManager)
+    public AudioRecorderService(IAudioManager audioManager, IFileSystem fileSystem)
     {
         _audioManager = audioManager;
+        _fileSystem = fileSystem;
         _recorder = _audioManager.CreateRecorder();
 
         _tickTimer = new System.Timers.Timer(100);
@@ -65,7 +67,7 @@ public class AudioRecorderService : IAudioRecorderService, IDisposable
     ///<inheritdoc/>
     public async Task StartAsync()
     {
-        string directory = Path.Combine(FileSystem.AppDataDirectory, "Clips");
+        string directory = Path.Combine(_fileSystem.AppDataDirectory, "Clips");
         Directory.CreateDirectory(directory);
         _currentFilePath = Path.Combine(directory, $"recording_{DateTime.Now:yyyyMMdd_HHmmss}.wav");
 

@@ -110,6 +110,16 @@ internal sealed class WavFile
                 {
                     reader.ReadBytes(chunkSize);
                 }
+
+                // RIFF chunks are word-aligned: a chunk with an odd size is followed by one pad byte that its size doesn't
+                // count. Without skipping it, the next chunk's id is read one byte early and the rest of the file is garbage,
+                // so a file with an odd-sized chunk (e.g. a LIST/INFO tag) before its data chunk looks like it has no audio.
+                // The last chunk may be the unpadded end of the file.
+                bool hasPadByte = chunkSize % 2 == 1 && stream.Position < stream.Length;
+                if (hasPadByte)
+                {
+                    reader.ReadByte();
+                }
             }
 
             bool hasNoValidFormat = !hasFmtChunk || channels <= 0 || sampleRate <= 0;

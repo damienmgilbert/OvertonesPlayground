@@ -18,18 +18,23 @@ public partial class LibraryViewModel : BaseViewModel
 
     #region Fields
     private readonly IAudioLibraryService _libraryService;
+    private readonly INavigationService _navigation;
     private readonly IAudioPlaybackService _playbackService;
+    private readonly IPreferences _preferences;
     #endregion
 
     #region Constructors
-    public LibraryViewModel(IAudioLibraryService libraryService, IAudioPlaybackService playbackService, ILogger<LibraryViewModel> logger) : base(logger)
+    public LibraryViewModel(IAudioLibraryService libraryService, IAudioPlaybackService playbackService, INavigationService navigation, IPreferences preferences, ILogger<LibraryViewModel> logger) : base(logger)
     {
         _libraryService = libraryService;
         _playbackService = playbackService;
+        _navigation = navigation;
+        _preferences = preferences;
         Title = "Library";
 
-        string savedMode = Preferences.Default.Get(ViewModeKey, nameof(LibraryViewMode.Detail));
-        ViewMode = Enum.TryParse<LibraryViewMode>(savedMode, out LibraryViewMode mode) ? mode : LibraryViewMode.Detail;
+        string savedMode = _preferences.Get(ViewModeKey, nameof(LibraryViewMode.Detail));
+        // TryParse also accepts any number, so a stored "7" has to be rejected explicitly or it would become a layout that doesn't exist.
+        ViewMode = Enum.TryParse<LibraryViewMode>(savedMode, out LibraryViewMode mode) && Enum.IsDefined(mode) ? mode : LibraryViewMode.Detail;
     }
     #endregion
 
@@ -56,7 +61,7 @@ public partial class LibraryViewModel : BaseViewModel
         }
 
         Log_NavigatingToEditor(clip.Name, clip.Id);
-        await Shell.Current.GoToAsync($"editor?clipId={clip.Id}");
+        await _navigation.GoToAsync($"editor?clipId={clip.Id}");
     }
 
     ///<summary>
@@ -187,7 +192,7 @@ public partial class LibraryViewModel : BaseViewModel
     [LoggerMessage(Level = LogLevel.Debug, Message = "View mode changed to {ViewMode}.")]
     private partial void Log_ViewModeChanged(LibraryViewMode viewMode);
 
-    partial void OnViewModeChanged(LibraryViewMode value) => Preferences.Default.Set(ViewModeKey, value.ToString());
+    partial void OnViewModeChanged(LibraryViewMode value) => _preferences.Set(ViewModeKey, value.ToString());
 
     [RelayCommand]
     private async Task PlayAsync(AudioClip? clip)
@@ -200,7 +205,7 @@ public partial class LibraryViewModel : BaseViewModel
         Log_PlayingClip(clip.Name, clip.Id);
         await _playbackService.LoadAsync(clip);
         _playbackService.Play();
-        await Shell.Current.GoToAsync("//player");
+        await _navigation.GoToAsync("//player");
     }
 
     [RelayCommand]

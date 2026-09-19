@@ -10,6 +10,6 @@ internal static class PcmMath
     ///<summary>
     ///Rounds and clamps a sample value into the valid 16-bit PCM range.
     ///</summary>
-    public static short ClampToShort(double value) => (short)Math.Clamp(value, short.MinValue, short.MaxValue);
+    public static short ClampToShort(double value) => (short)Math.Clamp(Math.Round(value, MidpointRounding.AwayFromZero), short.MinValue, short.MaxValue);
     #endregion
 }

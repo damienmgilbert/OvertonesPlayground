@@ -31,6 +31,7 @@ public partial class TrimViewModel : BaseViewModel
     private static readonly double[] ZoomSteps = [1, 2, 4, 8, 16];
     private readonly IAudioEditorService _editorService;
     private readonly IAudioLibraryService _libraryService;
+    private readonly INavigationService _navigation;
     private readonly IAudioPlaybackService _playbackService;
     private IDispatcherTimer? _positionTimer;
     private readonly Stack<(double Start, double End)> _redoStack = new();
@@ -38,11 +39,12 @@ public partial class TrimViewModel : BaseViewModel
     #endregion
 
     #region Constructors
-    public TrimViewModel(IAudioEditorService editorService, IAudioLibraryService libraryService, IAudioPlaybackService playbackService, ILogger<TrimViewModel> logger) : base(logger)
+    public TrimViewModel(IAudioEditorService editorService, IAudioLibraryService libraryService, IAudioPlaybackService playbackService, INavigationService navigation, ILogger<TrimViewModel> logger) : base(logger)
     {
         _editorService = editorService;
         _libraryService = libraryService;
         _playbackService = playbackService;
+        _navigation = navigation;
         Title = "Trim";
     }
     #endregion
@@ -113,7 +115,7 @@ public partial class TrimViewModel : BaseViewModel
             string outputPath = await _editorService.InsertAsync(LoadedClip.FilePath, clipToInsert.FilePath, at, baseName);
             AudioClip saved = await _libraryService.AddClipAsync(outputPath, baseName, isUserRecording: true);
             Log_Inserted(saved.Name);
-            await Shell.Current.GoToAsync("..");
+            await _navigation.GoToAsync("..");
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException or NotSupportedException)
         {
@@ -343,7 +345,7 @@ public partial class TrimViewModel : BaseViewModel
 
             AudioClip saved = await _libraryService.AddClipAsync(outputPath, baseName, isUserRecording: true);
             Log_SavedTrim(saved.Name);
-            await Shell.Current.GoToAsync("..");
+            await _navigation.GoToAsync("..");
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException or NotSupportedException)
         {
@@ -383,7 +385,7 @@ public partial class TrimViewModel : BaseViewModel
             await _libraryService.AddClipAsync(afterPath, $"{baseName} (part 2)", isUserRecording: true);
 
             Log_Split(baseName, PositionSeconds);
-            await Shell.Current.GoToAsync("..");
+            await _navigation.GoToAsync("..");
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException or NotSupportedException)
         {

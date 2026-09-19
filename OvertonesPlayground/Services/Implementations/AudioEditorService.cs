@@ -5,6 +5,21 @@ namespace OvertonesPlayground.Services.Implementations;
 ///<inheritdoc cref="IAudioEditorService"/>
 public class AudioEditorService : IAudioEditorService
 {
+    #region Fields
+    private readonly IFileSystem _fileSystem;
+    #endregion
+
+    #region Constructors
+    ///<summary>
+    ///Creates the editor service.
+    ///</summary>
+    ///<param name="fileSystem">Locates the app-private folder that every edit's derived file is written to.</param>
+    public AudioEditorService(IFileSystem fileSystem)
+    {
+        _fileSystem = fileSystem;
+    }
+    #endregion
+
     #region Constants
     ///<summary>
     ///Q (bandwidth) shared by all three equalizer bands - a moderate, musically neutral width.
@@ -32,7 +47,7 @@ public class AudioEditorService : IAudioEditorService
     ///Writes <paramref name="samples"/> as a new WAV file alongside <paramref name="source"/>'s format and returns its
     ///path.
     ///</summary>
-    private static Task<string> SaveDerivedAsync(WavFile source, short[] samples, string outputName)
+    private Task<string> SaveDerivedAsync(WavFile source, short[] samples, string outputName)
     {
         WavFile derived = new() { Channels = source.Channels, SampleRate = source.SampleRate, BitsPerSample = source.BitsPerSample, Samples = samples, };
         return DerivedAudioFileWriter.SaveAsync(derived, ExportsDirectory, outputName);
@@ -43,11 +58,11 @@ public class AudioEditorService : IAudioEditorService
     ///<summary>
     ///App-private folder where every edit's derived output file is written.
     ///</summary>
-    private static string ExportsDirectory
+    private string ExportsDirectory
     {
         get
         {
-            string dir = Path.Combine(FileSystem.AppDataDirectory, "Exports");
+            string dir = Path.Combine(_fileSystem.AppDataDirectory, "Exports");
             Directory.CreateDirectory(dir);
             return dir;
         }

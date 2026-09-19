@@ -20,6 +20,21 @@ public class MixdownService : IMixdownService
     private const int TargetSampleRate = 44_100;
     #endregion
 
+    #region Fields
+    private readonly IFileSystem _fileSystem;
+    #endregion
+
+    #region Constructors
+    ///<summary>
+    ///Creates the mixdown service.
+    ///</summary>
+    ///<param name="fileSystem">Locates the app-private folder that every mixdown's rendered file is written to.</param>
+    public MixdownService(IFileSystem fileSystem)
+    {
+        _fileSystem = fileSystem;
+    }
+    #endregion
+
     #region Private methods
     ///<summary>
     ///Reads and conforms every clip on every included track, applying each clip's own gain, and returns each as a
@@ -84,11 +99,11 @@ public class MixdownService : IMixdownService
     ///<summary>
     ///App-private folder where every mixdown's rendered output file is written.
     ///</summary>
-    private static string MixesDirectory
+    private string MixesDirectory
     {
         get
         {
-            string dir = Path.Combine(FileSystem.AppDataDirectory, "Mixes");
+            string dir = Path.Combine(_fileSystem.AppDataDirectory, "Mixes");
             Directory.CreateDirectory(dir);
             return dir;
         }

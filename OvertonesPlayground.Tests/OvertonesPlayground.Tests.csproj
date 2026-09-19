@@ -1,0 +1,80 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<OutputType>Exe</OutputType>
+		<LangVersion>preview</LangVersion>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<RootNamespace>OvertonesPlayground.Tests</RootNamespace>
+		<IsPackable>false</IsPackable>
+		<UseMaui>true</UseMaui>
+	</PropertyGroup>
+
+	<!-- The app project targets net10.0-android only, so it can't be referenced from a host-run test project (and
+	     AppProjectReference only hands a host project the built APK, not the app's assembly). Instead the app's sources are
+	     compiled straight into this assembly, but only the ones that can run on a plain .NET host:
+
+	       UNIT-TESTED HERE (linked below)     Models, Services/Interfaces, ViewModels, and the services that reach the device only
+	                                           through an injectable interface (IFileSystem, IPreferences, IFilePicker, IAudioManager...).
+	       DEVICE / INTEGRATION ONLY (not linked)
+	                                           Platforms/**, Views/**, Controls/**, Themes/**, PermissionsService, ShellNavigationService
+	                                           and every *.xaml: they need handlers, native controls, permissions or a Shell.
+	                                           Check those on a device, e.g. with DevFlow. -->
+	<ItemGroup>
+		<Compile Include="..\OvertonesPlayground\Models\**\*.cs" Link="Linked\Models\%(RecursiveDir)%(Filename)%(Extension)" />
+		<Compile Include="..\OvertonesPlayground\Services\Interfaces\**\*.cs" Link="Linked\Services\Interfaces\%(RecursiveDir)%(Filename)%(Extension)" />
+		<Compile Include="..\OvertonesPlayground\ViewModels\**\*.cs" Link="Linked\ViewModels\%(RecursiveDir)%(Filename)%(Extension)" />
+	</ItemGroup>
+
+	<!-- Service implementations, listed one by one so a new device-bound service is never linked by accident. -->
+	<ItemGroup>
+		<Compile Include="..\OvertonesPlayground\Services\Implementations\AppThemeService.cs" Link="Linked\Services\AppThemeService.cs" />
+		<Compile Include="..\OvertonesPlayground\Services\Implementations\AudioEditorService.cs" Link="Linked\Services\AudioEditorService.cs" />
+		<Compile Include="..\OvertonesPlayground\Services\Implementations\AudioFormatUtility.cs" Link="Linked\Services\AudioFormatUtility.cs" />
+		<Compile Include="..\OvertonesPlayground\Services\Implementations\AudioLibraryService.cs" Link="Linked\Services\AudioLibraryService.cs" />
+		<Compile Include="..\OvertonesPlayground\Services\Implementations\AudioPlaybackService.cs" Link="Linked\Services\AudioPlaybackService.cs" />
+		<Compile Include="..\OvertonesPlayground\Services\Implementations\AudioRecorderService.cs" Link="Linked\Services\AudioRecorderService.cs" />
+		<Compile Include="..\OvertonesPlayground\Services\Implementations\BiquadFilter.cs" Link="Linked\Services\BiquadFilter.cs" />
+		<Compile Include="..\OvertonesPlayground\Services\Implementations\DerivedAudioFileWriter.cs" Link="Linked\Services\DerivedAudioFileWriter.cs" />
+		<Compile Include="..\OvertonesPlayground\Services\Implementations\DrumSynthesizer.cs" Link="Linked\Services\DrumSynthesizer.cs" />
+		<Compile Include="..\OvertonesPlayground\Services\Implementations\DynamicsProcessor.cs" Link="Linked\Services\DynamicsProcessor.cs" />
+		<Compile Include="..\OvertonesPlayground\Services\Implementations\FastFourierTransform.cs" Link="Linked\Services\FastFourierTransform.cs" />
+		<Compile Include="..\OvertonesPlayground\Services\Implementations\MixdownService.cs" Link="Linked\Services\MixdownService.cs" />
+		<Compile Include="..\OvertonesPlayground\Services\Implementations\PcmMath.cs" Link="Linked\Services\PcmMath.cs" />
+		<Compile Include="..\OvertonesPlayground\Services\Implementations\SoundSynthesisService.cs" Link="Linked\Services\SoundSynthesisService.cs" />
+		<Compile Include="..\OvertonesPlayground\Services\Implementations\SpectralNoiseReducer.cs" Link="Linked\Services\SpectralNoiseReducer.cs" />
+		<Compile Include="..\OvertonesPlayground\Services\Implementations\TeachingTipsService.cs" Link="Linked\Services\TeachingTipsService.cs" />
+		<Compile Include="..\OvertonesPlayground\Services\Implementations\WavFile.cs" Link="Linked\Services\WavFile.cs" />
+		<Compile Include="..\OvertonesPlayground\Services\Implementations\WaveformGenerator.cs" Link="Linked\Services\WaveformGenerator.cs" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Content Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
+	</ItemGroup>
+
+	<!-- The same global usings the app declares, so the linked sources compile unchanged. -->
+	<ItemGroup>
+		<Using Include="CommunityToolkit.Mvvm" />
+		<Using Include="Microsoft.Extensions.Logging" />
+		<Using Include="Microsoft.Extensions.Logging.Abstractions" />
+
+		<!-- Test-only conveniences. -->
+		<Using Include="NSubstitute" />
+		<Using Include="OvertonesPlayground.Models" />
+		<Using Include="OvertonesPlayground.Services.Interfaces" />
+		<Using Include="OvertonesPlayground.Tests.TestSupport" />
+		<Using Include="OvertonesPlayground.ViewModels" />
+		<Using Include="Xunit" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+		<PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.12" />
+		<PackageReference Include="Microsoft.Maui.Controls" Version="10.0.101" />
+		<PackageReference Include="NSubstitute" Version="6.2.0" />
+		<PackageReference Include="Plugin.Maui.Audio" Version="4.0.0" />
+		<PackageReference Include="xunit.v3.mtp-v2" Version="4.0.1" />
+	</ItemGroup>
+
+</Project>

@@ -10,11 +10,26 @@ public class SoundSynthesisService : ISoundSynthesisService
     private const int SampleRate = 44_100;
     #endregion
 
+    #region Fields
+    private readonly IFileSystem _fileSystem;
+    #endregion
+
+    #region Constructors
+    ///<summary>
+    ///Creates the synthesis service.
+    ///</summary>
+    ///<param name="fileSystem">Locates the app-private folder that every generated preview WAV file is written to.</param>
+    public SoundSynthesisService(IFileSystem fileSystem)
+    {
+        _fileSystem = fileSystem;
+    }
+    #endregion
+
     #region Private methods
     ///<summary>
     ///Writes raw PCM samples out as a mono 16-bit WAV file and wraps the result in an unsaved <see cref="AudioClip"/>.
     ///</summary>
-    private static async Task<AudioClip> WriteAsync(short[] samples, int sampleRate, string prefix, string name)
+    private async Task<AudioClip> WriteAsync(short[] samples, int sampleRate, string prefix, string name)
     {
         WavFile wav = new() { Channels = 1, SampleRate = sampleRate, BitsPerSample = 16, Samples = samples, };
 
@@ -30,11 +45,11 @@ public class SoundSynthesisService : ISoundSynthesisService
     ///<summary>
     ///App-private folder where every generated preview WAV file is written.
     ///</summary>
-    private static string SynthDirectory
+    private string SynthDirectory
     {
         get
         {
-            string dir = Path.Combine(FileSystem.AppDataDirectory, "Synth");
+            string dir = Path.Combine(_fileSystem.AppDataDirectory, "Synth");
             Directory.CreateDirectory(dir);
             return dir;
         }

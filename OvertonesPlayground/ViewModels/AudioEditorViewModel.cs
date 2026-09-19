@@ -15,15 +15,17 @@ public partial class AudioEditorViewModel : BaseViewModel
     #region Fields
     private readonly IAudioEditorService _editorService;
     private readonly IAudioLibraryService _libraryService;
+    private readonly INavigationService _navigation;
     private readonly IAudioPlaybackService _playbackService;
     #endregion
 
     #region Constructors
-    public AudioEditorViewModel(IAudioEditorService editorService, IAudioLibraryService libraryService, IAudioPlaybackService playbackService, ILogger<AudioEditorViewModel> logger) : base(logger)
+    public AudioEditorViewModel(IAudioEditorService editorService, IAudioLibraryService libraryService, IAudioPlaybackService playbackService, INavigationService navigation, ILogger<AudioEditorViewModel> logger) : base(logger)
     {
         _editorService = editorService;
         _libraryService = libraryService;
         _playbackService = playbackService;
+        _navigation = navigation;
         Title = "Sound Editor";
     }
     #endregion
@@ -136,7 +138,7 @@ public partial class AudioEditorViewModel : BaseViewModel
         }
 
         Log_OpeningTrimEditor(LoadedClip.Name);
-        await Shell.Current.GoToAsync($"trim?clipId={LoadedClip.Id}");
+        await _navigation.GoToAsync($"trim?clipId={LoadedClip.Id}");
     }
 
     [RelayCommand]

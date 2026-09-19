@@ -16,7 +16,7 @@ public partial class LaunchpadViewModel
 
     #region Fields
     private readonly List<string> _undo = [];
-    private static string LayoutFilePath => Path.Combine(FileSystem.AppDataDirectory, LayoutFileName);
+    private string LayoutFilePath => Path.Combine(_fileSystem.AppDataDirectory, LayoutFileName);
     #endregion
 
     #region Private methods
@@ -131,9 +131,9 @@ public partial class LaunchpadViewModel
     ///<summary>
     ///Where the named project is kept.
     ///</summary>
-    private static string ProjectPath(string name)
+    private string ProjectPath(string name)
     {
-        string directory = Path.Combine(FileSystem.AppDataDirectory, ProjectsFolderName);
+        string directory = Path.Combine(_fileSystem.AppDataDirectory, ProjectsFolderName);
         _ = Directory.CreateDirectory(directory);
         string safe = string.Concat(name.Trim().Select(c => Path.GetInvalidFileNameChars().Contains(c) ? '_' : c));
         return Path.Combine(directory, $"{safe}.json");
@@ -142,7 +142,7 @@ public partial class LaunchpadViewModel
     ///<summary>
     ///The names of the saved projects.
     ///</summary>
-    private static List<string> ProjectNames()
+    private List<string> ProjectNames()
     {
         string directory = Path.GetDirectoryName(ProjectPath("x"))!;
         return [.. Directory.EnumerateFiles(directory, "*.json").Select(path => Path.GetFileNameWithoutExtension(path)).Order(StringComparer.OrdinalIgnoreCase)];

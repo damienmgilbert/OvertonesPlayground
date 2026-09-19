@@ -1,7 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using OvertonesPlayground.Services.Interfaces;
-// Clipboard/Share (Microsoft.Maui.ApplicationModel.DataTransfer) are already in scope via MAUI's implicit global usings.
+// IClipboard/IShare (Microsoft.Maui.ApplicationModel.DataTransfer) are already in scope via MAUI's implicit global usings.
 
 namespace OvertonesPlayground.ViewModels;
 
@@ -13,7 +13,9 @@ namespace OvertonesPlayground.ViewModels;
 public partial class SpeechToTextViewModel : BaseViewModel, IDisposable
 {
     #region Fields
+    private readonly IClipboard _clipboard;
     private readonly IPermissionsService _permissionsService;
+    private readonly IShare _share;
     private readonly ISpeechToTextService _speechToTextService;
     #endregion
 
@@ -21,10 +23,12 @@ public partial class SpeechToTextViewModel : BaseViewModel, IDisposable
     ///<summary>
     ///Creates the view model and subscribes to the speech-to-text service's results for the lifetime of the app.
     ///</summary>
-    public SpeechToTextViewModel(ISpeechToTextService speechToTextService, IPermissionsService permissionsService, ILogger<SpeechToTextViewModel> logger) : base(logger)
+    public SpeechToTextViewModel(ISpeechToTextService speechToTextService, IPermissionsService permissionsService, IClipboard clipboard, IShare share, ILogger<SpeechToTextViewModel> logger) : base(logger)
     {
         _speechToTextService = speechToTextService;
         _permissionsService = permissionsService;
+        _clipboard = clipboard;
+        _share = share;
         Title = "Speech to Text";
 
         _speechToTextService.PartialResultReceived += OnPartialResultReceived;
@@ -45,7 +49,7 @@ public partial class SpeechToTextViewModel : BaseViewModel, IDisposable
             return;
         }
 
-        await Clipboard.Default.SetTextAsync(Transcript);
+        await _clipboard.SetTextAsync(Transcript);
         StatusMessage = "Copied to clipboard.";
     }
 
@@ -85,7 +89,7 @@ public partial class SpeechToTextViewModel : BaseViewModel, IDisposable
             return;
         }
 
-        await Share.Default.RequestAsync(new ShareTextRequest { Text = Transcript, Title = "Share transcript", });
+        await _share.RequestAsync(new ShareTextRequest { Text = Transcript, Title = "Share transcript", });
     }
 
     ///<summary>

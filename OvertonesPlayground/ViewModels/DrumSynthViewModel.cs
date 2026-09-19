@@ -121,6 +121,10 @@ public partial class DrumSynthViewModel : BaseViewModel
     {
         Log_SelectedDrumType(drum);
         SelectedDrumParams = new DrumSynthParametersViewModel(drum);
+
+        // Forget the clip too, not just the Save button: Save has no CanExecute of its own, so it would otherwise still save the
+        // previous drum's preview.
+        _pendingClip = null;
         CanSave = false;
         WaveformPeaks = [];
     }

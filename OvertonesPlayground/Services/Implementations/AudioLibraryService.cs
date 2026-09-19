@@ -38,6 +38,8 @@ public class AudioLibraryService : IAudioLibraryService
     private static readonly string[] value = ["audio/*"];
     private readonly IAudioManager _audioManager;
     private List<AudioClip>? _cache;
+    private readonly IFilePicker _filePicker;
+    private readonly IFileSystem _fileSystem;
     private readonly IAudioFormatConverterService _formatConverterService;
     private readonly SemaphoreSlim _lock = new(1, 1);
     private readonly IPublicStorageService _publicStorageService;
@@ -51,11 +53,16 @@ public class AudioLibraryService : IAudioLibraryService
     ///<param fileName="formatConverterService">Used to decode a picked non-WAV file (e.g. MP3) before it's added, so
     ///the app's WAV-only pipeline can read it.</param>
     ///<param fileName="publicStorageService">Used to export user-created clips into the shared Music folder.</param>
-    public AudioLibraryService(IAudioManager audioManager, IAudioFormatConverterService formatConverterService, IPublicStorageService publicStorageService)
+    ///<param fileName="fileSystem">Locates the app-private folders the catalog and imported files live in, and the cache
+    ///folder the picker copies chosen files into.</param>
+    ///<param fileName="filePicker">Shows the system file picker when the user imports a clip.</param>
+    public AudioLibraryService(IAudioManager audioManager, IAudioFormatConverterService formatConverterService, IPublicStorageService publicStorageService, IFileSystem fileSystem, IFilePicker filePicker)
     {
         _audioManager = audioManager;
         _formatConverterService = formatConverterService;
         _publicStorageService = publicStorageService;
+        _fileSystem = fileSystem;
+        _filePicker = filePicker;
     }
     #endregion
 
@@ -64,7 +71,7 @@ public class AudioLibraryService : IAudioLibraryService
     ///Brings a picked file to <paramref name="destination"/>, reporting the fraction copied (0 to 1) to
     ///<paramref name="report"/>. Where possible it moves the copy the picker already made instead of copying it again.
     ///</summary>
-    private static async Task CopyPickedFileAsync(FileResult result, string destination, Action<double> report)
+    private async Task CopyPickedFileAsync(FileResult result, string destination, Action<double> report)
     {
         if (TryMovePickerCopy(result, destination))
         {
@@ -192,7 +199,7 @@ public class AudioLibraryService : IAudioLibraryService
     ///file) and returns true. A file anywhere else may be the user's own, so it is never moved; returns false and leaves
     ///it alone.
     ///</summary>
-    private static bool TryMovePickerCopy(FileResult result, string destination)
+    private bool TryMovePickerCopy(FileResult result, string destination)
     {
         string? pickedPath = result.FullPath;
         bool isMissing = string.IsNullOrEmpty(pickedPath) || !File.Exists(pickedPath);
@@ -205,7 +212,7 @@ public class AudioLibraryService : IAudioLibraryService
         {
             // The picker and FileSystem.CacheDirectory can name the same folder differently (/data/data/... and
             // /data/user/0/...), so compare the folders once their links are followed.
-            string cacheFolder = ResolveFolderLinks(FileSystem.CacheDirectory) + Path.DirectorySeparatorChar;
+            string cacheFolder = ResolveFolderLinks(_fileSystem.CacheDirectory) + Path.DirectorySeparatorChar;
             bool isPickerCopy = ResolveFolderLinks(pickedPath).StartsWith(cacheFolder, StringComparison.Ordinal);
             if (!isPickerCopy)
             {
@@ -249,11 +256,11 @@ public class AudioLibraryService : IAudioLibraryService
     ///<summary>
     ///App-private folder where imported and picked audio files are copied.
     ///</summary>
-    private static string ClipsDirectory
+    private string ClipsDirectory
     {
         get
         {
-            string dir = Path.Combine(FileSystem.AppDataDirectory, "Clips");
+            string dir = Path.Combine(_fileSystem.AppDataDirectory, "Clips");
             Directory.CreateDirectory(dir);
             return dir;
         }
@@ -262,7 +269,7 @@ public class AudioLibraryService : IAudioLibraryService
     ///<summary>
     ///Path to the JSON file backing the persisted library catalog.
     ///</summary>
-    private static string LibraryFilePath => Path.Combine(FileSystem.AppDataDirectory, LibraryFileName);
+    private string LibraryFilePath => Path.Combine(_fileSystem.AppDataDirectory, LibraryFileName);
     #endregion
 
     #region Public methods
@@ -329,7 +336,7 @@ public class AudioLibraryService : IAudioLibraryService
         FilePickerFileType audioFileType = new(fileTypes);
 
         PickOptions options = new() { PickerTitle = "Choose an audio file", FileTypes = audioFileType, };
-        FileResult? result = await FilePicker.Default.PickAsync(options);
+        FileResult? result = await _filePicker.PickAsync(options);
 
         if (result is null)
         {

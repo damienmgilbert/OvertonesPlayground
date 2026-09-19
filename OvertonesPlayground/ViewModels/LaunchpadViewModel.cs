@@ -46,9 +46,11 @@ public partial class LaunchpadViewModel : BaseViewModel
 
     private readonly LaunchpadPad[][] _banks;
     private readonly Stopwatch _clock = Stopwatch.StartNew();
+    private readonly IFileSystem _fileSystem;
     private readonly IAudioLibraryService _libraryService;
     private readonly IMixdownService _mixdownService;
     private readonly IAudioPlaybackService _playbackService;
+    private readonly IPreferences _preferences;
     private readonly Random _random = new();
     private readonly ISoundSynthesisService _synthesisService;
     private LaunchpadPadViewModel? _flashedPad;
@@ -60,15 +62,17 @@ public partial class LaunchpadViewModel : BaseViewModel
     ///Creates the view model, fills the grid with <see cref="Rows"/> x <see cref="Columns"/> empty pads, builds the ring of
     ///buttons and restores the layout the app last saved.
     ///</summary>
-    public LaunchpadViewModel(IAudioPlaybackService playbackService, IAudioLibraryService libraryService, ISoundSynthesisService synthesisService, IMixdownService mixdownService, ILogger<LaunchpadViewModel> logger) : base(logger)
+    public LaunchpadViewModel(IAudioPlaybackService playbackService, IAudioLibraryService libraryService, ISoundSynthesisService synthesisService, IMixdownService mixdownService, IPreferences preferences, IFileSystem fileSystem, ILogger<LaunchpadViewModel> logger) : base(logger)
     {
         ConstructorLog(Rows, Columns);
         _playbackService = playbackService;
         _libraryService = libraryService;
         _synthesisService = synthesisService;
         _mixdownService = mixdownService;
+        _preferences = preferences;
+        _fileSystem = fileSystem;
         Title = "Launchpad";
-        IsTextPanelVisible = Preferences.Default.Get(TextPanelVisibleKey, true);
+        IsTextPanelVisible = _preferences.Get(TextPanelVisibleKey, true);
 
         _banks = [.. Enumerable.Range(0, LaunchpadProject.BankCount).Select(bank => Enumerable.Range(0, LaunchpadProject.PadsPerBank).Select(index => new LaunchpadPad { Bank = bank, Index = index }).ToArray())];
         foreach (LaunchpadPad pad in _banks[0])
@@ -103,7 +107,7 @@ public partial class LaunchpadViewModel : BaseViewModel
     partial void OnIsTextPanelVisibleChanged(bool value)
     {
         Log_TextPanelChanged(value);
-        Preferences.Default.Set(TextPanelVisibleKey, value);
+        _preferences.Set(TextPanelVisibleKey, value);
         OnPropertyChanged(nameof(TextPanelGlyph));
         OnPropertyChanged(nameof(TextPanelText));
     }
