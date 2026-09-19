@@ -118,6 +118,15 @@ public partial class SoundCreatorViewModel : BaseViewModel
     }
     #endregion
 
+    #region Public methods
+    ///<summary>
+    ///Stops a recording that is still running and saves it to the library. Called when the page goes away or the app is
+    ///stopped: nothing is left recording in the background (Android stops delivering microphone audio to a background app,
+    ///so the rest of the take would be silence), and the take so far is kept instead of lost.
+    ///</summary>
+    public Task FinishRecordingAsync() => StopRecordingAsync();
+    #endregion
+
     #region Public properties
     ///<summary>
     ///Human readable elapsed time for the current recording.

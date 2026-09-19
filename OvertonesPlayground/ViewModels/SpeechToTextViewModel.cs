@@ -129,6 +129,18 @@ public partial class SpeechToTextViewModel : BaseViewModel, IDisposable
 
     #region Public methods
     ///<summary>
+    ///Stops a live session, if one is running. Called when the app is stopped: Android does not deliver microphone audio to
+    ///a background app, so the session could only sit "listening" to silence until it timed out.
+    ///</summary>
+    public void StopListeningIfActive()
+    {
+        if (IsListening)
+        {
+            StopListening();
+        }
+    }
+
+    ///<summary>
     ///Unsubscribes from the speech-to-text service.
     ///</summary>
     public void Dispose()

@@ -9,6 +9,7 @@ public partial class SoundCreatorPage : ContentPage
 {
     #region Fields
     private readonly ILogger<SoundCreatorPage> _logger;
+    private Window? _window;
     #endregion
 
     #region Constructors
@@ -24,6 +25,14 @@ public partial class SoundCreatorPage : ContentPage
     #endregion
 
     #region Private methods
+    private async void OnWindowStopped(object? sender, EventArgs e)
+    {
+        if (BindingContext is SoundCreatorViewModel viewModel)
+        {
+            await viewModel.FinishRecordingAsync().ConfigureAwait(true);
+        }
+    }
+
     [LoggerMessage(Level = LogLevel.Debug, Message = "Page appeared.")]
     private partial void Log_PageAppeared();
 
@@ -36,12 +45,25 @@ public partial class SoundCreatorPage : ContentPage
     {
         base.OnAppearing();
         Log_PageAppeared();
+
+        // The app can also be stopped while this page is showing (Home button, another app): save the take then too.
+        _window = Window;
+        _window?.Stopped += OnWindowStopped;
     }
 
     protected override void OnDisappearing()
     {
         base.OnDisappearing();
         Log_PageDisappeared();
+
+        _window?.Stopped -= OnWindowStopped;
+        _window = null;
+
+        // Leaving the page mid-recording would otherwise leave the recorder running with nothing on screen to stop it.
+        if (BindingContext is SoundCreatorViewModel viewModel)
+        {
+            _ = viewModel.FinishRecordingAsync();
+        }
     }
     #endregion
 }

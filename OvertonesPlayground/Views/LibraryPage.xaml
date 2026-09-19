@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:OvertonesPlayground.Controls"
              xmlns:vm="clr-namespace:OvertonesPlayground.ViewModels"
              xmlns:models="clr-namespace:OvertonesPlayground.Models"
              x:Class="OvertonesPlayground.Views.LibraryPage" AutomationId="library-page"
@@ -8,15 +9,15 @@
              Title="{Binding Title}">
 
     <ContentPage.ToolbarItems>
-        <ToolbarItem AutomationId="library-import" Text="⬆ Import" Command="{Binding ImportCommand}" />
+        <ToolbarItem AutomationId="library-import" Text="Import" controls:Icon.Glyph="{x:Static models:IconFont.Upload}" controls:Icon.Size="24" Command="{Binding ImportCommand}" />
     </ContentPage.ToolbarItems>
 
     <Grid RowDefinitions="Auto,*">
 
         <HorizontalStackLayout Grid.Row="0" Spacing="8" Padding="16,10">
-            <Button AutomationId="library-view-list" Text="☰ List" Padding="12,6" Command="{Binding SetViewModeCommand}" CommandParameter="{x:Static models:LibraryViewMode.List}" />
-            <Button AutomationId="library-view-detail" Text="▤ Detail" Padding="12,6" Command="{Binding SetViewModeCommand}" CommandParameter="{x:Static models:LibraryViewMode.Detail}" />
-            <Button AutomationId="library-view-tile" Text="▦ Tile" Padding="12,6" Command="{Binding SetViewModeCommand}" CommandParameter="{x:Static models:LibraryViewMode.Tile}" />
+            <Button AutomationId="library-view-list" Text="List" controls:Icon.Glyph="{x:Static models:IconFont.View_list}" Padding="12,6" Command="{Binding SetViewModeCommand}" CommandParameter="{x:Static models:LibraryViewMode.List}" />
+            <Button AutomationId="library-view-detail" Text="Detail" controls:Icon.Glyph="{x:Static models:IconFont.Table_rows}" Padding="12,6" Command="{Binding SetViewModeCommand}" CommandParameter="{x:Static models:LibraryViewMode.Detail}" />
+            <Button AutomationId="library-view-tile" Text="Tile" controls:Icon.Glyph="{x:Static models:IconFont.Grid_view}" Padding="12,6" Command="{Binding SetViewModeCommand}" CommandParameter="{x:Static models:LibraryViewMode.Tile}" />
         </HorizontalStackLayout>
 
         <RefreshView AutomationId="library-refresh" Grid.Row="1" IsRefreshing="{Binding IsBusy}" Command="{Binding LoadCommand}">
@@ -39,14 +40,14 @@
                                     <Label Style="{StaticResource BodyStrongTextBlockStyle}" Text="{Binding Name}" LineBreakMode="TailTruncation" />
                                     <Label Style="{StaticResource CaptionTextBlockStyle}" Text="{Binding Duration, StringFormat='{0:mm\\:ss}'}" TextColor="{DynamicResource TextFillColorSecondary}" />
                                 </VerticalStackLayout>
-                                <Button AutomationId="{Binding Id, StringFormat='library-list-clip-{0}-play'}" Grid.Column="1" Text="▶" Padding="10,6"
+                                <Button AutomationId="{Binding Id, StringFormat='library-list-clip-{0}-play'}" Grid.Column="1" controls:Icon.Glyph="{x:Static models:IconFont.Play_arrow}" controls:Icon.Size="22" SemanticProperties.Description="{Binding Name, StringFormat='Play {0}'}" Padding="10,6"
                                         Command="{Binding Source={RelativeSource AncestorType={x:Type vm:LibraryViewModel}}, Path=PlayCommand}"
                                         CommandParameter="{Binding .}" />
-                                <Button AutomationId="{Binding Id, StringFormat='library-list-clip-{0}-edit'}" Grid.Column="2" Text="✎" Padding="10,6"
+                                <Button AutomationId="{Binding Id, StringFormat='library-list-clip-{0}-edit'}" Grid.Column="2" controls:Icon.Glyph="{x:Static models:IconFont.Edit}" controls:Icon.Size="22" SemanticProperties.Description="{Binding Name, StringFormat='Edit {0}'}" Padding="10,6"
                                         Command="{Binding Source={RelativeSource AncestorType={x:Type vm:LibraryViewModel}}, Path=EditCommand}"
                                         CommandParameter="{Binding .}" />
-                                <Button AutomationId="{Binding Id, StringFormat='library-list-clip-{0}-export'}" Grid.Column="3" Text="⇩" Padding="10,6" Clicked="OnExportClicked" />
-                                <Button AutomationId="{Binding Id, StringFormat='library-list-clip-{0}-delete'}" Grid.Column="4" Text="🗑" Padding="10,6" TextColor="{DynamicResource SystemFillColorCritical}"
+                                <Button AutomationId="{Binding Id, StringFormat='library-list-clip-{0}-export'}" Grid.Column="3" controls:Icon.Glyph="{x:Static models:IconFont.Download}" controls:Icon.Size="22" SemanticProperties.Description="{Binding Name, StringFormat='Export {0}'}" Padding="10,6" Clicked="OnExportClicked" />
+                                <Button AutomationId="{Binding Id, StringFormat='library-list-clip-{0}-delete'}" Grid.Column="4" controls:Icon.Glyph="{x:Static models:IconFont.Delete}" controls:Icon.Size="22" SemanticProperties.Description="{Binding Name, StringFormat='Delete {0}'}" Padding="10,6" TextColor="{DynamicResource SystemFillColorCritical}"
                                         Command="{Binding Source={RelativeSource AncestorType={x:Type vm:LibraryViewModel}}, Path=DeleteCommand}"
                                         CommandParameter="{Binding .}" />
                             </Grid>
@@ -77,18 +78,18 @@
                                            IsVisible="{Binding PublicStorageLocation, Converter={StaticResource StringToBool}}"
                                            LineBreakMode="TailTruncation" />
                                     <HorizontalStackLayout Grid.Row="3" Spacing="10">
-                                        <Button AutomationId="{Binding Id, StringFormat='library-detail-clip-{0}-play'}" Text="▶ Play"
+                                        <Button AutomationId="{Binding Id, StringFormat='library-detail-clip-{0}-play'}" Text="Play" controls:Icon.Glyph="{x:Static models:IconFont.Play_arrow}"
                                                 Padding="14,6"
                                                 Command="{Binding Source={RelativeSource AncestorType={x:Type vm:LibraryViewModel}}, Path=PlayCommand}"
                                                 CommandParameter="{Binding .}" />
-                                        <Button AutomationId="{Binding Id, StringFormat='library-detail-clip-{0}-edit'}" Text="✎ Edit"
+                                        <Button AutomationId="{Binding Id, StringFormat='library-detail-clip-{0}-edit'}" Text="Edit" controls:Icon.Glyph="{x:Static models:IconFont.Edit}"
                                                 Padding="14,6"
                                                 Command="{Binding Source={RelativeSource AncestorType={x:Type vm:LibraryViewModel}}, Path=EditCommand}"
                                                 CommandParameter="{Binding .}" />
-                                        <Button AutomationId="{Binding Id, StringFormat='library-detail-clip-{0}-export'}" Text="⇩ Export"
+                                        <Button AutomationId="{Binding Id, StringFormat='library-detail-clip-{0}-export'}" Text="Export" controls:Icon.Glyph="{x:Static models:IconFont.Download}"
                                                 Padding="14,6"
                                                 Clicked="OnExportClicked" />
-                                        <Button AutomationId="{Binding Id, StringFormat='library-detail-clip-{0}-delete'}" Text="🗑 Delete"
+                                        <Button AutomationId="{Binding Id, StringFormat='library-detail-clip-{0}-delete'}" Text="Delete" controls:Icon.Glyph="{x:Static models:IconFont.Delete}"
                                                 Padding="14,6"
                                                 TextColor="{DynamicResource SystemFillColorCritical}"
                                                 Command="{Binding Source={RelativeSource AncestorType={x:Type vm:LibraryViewModel}}, Path=DeleteCommand}"
@@ -125,7 +126,7 @@
                                             Command="{Binding Source={RelativeSource AncestorType={x:Type vm:LibraryViewModel}}, Path=EditCommand}"
                                             CommandParameter="{Binding .}" />
                                     </Grid.GestureRecognizers>
-                                    <Label Grid.Row="0" Text="🎵" FontSize="28" HorizontalOptions="Center" VerticalOptions="Center" />
+                                    <Label Grid.Row="0" Style="{StaticResource IconTextBlockStyle}" Text="{x:Static models:IconFont.Music_note}" FontSize="28" HorizontalOptions="Center" VerticalOptions="Center" />
                                     <Label Style="{StaticResource CaptionTextBlockStyle}" Grid.Row="1" Text="{Binding Name}" HorizontalTextAlignment="Center"
                                            LineBreakMode="TailTruncation" MaxLines="2" />
                                 </Grid>

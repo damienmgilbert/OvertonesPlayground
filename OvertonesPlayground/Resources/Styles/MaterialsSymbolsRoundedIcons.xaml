@@ -1,6 +1,23 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
-<ResourceDictionary xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="OvertonesPlayground.Resources.Styles.MaterialsSymbolsRoundedIcons">
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Styles for the Material Symbols Rounded icon font (registered as "MaterialSymbols" in MauiProgram). The glyphs themselves
+     are the constants in Models/MaterialSymbolsRoundedIcons.cs (IconFont). Buttons and toolbar items get an icon through the
+     controls:Icon.Glyph attached property, headings through controls:IconLabel, and a free-standing icon is a Label with this
+     style. Colors come from the Fluent tokens with {DynamicResource}, so an icon follows the light/dark theme like text does. -->
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:controls="clr-namespace:OvertonesPlayground.Controls">
+
+    <!-- A free-standing icon: <Label Style="{StaticResource IconTextBlockStyle}" Text="{x:Static models:IconFont.Music_note}" />.
+         Set FontSize for other sizes. Icons decorate the text next to them, so the screen reader skips them. -->
+    <Style x:Key="IconTextBlockStyle" TargetType="Label">
+        <Setter Property="FontFamily" Value="{x:Static controls:Icon.FontFamily}" />
+        <Setter Property="FontSize" Value="24" />
+        <Setter Property="TextColor" Value="{DynamicResource TextFillColorPrimary}" />
+        <Setter Property="BackgroundColor" Value="Transparent" />
+        <Setter Property="HorizontalTextAlignment" Value="Center" />
+        <Setter Property="VerticalTextAlignment" Value="Center" />
+        <Setter Property="AutomationProperties.IsInAccessibleTree" Value="False" />
+    </Style>
 
 </ResourceDictionary>

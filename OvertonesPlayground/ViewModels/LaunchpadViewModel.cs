@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using OvertonesPlayground.Models;
@@ -23,11 +24,14 @@ public partial class LaunchpadViewModel : BaseViewModel
     ///</summary>
     public const int Rows = 8;
 
+    private const string LayoutFileName = "launchpad.json";
     private const string EditHint = "Edit mode: tap a pad to assign a sample, turn looping on or off, stop it, or clear it";
     private const string PlayHint = "Tap a pad to trigger it \u2022 Double-tap to assign a sample \u2022 Triple-tap to toggle looping \u2022 Long-press for more";
     #endregion
 
     #region Fields
+    private static string LayoutFilePath => Path.Combine(FileSystem.AppDataDirectory, LayoutFileName);
+
     ///<summary>
     ///Colors assigned round-robin to pads as they're given a sample.
     ///</summary>
@@ -51,6 +55,8 @@ public partial class LaunchpadViewModel : BaseViewModel
         {
             Pads.Add(new LaunchpadPadViewModel(new LaunchpadPad { Index = i }));
         }
+
+        RestoreLayout();
     }
     #endregion
 
@@ -59,6 +65,7 @@ public partial class LaunchpadViewModel : BaseViewModel
     {
         Log_EditModeChanged(value);
         OnPropertyChanged(nameof(EditModeText));
+        OnPropertyChanged(nameof(EditModeGlyph));
         OnPropertyChanged(nameof(HintText));
     }
 
@@ -84,6 +91,7 @@ public partial class LaunchpadViewModel : BaseViewModel
             string color = PadPalette[pad.Index % PadPalette.Length];
             Log_AssignedClip(clip.Name, pad.Index);
             pad.Assign(clip.FilePath, clip.Name, color);
+            SaveLayout();
         }
         catch (Exception ex)
         {
@@ -106,7 +114,73 @@ public partial class LaunchpadViewModel : BaseViewModel
         StopPad(pad);
         Log_PadCleared(pad.Index);
         pad.Clear();
+        SaveLayout();
     }
+
+    ///<summary>
+    ///Puts back the pads that had a sample when the app last ran. A pad whose sample file has since been deleted stays empty.
+    ///The layout is saved after every change, so it is already on disk whenever Android stops or reclaims the app.
+    ///</summary>
+    private void RestoreLayout()
+    {
+        try
+        {
+            if (!File.Exists(LayoutFilePath))
+            {
+                return;
+            }
+
+            List<LaunchpadPad> saved = JsonSerializer.Deserialize<List<LaunchpadPad>>(File.ReadAllText(LayoutFilePath)) ?? [];
+            int restored = 0;
+            foreach (LaunchpadPad pad in saved)
+            {
+                if (pad.Index < 0 || pad.Index >= Pads.Count || !pad.HasClip || !File.Exists(pad.ClipPath))
+                {
+                    continue;
+                }
+
+                LaunchpadPadViewModel target = Pads[pad.Index];
+                target.Assign(pad.ClipPath, pad.Label, pad.ColorHex);
+                target.Pad.Volume = pad.Volume;
+                if (pad.IsLooping)
+                {
+                    target.ToggleLoop();
+                }
+
+                restored++;
+            }
+
+            Log_LayoutRestored(restored);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
+        {
+            Log_LayoutRestoreFailed(ex);
+        }
+    }
+
+    ///<summary>
+    ///Writes the assigned pads to app storage.
+    ///</summary>
+    private void SaveLayout()
+    {
+        try
+        {
+            File.WriteAllText(LayoutFilePath, JsonSerializer.Serialize(Pads.Where(p => p.HasClip).Select(p => p.Pad).ToList()));
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            Log_LayoutSaveFailed(ex);
+        }
+    }
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Restored {PadCount} launchpad pads.")]
+    private partial void Log_LayoutRestored(int padCount);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Couldn't restore the launchpad layout.")]
+    private partial void Log_LayoutRestoreFailed(Exception exception);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Couldn't save the launchpad layout.")]
+    private partial void Log_LayoutSaveFailed(Exception exception);
 
     [LoggerMessage(Level = LogLevel.Debug, Message = "Creating LaunchpadViewModel with {Rows} rows and {Columns} columns.")]
     partial void ConstructorLog(int Rows, int Columns);
@@ -222,6 +296,7 @@ public partial class LaunchpadViewModel : BaseViewModel
 
         Log_PadLoopToggled(pad.Index);
         pad.ToggleLoop();
+        SaveLayout();
     }
 
     ///<summary>
@@ -256,9 +331,15 @@ public partial class LaunchpadViewModel : BaseViewModel
 
     #region Public properties
     ///<summary>
-    ///Label of the toolbar button that toggles edit mode.
+    ///Icon of the toolbar button that toggles edit mode: a check mark while editing, a pencil otherwise.
     ///</summary>
-    public string EditModeText => IsEditMode ? "\u2713 Done" : "\u270E Edit";
+    public string EditModeGlyph => IsEditMode ? IconFont.Check : IconFont.Edit;
+
+    ///<summary>
+    ///Name of the toolbar button that toggles edit mode. The button shows only its icon, so this is what a screen reader
+    ///announces.
+    ///</summary>
+    public string EditModeText => IsEditMode ? "Done" : "Edit";
 
     ///<summary>
     ///Hint line above the grid, describing the gestures for the current mode.

@@ -11,7 +11,7 @@
     <ScrollView>
         <VerticalStackLayout Padding="24" Spacing="18">
 
-            <Label Style="{StaticResource SubtitleTextBlockStyle}" Text="🎼 Synth Tone" />
+            <controls:IconLabel Style="{StaticResource SubtitleTextBlockStyle}" Caption="Synth Tone" Glyph="{x:Static models:IconFont.Piano}" />
             <Label Style="{StaticResource CaptionTextBlockStyle}" Text="Tune it, Generate &amp; Play to preview, then Save to keep it in your library (and your device's Music folder)."
                    TextColor="{DynamicResource TextFillColorSecondary}" />
 
@@ -41,8 +41,8 @@
             <controls:LabeledSlider AutomationId="tonegenerator-level" LabelText="Level" Minimum="0" Maximum="1" Digits="2" Value="{Binding Amplitude}" />
 
             <HorizontalStackLayout Spacing="12">
-                <Button AutomationId="tonegenerator-generate" Style="{StaticResource AccentButtonStyle}" Text="▶ Generate &amp; Play" Command="{Binding GenerateCommand}" />
-                <Button AutomationId="tonegenerator-save" Style="{StaticResource AccentButtonStyle}" Text="💾 Save" Command="{Binding SaveCommand}" IsEnabled="{Binding CanSave}" />
+                <Button AutomationId="tonegenerator-generate" Style="{StaticResource AccentButtonStyle}" Text="Generate &amp; Play" controls:Icon.Glyph="{x:Static models:IconFont.Play_arrow}" Command="{Binding GenerateCommand}" />
+                <Button AutomationId="tonegenerator-save" Style="{StaticResource AccentButtonStyle}" Text="Save" controls:Icon.Glyph="{x:Static models:IconFont.Save}" Command="{Binding SaveCommand}" IsEnabled="{Binding CanSave}" />
             </HorizontalStackLayout>
 
             <GraphicsView SemanticProperties.Description="Waveform preview of the generated tone" AutomationId="tonegenerator-waveform" x:Name="WaveformView" HeightRequest="120" BackgroundColor="{DynamicResource SolidBackgroundFillColorTertiary}" />

@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:models="clr-namespace:OvertonesPlayground.Models"
+             xmlns:controls="clr-namespace:OvertonesPlayground.Controls"
              xmlns:vm="clr-namespace:OvertonesPlayground.ViewModels"
              x:Class="OvertonesPlayground.Views.SpeechToTextPage" AutomationId="speechtotext-page"
              x:DataType="vm:SpeechToTextViewModel"
@@ -9,15 +11,15 @@
     <ScrollView>
         <VerticalStackLayout Padding="24" Spacing="18">
 
-            <Label Style="{StaticResource SubtitleTextBlockStyle}" Text="🎤 Speech to Text" />
+            <controls:IconLabel Style="{StaticResource SubtitleTextBlockStyle}" Caption="Speech to Text" Glyph="{x:Static models:IconFont.Speech_to_text}" />
             <Label Style="{StaticResource CaptionTextBlockStyle}" Text="Listen live through the microphone and watch the transcript build up, then Copy or Share it. There's no reliable way to transcribe an existing recording - only live listening."
                    TextColor="{DynamicResource TextFillColorSecondary}" />
 
-            <Button AutomationId="speechtotext-start" Style="{StaticResource AccentButtonStyle}" Text="🎤 Start Listening"
+            <Button AutomationId="speechtotext-start" Style="{StaticResource AccentButtonStyle}" Text="Start Listening" controls:Icon.Glyph="{x:Static models:IconFont.Mic}"
                     Command="{Binding StartListeningCommand}"
                     IsVisible="{Binding IsListening, Converter={StaticResource InvertedBool}}" />
 
-            <Button AutomationId="speechtotext-stop" Style="{StaticResource AccentButtonStyle}" Text="⏹ Stop Listening"
+            <Button AutomationId="speechtotext-stop" Style="{StaticResource AccentButtonStyle}" Text="Stop Listening" controls:Icon.Glyph="{x:Static models:IconFont.Stop}"
                     Command="{Binding StopListeningCommand}"
                     IsVisible="{Binding IsListening}" />
 
@@ -30,8 +32,8 @@
                     MinimumHeightRequest="150" />
 
             <HorizontalStackLayout Spacing="12">
-                <Button AutomationId="speechtotext-copy" Text="📋 Copy" Command="{Binding CopyCommand}" />
-                <Button AutomationId="speechtotext-share" Text="📤 Share" Command="{Binding ShareCommand}" />
+                <Button AutomationId="speechtotext-copy" Text="Copy" controls:Icon.Glyph="{x:Static models:IconFont.Content_copy}" Command="{Binding CopyCommand}" />
+                <Button AutomationId="speechtotext-share" Text="Share" controls:Icon.Glyph="{x:Static models:IconFont.Share}" Command="{Binding ShareCommand}" />
             </HorizontalStackLayout>
 
             <Label AutomationId="speechtotext-status" Text="{Binding StatusMessage}" TextColor="{DynamicResource TextFillColorSecondary}" />

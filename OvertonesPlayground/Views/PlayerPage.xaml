@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:models="clr-namespace:OvertonesPlayground.Models"
              xmlns:vm="clr-namespace:OvertonesPlayground.ViewModels"
              xmlns:controls="clr-namespace:OvertonesPlayground.Controls"
              x:Class="OvertonesPlayground.Views.PlayerPage" AutomationId="player-page" SafeAreaEdges="All"
@@ -10,7 +11,7 @@
     <Grid RowDefinitions="*,Auto">
 
         <VerticalStackLayout Grid.Row="0" VerticalOptions="Center" HorizontalOptions="Center" Spacing="16" Padding="40">
-            <Label Text="🎵" FontSize="88" HorizontalTextAlignment="Center" TextColor="{DynamicResource TextFillColorTertiary}" />
+            <Label Style="{StaticResource IconTextBlockStyle}" Text="{x:Static models:IconFont.Music_note}" FontSize="88" HorizontalTextAlignment="Center" TextColor="{DynamicResource TextFillColorTertiary}" />
             <Label Style="{StaticResource TitleTextBlockStyle}" AutomationId="player-clip-name" Text="{Binding ClipName}" HorizontalTextAlignment="Center" />
         </VerticalStackLayout>
 
@@ -29,13 +30,12 @@
                 </Grid>
 
                 <HorizontalStackLayout Spacing="20" HorizontalOptions="Center">
-                    <Button AutomationId="player-play-pause" Style="{StaticResource AccentButtonStyle}" Text="{Binding IsPlaying, Converter={StaticResource PlayPauseIcon}}"
-                            FontSize="28"
+                    <Button AutomationId="player-play-pause" Style="{StaticResource AccentButtonStyle}" controls:Icon.Glyph="{Binding IsPlaying, Converter={StaticResource PlayPauseIcon}}" controls:Icon.Size="40" SemanticProperties.Description="{Binding IsPlaying, Converter={StaticResource PlayPauseLabel}}"
                             WidthRequest="90"
                             HeightRequest="90"
                             CornerRadius="45"
                             Command="{Binding PlayPauseCommand}" />
-                    <Button AutomationId="player-stop" Text="⏹" FontSize="24" WidthRequest="70" HeightRequest="70" CornerRadius="35"
+                    <Button AutomationId="player-stop" controls:Icon.Glyph="{x:Static models:IconFont.Stop}" controls:Icon.Size="32" SemanticProperties.Description="Stop" WidthRequest="70" HeightRequest="70" CornerRadius="35"
                             VerticalOptions="Center"
                             Command="{Binding StopCommand}" />
                 </HorizontalStackLayout>

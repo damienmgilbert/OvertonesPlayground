@@ -9,9 +9,9 @@
              Title="{Binding Title}">
 
     <ContentPage.ToolbarItems>
-        <ToolbarItem AutomationId="trim-undo" Text="↶ Undo" Command="{Binding UndoCommand}" />
-        <ToolbarItem AutomationId="trim-redo" Text="↷ Redo" Command="{Binding RedoCommand}" />
-        <ToolbarItem AutomationId="trim-save" Text="💾 Save" Command="{Binding SaveCommand}" />
+        <ToolbarItem AutomationId="trim-undo" Text="Undo" controls:Icon.Glyph="{x:Static models:IconFont.Undo}" controls:Icon.Size="24" Command="{Binding UndoCommand}" />
+        <ToolbarItem AutomationId="trim-redo" Text="Redo" controls:Icon.Glyph="{x:Static models:IconFont.Redo}" controls:Icon.Size="24" Command="{Binding RedoCommand}" />
+        <ToolbarItem AutomationId="trim-save" Text="Save" controls:Icon.Glyph="{x:Static models:IconFont.Save}" controls:Icon.Size="24" Command="{Binding SaveCommand}" />
     </ContentPage.ToolbarItems>
 
     <Grid RowDefinitions="Auto,Auto,*,Auto,Auto,Auto" Padding="16,12" RowSpacing="12">
@@ -21,13 +21,13 @@
         <!-- Start/end time steppers, with the total duration centered between them. Tap a time to type an exact value. -->
         <Grid Grid.Row="1" ColumnDefinitions="*,Auto,*" ColumnSpacing="8">
             <HorizontalStackLayout Grid.Column="0" Spacing="4" HorizontalOptions="Start">
-                <Button AutomationId="trim-start-decrease" Text="−" Padding="12,6" FontAttributes="Bold" Command="{Binding DecreaseStartCommand}" />
+                <Button AutomationId="trim-start-decrease" controls:Icon.Glyph="{x:Static models:IconFont.Remove}" controls:Icon.Size="22" SemanticProperties.Description="Decrease start time" Padding="12,6" Command="{Binding DecreaseStartCommand}" />
                 <Label Style="{StaticResource BodyStrongTextBlockStyle}" SemanticProperties.Hint="Enter an exact start time" AutomationId="trim-start-time" Text="{Binding StartTimeText}" VerticalOptions="Center" MinimumWidthRequest="60" HorizontalTextAlignment="Center">
                     <Label.GestureRecognizers>
                         <TapGestureRecognizer Tapped="OnStartTimeTapped" />
                     </Label.GestureRecognizers>
                 </Label>
-                <Button AutomationId="trim-start-increase" Text="+" Padding="12,6" FontAttributes="Bold" Command="{Binding IncreaseStartCommand}" />
+                <Button AutomationId="trim-start-increase" controls:Icon.Glyph="{x:Static models:IconFont.Add}" controls:Icon.Size="22" SemanticProperties.Description="Increase start time" Padding="12,6" Command="{Binding IncreaseStartCommand}" />
             </HorizontalStackLayout>
 
             <VerticalStackLayout Grid.Column="1" HorizontalOptions="Center" VerticalOptions="Center">
@@ -36,13 +36,13 @@
             </VerticalStackLayout>
 
             <HorizontalStackLayout Grid.Column="2" Spacing="4" HorizontalOptions="End">
-                <Button AutomationId="trim-end-decrease" Text="−" Padding="12,6" FontAttributes="Bold" Command="{Binding DecreaseEndCommand}" />
+                <Button AutomationId="trim-end-decrease" controls:Icon.Glyph="{x:Static models:IconFont.Remove}" controls:Icon.Size="22" SemanticProperties.Description="Decrease end time" Padding="12,6" Command="{Binding DecreaseEndCommand}" />
                 <Label Style="{StaticResource BodyStrongTextBlockStyle}" SemanticProperties.Hint="Enter an exact end time" AutomationId="trim-end-time" Text="{Binding EndTimeText}" VerticalOptions="Center" MinimumWidthRequest="60" HorizontalTextAlignment="Center">
                     <Label.GestureRecognizers>
                         <TapGestureRecognizer Tapped="OnEndTimeTapped" />
                     </Label.GestureRecognizers>
                 </Label>
-                <Button AutomationId="trim-end-increase" Text="+" Padding="12,6" FontAttributes="Bold" Command="{Binding IncreaseEndCommand}" />
+                <Button AutomationId="trim-end-increase" controls:Icon.Glyph="{x:Static models:IconFont.Add}" controls:Icon.Size="22" SemanticProperties.Description="Increase end time" Padding="12,6" Command="{Binding IncreaseEndCommand}" />
             </HorizontalStackLayout>
         </Grid>
 
@@ -62,7 +62,7 @@
                   HorizontalOptions="Start" VerticalOptions="Center" Margin="-24,0,0,0" TranslationX="{Binding StartHandleX}">
                 <Border WidthRequest="32" HeightRequest="32" StrokeShape="RoundRectangle 16" Stroke="Transparent" BackgroundColor="{DynamicResource AccentFillColorDefault}"
                         HorizontalOptions="Center" VerticalOptions="Center" InputTransparent="True">
-                    <Label Text="&#8249;" TextColor="{DynamicResource TextOnAccentFillColorPrimary}" FontAttributes="Bold" FontSize="16" HorizontalTextAlignment="Center" VerticalTextAlignment="Center" InputTransparent="True" />
+                    <Label Style="{StaticResource IconTextBlockStyle}" Text="{x:Static models:IconFont.Chevron_left}" TextColor="{DynamicResource TextOnAccentFillColorPrimary}" FontSize="20" HorizontalTextAlignment="Center" VerticalTextAlignment="Center" InputTransparent="True" />
                 </Border>
                 <Grid.GestureRecognizers>
                     <PanGestureRecognizer PanUpdated="OnStartHandlePanUpdated" />
@@ -77,7 +77,7 @@
                   HorizontalOptions="Start" VerticalOptions="Center" Margin="-24,0,0,0" TranslationX="{Binding EndHandleX}">
                 <Border WidthRequest="32" HeightRequest="32" StrokeShape="RoundRectangle 16" Stroke="Transparent" BackgroundColor="{DynamicResource AccentFillColorDefault}"
                         HorizontalOptions="Center" VerticalOptions="Center" InputTransparent="True">
-                    <Label Text="&#8250;" TextColor="{DynamicResource TextOnAccentFillColorPrimary}" FontAttributes="Bold" FontSize="16" HorizontalTextAlignment="Center" VerticalTextAlignment="Center" InputTransparent="True" />
+                    <Label Style="{StaticResource IconTextBlockStyle}" Text="{x:Static models:IconFont.Chevron_right}" TextColor="{DynamicResource TextOnAccentFillColorPrimary}" FontSize="20" HorizontalTextAlignment="Center" VerticalTextAlignment="Center" InputTransparent="True" />
                 </Border>
                 <Grid.GestureRecognizers>
                     <PanGestureRecognizer PanUpdated="OnEndHandlePanUpdated" />
@@ -88,7 +88,7 @@
         <!-- Trim mode toggle + zoom/pan controls -->
         <Grid Grid.Row="3" ColumnDefinitions="*,Auto" ColumnSpacing="10">
             <HorizontalStackLayout Grid.Column="0" Spacing="10" HorizontalOptions="Start">
-                <Button AutomationId="trim-mode-trim" Style="{StaticResource AccentButtonStyle}" Text="✂ Trim" Command="{Binding SetModeCommand}" CommandParameter="{x:Static models:TrimMode.Trim}">
+                <Button AutomationId="trim-mode-trim" Style="{StaticResource AccentButtonStyle}" Text="Trim" controls:Icon.Glyph="{x:Static models:IconFont.Content_cut}" Command="{Binding SetModeCommand}" CommandParameter="{x:Static models:TrimMode.Trim}">
                     <Button.Triggers>
                         <DataTrigger TargetType="Button" Binding="{Binding Mode}" Value="{x:Static models:TrimMode.TrimMiddle}">
                             <Setter Property="BackgroundColor" Value="{DynamicResource ControlFillColorDefault}" />
@@ -97,7 +97,7 @@
                         </DataTrigger>
                     </Button.Triggers>
                 </Button>
-                <Button AutomationId="trim-mode-trim-middle" Style="{StaticResource AccentButtonStyle}" Text="✂ Trim Middle" Command="{Binding SetModeCommand}" CommandParameter="{x:Static models:TrimMode.TrimMiddle}">
+                <Button AutomationId="trim-mode-trim-middle" Style="{StaticResource AccentButtonStyle}" Text="Trim Middle" controls:Icon.Glyph="{x:Static models:IconFont.Content_cut}" Command="{Binding SetModeCommand}" CommandParameter="{x:Static models:TrimMode.TrimMiddle}">
                     <Button.Triggers>
                         <DataTrigger TargetType="Button" Binding="{Binding Mode}" Value="{x:Static models:TrimMode.Trim}">
                             <Setter Property="BackgroundColor" Value="{DynamicResource ControlFillColorDefault}" />
@@ -109,35 +109,35 @@
             </HorizontalStackLayout>
 
             <HorizontalStackLayout Grid.Column="1" Spacing="4" HorizontalOptions="End">
-                <Button AutomationId="trim-pan-earlier" Text="‹" Padding="10,6" FontAttributes="Bold" Command="{Binding PanEarlierCommand}" IsVisible="{Binding IsZoomed}" />
-                <Button AutomationId="trim-zoom-out" Text="−" Padding="10,6" FontAttributes="Bold" Command="{Binding ZoomOutCommand}" />
+                <Button AutomationId="trim-pan-earlier" controls:Icon.Glyph="{x:Static models:IconFont.Chevron_left}" controls:Icon.Size="22" SemanticProperties.Description="Pan the waveform earlier" Padding="10,6" Command="{Binding PanEarlierCommand}" IsVisible="{Binding IsZoomed}" />
+                <Button AutomationId="trim-zoom-out" controls:Icon.Glyph="{x:Static models:IconFont.Remove}" controls:Icon.Size="22" SemanticProperties.Description="Zoom out" Padding="10,6" Command="{Binding ZoomOutCommand}" />
                 <Label Style="{StaticResource CaptionTextBlockStyle}" AutomationId="trim-zoom-level" Text="{Binding ZoomLevelText}" VerticalOptions="Center" MinimumWidthRequest="30" HorizontalTextAlignment="Center" />
-                <Button AutomationId="trim-zoom-in" Text="+" Padding="10,6" FontAttributes="Bold" Command="{Binding ZoomInCommand}" />
-                <Button AutomationId="trim-pan-later" Text="›" Padding="10,6" FontAttributes="Bold" Command="{Binding PanLaterCommand}" IsVisible="{Binding IsZoomed}" />
+                <Button AutomationId="trim-zoom-in" controls:Icon.Glyph="{x:Static models:IconFont.Add}" controls:Icon.Size="22" SemanticProperties.Description="Zoom in" Padding="10,6" Command="{Binding ZoomInCommand}" />
+                <Button AutomationId="trim-pan-later" controls:Icon.Glyph="{x:Static models:IconFont.Chevron_right}" controls:Icon.Size="22" SemanticProperties.Description="Pan the waveform later" Padding="10,6" Command="{Binding PanLaterCommand}" IsVisible="{Binding IsZoomed}" />
             </HorizontalStackLayout>
         </Grid>
 
         <!-- Split / insert at playhead -->
         <HorizontalStackLayout Grid.Row="4" Spacing="10" HorizontalOptions="Center">
-            <Button AutomationId="trim-split" Text="✂ Split at Playhead" Command="{Binding SplitAtPlayheadCommand}" />
-            <Button AutomationId="trim-insert-clip" Text="📎 Insert Clip Here" Clicked="OnInsertClipClicked" />
+            <Button AutomationId="trim-split" Text="Split at Playhead" controls:Icon.Glyph="{x:Static models:IconFont.Content_cut}" Command="{Binding SplitAtPlayheadCommand}" />
+            <Button AutomationId="trim-insert-clip" Text="Insert Clip Here" controls:Icon.Glyph="{x:Static models:IconFont.Attach_file}" Clicked="OnInsertClipClicked" />
         </HorizontalStackLayout>
 
         <!-- Playback transport + bottom quick-action bar -->
         <VerticalStackLayout Grid.Row="5" Spacing="12">
 
             <HorizontalStackLayout Spacing="20" HorizontalOptions="Center">
-                <Button AutomationId="trim-skip-start" Text="⏮" Command="{Binding SkipToStartCommand}" WidthRequest="52" HeightRequest="52" CornerRadius="26" FontSize="18" />
-                <Button AutomationId="trim-play-pause" Style="{StaticResource AccentButtonStyle}" Text="{Binding IsPlaying, Converter={StaticResource PlayPauseIcon}}" Command="{Binding PlayPauseCommand}"
-                        WidthRequest="72" HeightRequest="72" CornerRadius="36" FontSize="26" />
-                <Button AutomationId="trim-skip-end" Text="⏭" Command="{Binding SkipToEndCommand}" WidthRequest="52" HeightRequest="52" CornerRadius="26" FontSize="18" />
+                <Button AutomationId="trim-skip-start" controls:Icon.Glyph="{x:Static models:IconFont.Skip_previous}" controls:Icon.Size="24" SemanticProperties.Description="Skip to start" Command="{Binding SkipToStartCommand}" WidthRequest="52" HeightRequest="52" CornerRadius="26" />
+                <Button AutomationId="trim-play-pause" Style="{StaticResource AccentButtonStyle}" controls:Icon.Glyph="{Binding IsPlaying, Converter={StaticResource PlayPauseIcon}}" controls:Icon.Size="32" SemanticProperties.Description="{Binding IsPlaying, Converter={StaticResource PlayPauseLabel}}" Command="{Binding PlayPauseCommand}"
+                        WidthRequest="72" HeightRequest="72" CornerRadius="36" />
+                <Button AutomationId="trim-skip-end" controls:Icon.Glyph="{x:Static models:IconFont.Skip_next}" controls:Icon.Size="24" SemanticProperties.Description="Skip to end" Command="{Binding SkipToEndCommand}" WidthRequest="52" HeightRequest="52" CornerRadius="26" />
             </HorizontalStackLayout>
 
             <Border StrokeShape="Rectangle">
                 <VerticalStackLayout Padding="16,12" Spacing="10">
 
                     <HorizontalStackLayout Spacing="16" HorizontalOptions="Center">
-                        <Button AutomationId="trim-tool-volume" Text="🔊 Volume" Padding="12,8" Command="{Binding ToggleToolCommand}" CommandParameter="{x:Static models:TrimTool.Volume}">
+                        <Button AutomationId="trim-tool-volume" Text="Volume" controls:Icon.Glyph="{x:Static models:IconFont.Volume_up}" Padding="12,8" Command="{Binding ToggleToolCommand}" CommandParameter="{x:Static models:TrimTool.Volume}">
                             <Button.Triggers>
                                 <DataTrigger TargetType="Button" Binding="{Binding ActiveTool}" Value="{x:Static models:TrimTool.Volume}">
                                     <Setter Property="BackgroundColor" Value="{DynamicResource AccentFillColorDefault}" />
@@ -146,7 +146,7 @@
                                 </DataTrigger>
                             </Button.Triggers>
                         </Button>
-                        <Button AutomationId="trim-tool-fade-in" Text="📈 Fade In" Padding="12,8" Command="{Binding ToggleToolCommand}" CommandParameter="{x:Static models:TrimTool.FadeIn}">
+                        <Button AutomationId="trim-tool-fade-in" Text="Fade In" controls:Icon.Glyph="{x:Static models:IconFont.Trending_up}" Padding="12,8" Command="{Binding ToggleToolCommand}" CommandParameter="{x:Static models:TrimTool.FadeIn}">
                             <Button.Triggers>
                                 <DataTrigger TargetType="Button" Binding="{Binding ActiveTool}" Value="{x:Static models:TrimTool.FadeIn}">
                                     <Setter Property="BackgroundColor" Value="{DynamicResource AccentFillColorDefault}" />
@@ -155,7 +155,7 @@
                                 </DataTrigger>
                             </Button.Triggers>
                         </Button>
-                        <Button AutomationId="trim-tool-fade-out" Text="📉 Fade Out" Padding="12,8" Command="{Binding ToggleToolCommand}" CommandParameter="{x:Static models:TrimTool.FadeOut}">
+                        <Button AutomationId="trim-tool-fade-out" Text="Fade Out" controls:Icon.Glyph="{x:Static models:IconFont.Trending_down}" Padding="12,8" Command="{Binding ToggleToolCommand}" CommandParameter="{x:Static models:TrimTool.FadeOut}">
                             <Button.Triggers>
                                 <DataTrigger TargetType="Button" Binding="{Binding ActiveTool}" Value="{x:Static models:TrimTool.FadeOut}">
                                     <Setter Property="BackgroundColor" Value="{DynamicResource AccentFillColorDefault}" />

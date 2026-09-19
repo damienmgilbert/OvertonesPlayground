@@ -1,13 +1,15 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:models="clr-namespace:OvertonesPlayground.Models"
+             xmlns:controls="clr-namespace:OvertonesPlayground.Controls"
              xmlns:vm="clr-namespace:OvertonesPlayground.ViewModels"
              x:Class="OvertonesPlayground.Views.MixerPage" AutomationId="mixer-page"
              x:DataType="vm:MixerViewModel"
              Title="{Binding Title}">
 
     <ContentPage.ToolbarItems>
-        <ToolbarItem AutomationId="mixer-stop-all" Text="⏹ Stop All" Command="{Binding StopAllCommand}" />
+        <ToolbarItem AutomationId="mixer-stop-all" Text="Stop All" controls:Icon.Glyph="{x:Static models:IconFont.Stop}" controls:Icon.Size="24" Command="{Binding StopAllCommand}" />
     </ContentPage.ToolbarItems>
 
     <!-- Channel strips sit side by side like a real mixing console, scrolling horizontally as tracks are added,
@@ -81,10 +83,10 @@
                         </HorizontalStackLayout>
 
                         <HorizontalStackLayout Grid.Row="8" Spacing="6" HorizontalOptions="Center">
-                            <Button AutomationId="{Binding Number, StringFormat='mixer-channel-{0}-load'}" Text="📂" WidthRequest="48" HeightRequest="48" Padding="0"
+                            <Button AutomationId="{Binding Number, StringFormat='mixer-channel-{0}-load'}" controls:Icon.Glyph="{x:Static models:IconFont.Folder_open}" controls:Icon.Size="24" SemanticProperties.Description="{Binding Number, StringFormat='Load a sample into channel {0}'}" WidthRequest="48" HeightRequest="48" Padding="0"
                                     Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MixerViewModel}}, Path=LoadSampleCommand}"
                                     CommandParameter="{Binding .}" />
-                            <Button AutomationId="{Binding Number, StringFormat='mixer-channel-{0}-play'}" Text="{Binding IsPlaying, Converter={StaticResource PlayPauseIcon}}"
+                            <Button AutomationId="{Binding Number, StringFormat='mixer-channel-{0}-play'}" controls:Icon.Glyph="{Binding IsPlaying, Converter={StaticResource PlayPauseIcon}}" controls:Icon.Size="24" SemanticProperties.Description="{Binding IsPlaying, Converter={StaticResource PlayPauseLabel}}"
                                     WidthRequest="48" HeightRequest="48" Padding="0"
                                     IsEnabled="{Binding HasSource}"
                                     Command="{Binding TogglePlaybackCommand}" />

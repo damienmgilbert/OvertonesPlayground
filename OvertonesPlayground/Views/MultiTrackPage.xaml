@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:models="clr-namespace:OvertonesPlayground.Models"
              xmlns:vm="clr-namespace:OvertonesPlayground.ViewModels"
              xmlns:controls="clr-namespace:OvertonesPlayground.Controls"
              x:Class="OvertonesPlayground.Views.MultiTrackPage" AutomationId="multitrack-page" SafeAreaEdges="All"
@@ -16,7 +17,7 @@
                             <Label Style="{StaticResource BodyStrongTextBlockStyle}" Text="{Binding ClipName}" LineBreakMode="TailTruncation" />
                             <Label Style="{StaticResource CaptionTextBlockStyle}" Text="{Binding DurationText}" TextColor="{DynamicResource TextFillColorSecondary}" />
                         </VerticalStackLayout>
-                        <Button AutomationId="{Binding TrackClip.Id, StringFormat='multitrack-clip-{0}-remove'}" Grid.Column="1" Text="✕" Padding="10,6" FontSize="12"
+                        <Button AutomationId="{Binding TrackClip.Id, StringFormat='multitrack-clip-{0}-remove'}" Grid.Column="1" controls:Icon.Glyph="{x:Static models:IconFont.Close}" controls:Icon.Size="20" SemanticProperties.Description="{Binding ClipName, StringFormat='Remove {0}'}" Padding="10,6"
                                 TextColor="{DynamicResource SystemFillColorCritical}"
                                 Command="{Binding Source={RelativeSource AncestorType={x:Type vm:TrackViewModel}}, Path=RemoveClipCommand}"
                                 CommandParameter="{Binding .}" />
@@ -67,8 +68,8 @@
                                          BindableLayout.ItemTemplate="{StaticResource TrackClipTemplate}" />
 
                     <HorizontalStackLayout Spacing="10">
-                        <Button AutomationId="{Binding Number, StringFormat='multitrack-track-{0}-add-clip'}" Text="+ Add Clip" Clicked="OnAddClipClicked" />
-                        <Button AutomationId="{Binding Number, StringFormat='multitrack-track-{0}-merge'}" Text="🔗 Merge" Command="{Binding MergeClipsCommand}" />
+                        <Button AutomationId="{Binding Number, StringFormat='multitrack-track-{0}-add-clip'}" Text="Add Clip" controls:Icon.Glyph="{x:Static models:IconFont.Add}" Clicked="OnAddClipClicked" />
+                        <Button AutomationId="{Binding Number, StringFormat='multitrack-track-{0}-merge'}" Text="Merge" controls:Icon.Glyph="{x:Static models:IconFont.Link}" Command="{Binding MergeClipsCommand}" />
                     </HorizontalStackLayout>
                 </VerticalStackLayout>
             </Border>
@@ -76,8 +77,8 @@
     </ContentPage.Resources>
 
     <ContentPage.ToolbarItems>
-        <ToolbarItem AutomationId="multitrack-mix-all" Text="🎚 Mix All" Command="{Binding MixAllToStartCommand}" />
-        <ToolbarItem AutomationId="multitrack-bounce" Text="⬇ Bounce" Command="{Binding BounceCommand}" />
+        <ToolbarItem AutomationId="multitrack-mix-all" Text="Mix All" controls:Icon.Glyph="{x:Static models:IconFont.Tune}" controls:Icon.Size="24" Command="{Binding MixAllToStartCommand}" />
+        <ToolbarItem AutomationId="multitrack-bounce" Text="Bounce" controls:Icon.Glyph="{x:Static models:IconFont.Download}" controls:Icon.Size="24" Command="{Binding BounceCommand}" />
     </ContentPage.ToolbarItems>
 
     <ScrollView>

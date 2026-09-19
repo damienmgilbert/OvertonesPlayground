@@ -12,7 +12,7 @@
     <ScrollView>
         <VerticalStackLayout Padding="24" Spacing="18">
 
-            <Label Style="{StaticResource SubtitleTextBlockStyle}" Text="🥁 Drum &amp; Bass Synth" />
+            <controls:IconLabel Style="{StaticResource SubtitleTextBlockStyle}" Caption="Drum &amp; Bass Synth" Glyph="{x:Static models:IconFont.Graphic_eq}" />
             <Label Style="{StaticResource CaptionTextBlockStyle}" Text="Pick a type to load its defaults, tune every knob, Generate &amp; Play to preview, then Save to keep it in your library (and your device's Music folder) for the Launchpad and Mixer."
                    TextColor="{DynamicResource TextFillColorSecondary}" />
 
@@ -35,7 +35,7 @@
                                   x:DataType="vm:DrumSynthParametersViewModel"
                                   Spacing="12">
 
-                <Label Style="{StaticResource BodyStrongTextBlockStyle}" AutomationId="drumsynth-editing" Text="{Binding DrumType, StringFormat='🎚 Editing: {0}'}" TextColor="{DynamicResource AccentTextFillColorPrimary}" />
+                <controls:IconLabel Style="{StaticResource BodyStrongTextBlockStyle}" AutomationId="drumsynth-editing" Caption="{Binding DrumType, StringFormat='Editing: {0}'}" Glyph="{x:Static models:IconFont.Tune}" TextColor="{DynamicResource AccentTextFillColorPrimary}" />
 
                 <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12" RowSpacing="12">
                     <Label Grid.Row="0" Grid.Column="0" Text="Sample rate" VerticalOptions="Center" />
@@ -50,7 +50,7 @@
 
                 <toolkit:Expander IsVisible="{Binding ShowPitchSweep}" IsExpanded="True">
                     <toolkit:Expander.Header>
-                        <Label Style="{StaticResource BodyStrongTextBlockStyle}" AutomationId="drumsynth-pitch-sweep-header" Text="📈 Pitch Sweep" Padding="0,10" />
+                        <controls:IconLabel Style="{StaticResource BodyStrongTextBlockStyle}" AutomationId="drumsynth-pitch-sweep-header" Caption="Pitch Sweep" Glyph="{x:Static models:IconFont.Trending_up}" Padding="0,10" />
                     </toolkit:Expander.Header>
                     <VerticalStackLayout Spacing="12" Padding="0,4,0,12">
                         <controls:LabeledSlider AutomationId="drumsynth-sweep-start" LabelText="Start" Minimum="20" Maximum="2000" Digits="0" Value="{Binding StartFrequencyHz}" />
@@ -61,7 +61,7 @@
 
                 <toolkit:Expander IsVisible="{Binding ShowSnareControls}" IsExpanded="True">
                     <toolkit:Expander.Header>
-                        <Label Style="{StaticResource BodyStrongTextBlockStyle}" AutomationId="drumsynth-snare-header" Text="🥁 Snare Body" Padding="0,10" />
+                        <controls:IconLabel Style="{StaticResource BodyStrongTextBlockStyle}" AutomationId="drumsynth-snare-header" Caption="Snare Body" Glyph="{x:Static models:IconFont.Music_note}" Padding="0,10" />
                     </toolkit:Expander.Header>
                     <VerticalStackLayout Spacing="12" Padding="0,4,0,12">
                         <controls:LabeledSlider AutomationId="drumsynth-snare-tone" LabelText="Tone" Minimum="50" Maximum="1000" Digits="0" Value="{Binding ToneFrequencyHz}" />
@@ -73,7 +73,7 @@
 
                 <toolkit:Expander IsVisible="{Binding ShowClapControls}" IsExpanded="True">
                     <toolkit:Expander.Header>
-                        <Label Style="{StaticResource BodyStrongTextBlockStyle}" AutomationId="drumsynth-clap-header" Text="👏 Clap Bursts" Padding="0,10" />
+                        <controls:IconLabel Style="{StaticResource BodyStrongTextBlockStyle}" AutomationId="drumsynth-clap-header" Caption="Clap Bursts" Glyph="{x:Static models:IconFont.Waving_hand}" Padding="0,10" />
                     </toolkit:Expander.Header>
                     <VerticalStackLayout Spacing="12" Padding="0,4,0,12">
                         <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
@@ -87,7 +87,7 @@
 
                 <toolkit:Expander IsExpanded="False">
                     <toolkit:Expander.Header>
-                        <Label Style="{StaticResource BodyStrongTextBlockStyle}" AutomationId="drumsynth-filter-header" Text="🎛 Filter" Padding="0,10" />
+                        <controls:IconLabel Style="{StaticResource BodyStrongTextBlockStyle}" AutomationId="drumsynth-filter-header" Caption="Filter" Glyph="{x:Static models:IconFont.Filter_alt}" Padding="0,10" />
                     </toolkit:Expander.Header>
                     <VerticalStackLayout Spacing="12" Padding="0,4,0,12">
                         <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12" RowSpacing="12">
@@ -103,8 +103,8 @@
             </VerticalStackLayout>
 
             <HorizontalStackLayout Spacing="12">
-                <Button AutomationId="drumsynth-generate" Style="{StaticResource AccentButtonStyle}" Text="▶ Generate &amp; Play" Command="{Binding GenerateCommand}" />
-                <Button AutomationId="drumsynth-save" Style="{StaticResource AccentButtonStyle}" Text="💾 Save" Command="{Binding SaveCommand}" IsEnabled="{Binding CanSave}" />
+                <Button AutomationId="drumsynth-generate" Style="{StaticResource AccentButtonStyle}" Text="Generate &amp; Play" controls:Icon.Glyph="{x:Static models:IconFont.Play_arrow}" Command="{Binding GenerateCommand}" />
+                <Button AutomationId="drumsynth-save" Style="{StaticResource AccentButtonStyle}" Text="Save" controls:Icon.Glyph="{x:Static models:IconFont.Save}" Command="{Binding SaveCommand}" IsEnabled="{Binding CanSave}" />
             </HorizontalStackLayout>
 
             <ActivityIndicator AutomationId="drumsynth-busy" IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />

@@ -9,6 +9,7 @@ public partial class SpeechToTextPage : ContentPage
 {
     #region Fields
     private readonly ILogger<SpeechToTextPage> _logger;
+    private bool _stopHooked;
     #endregion
 
     #region Constructors
@@ -24,6 +25,14 @@ public partial class SpeechToTextPage : ContentPage
     #endregion
 
     #region Private methods
+    private void OnWindowStopped(object? sender, EventArgs e)
+    {
+        if (BindingContext is SpeechToTextViewModel viewModel)
+        {
+            viewModel.StopListeningIfActive();
+        }
+    }
+
     [LoggerMessage(Level = LogLevel.Debug, Message = "Page appeared.")]
     private partial void Log_PageAppeared();
 
@@ -36,6 +45,14 @@ public partial class SpeechToTextPage : ContentPage
     {
         base.OnAppearing();
         Log_PageAppeared();
+
+        // Listening deliberately continues while you visit another page, so this is hooked once for the life of the app
+        // (this page is a singleton and the app has a single window) rather than per appearance.
+        if (!_stopHooked && Window is { } window)
+        {
+            window.Stopped += OnWindowStopped;
+            _stopHooked = true;
+        }
     }
 
     protected override void OnDisappearing()

@@ -11,10 +11,12 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="Themes/FluentMetrics.xaml" />
                 <ResourceDictionary Source="Resources/Styles/Styles.xaml" />
+                <ResourceDictionary Source="Resources/Styles/MaterialsSymbolsRoundedIcons.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
             <conv:HexColorConverter x:Key="HexColor" />
             <conv:BoolToPlayPauseIconConverter x:Key="PlayPauseIcon" />
+            <conv:BoolToPlayPauseLabelConverter x:Key="PlayPauseLabel" />
             <conv:InvertedBoolConverter x:Key="InvertedBool" />
             <conv:RecordButtonLabelConverter x:Key="RecordButtonLabel" />
             <conv:StringToBoolConverter x:Key="StringToBool" />

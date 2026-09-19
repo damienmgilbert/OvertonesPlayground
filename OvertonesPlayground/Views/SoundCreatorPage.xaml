@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:models="clr-namespace:OvertonesPlayground.Models"
+             xmlns:controls="clr-namespace:OvertonesPlayground.Controls"
              xmlns:vm="clr-namespace:OvertonesPlayground.ViewModels"
              x:Class="OvertonesPlayground.Views.SoundCreatorPage" AutomationId="soundcreator-page" SafeAreaEdges="All"
              x:DataType="vm:SoundCreatorViewModel"
@@ -8,7 +10,7 @@
 
     <VerticalStackLayout Padding="40" Spacing="20" VerticalOptions="Center" MaximumWidthRequest="600" HorizontalOptions="Center">
 
-        <Label Style="{StaticResource SubtitleTextBlockStyle}" Text="🎙 Audio Recorder" HorizontalTextAlignment="Center" />
+        <controls:IconLabel Style="{StaticResource SubtitleTextBlockStyle}" Caption="Audio Recorder" Glyph="{x:Static models:IconFont.Mic}" HorizontalTextAlignment="Center" />
         <Label Text="Record a new sample to use in the Launchpad, Mixer, or Editor." HorizontalTextAlignment="Center" TextColor="{DynamicResource TextFillColorSecondary}" />
 
         <Entry AutomationId="soundcreator-name" Placeholder="Recording name" Text="{Binding NewClipName}" IsEnabled="{Binding IsRecording, Converter={StaticResource InvertedBool}}" />
@@ -16,10 +18,12 @@
         <Label Style="{StaticResource TitleLargeTextBlockStyle}" AutomationId="soundcreator-elapsed" Text="{Binding ElapsedText}" HorizontalTextAlignment="Center" />
 
 <Button AutomationId="soundcreator-record" Style="{StaticResource AccentButtonStyle}" Text="{Binding IsRecording, Converter={StaticResource RecordButtonLabel}}"
+                controls:Icon.Glyph="{x:Static models:IconFont.Radio_button_checked}" controls:Icon.Size="24"
                 HeightRequest="70"
                 Command="{Binding ToggleRecordingCommand}">
             <Button.Triggers>
                 <DataTrigger TargetType="Button" Binding="{Binding IsRecording}" Value="True">
+                    <Setter Property="controls:Icon.Glyph" Value="{x:Static models:IconFont.Stop}" />
                     <Setter Property="BackgroundColor" Value="{DynamicResource SystemFillColorCritical}" />
                     <Setter Property="TextColor" Value="{DynamicResource TextOnAccentFillColorPrimary}" />
                     <Setter Property="BorderColor" Value="{DynamicResource SystemFillColorCritical}" />
@@ -27,7 +31,7 @@
             </Button.Triggers>
         </Button>
 
-        <Button AutomationId="soundcreator-cancel" Text="✕ Cancel Recording"
+        <Button AutomationId="soundcreator-cancel" Text="Cancel Recording" controls:Icon.Glyph="{x:Static models:IconFont.Close}"
                 IsVisible="{Binding IsRecording}"
                 Command="{Binding CancelRecordingCommand}" />
 
