@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- The colors and shapes of the on-screen Launchpad Pro. It is a copy of a physical object, which is black with teal lights
+     whatever theme the app is in, so these do NOT change between the light and dark Fluent dictionaries and are kept apart from
+     them. The pad colors are data (see LaunchpadViewModel.ColumnColors) and stay in code. Sizes that scale with the device
+     (the key font sizes and gaps) are set from the page's code-behind as KeyFontSize, KeySubFontSize, KeyIconSize, PadFontSize,
+     KeyGap and PadGap, and read with {DynamicResource}. -->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+                    x:Class="OvertonesPlayground.Themes.LaunchpadDeviceTheme">
+
+    <Color x:Key="DeviceBodyColor">#161618</Color>
+    <Color x:Key="DeviceEdgeColor">#08080A</Color>
+    <Color x:Key="KeyFaceColor">#252529</Color>
+    <Color x:Key="KeyEdgeColor">#3B3B41</Color>
+    <Color x:Key="KeyFaceLitColor">#2B3F3B</Color>
+    <Color x:Key="LedTextColor">#4FDFC4</Color>
+    <Color x:Key="LedTextDimColor">#2FA38D</Color>
+    <Color x:Key="LedTextLitColor">#D9FFF8</Color>
+    <Color x:Key="LogoFaceColor">#F4F4F5</Color>
+    <Color x:Key="LogoMarkColor">#111113</Color>
+    <Color x:Key="PadBadgeColor">#E6101010</Color>
+
+    <SolidColorBrush x:Key="DeviceBodyBrush" Color="{StaticResource DeviceBodyColor}" />
+    <SolidColorBrush x:Key="DeviceEdgeBrush" Color="{StaticResource DeviceEdgeColor}" />
+    <SolidColorBrush x:Key="KeyFaceBrush" Color="{StaticResource KeyFaceColor}" />
+    <SolidColorBrush x:Key="KeyEdgeBrush" Color="{StaticResource KeyEdgeColor}" />
+    <SolidColorBrush x:Key="KeyFaceLitBrush" Color="{StaticResource KeyFaceLitColor}" />
+    <SolidColorBrush x:Key="LedEdgeLitBrush" Color="{StaticResource LedTextColor}" />
+    <SolidColorBrush x:Key="LogoFaceBrush" Color="{StaticResource LogoFaceColor}" />
+    <SolidColorBrush x:Key="LogoMarkBrush" Color="{StaticResource LogoMarkColor}" />
+
+    <!-- The black body the pads and buttons sit in. -->
+    <Style x:Key="DeviceBodyStyle" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource DeviceBodyBrush}" />
+        <Setter Property="Stroke" Value="{StaticResource DeviceEdgeBrush}" />
+        <Setter Property="StrokeThickness" Value="2" />
+        <Setter Property="StrokeShape" Value="RoundRectangle 14" />
+    </Style>
+
+    <!-- A button in the ring around the pads. A lit one gets a teal edge and a faint teal face. -->
+    <Style x:Key="DeviceKeyStyle" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource KeyFaceBrush}" />
+        <Setter Property="Stroke" Value="{StaticResource KeyEdgeBrush}" />
+        <Setter Property="StrokeThickness" Value="1" />
+        <Setter Property="StrokeShape" Value="RoundRectangle 5" />
+        <Setter Property="Padding" Value="1" />
+    </Style>
+
+    <!-- Text that is a button's label: teal, like the lit labels on the hardware. -->
+    <Style x:Key="DeviceKeyLabelStyle" TargetType="Label">
+        <Setter Property="TextColor" Value="{StaticResource LedTextColor}" />
+        <Setter Property="FontFamily" Value="OpenSansSemibold" />
+        <Setter Property="HorizontalTextAlignment" Value="Center" />
+        <Setter Property="VerticalTextAlignment" Value="Center" />
+        <Setter Property="LineBreakMode" Value="WordWrap" />
+        <Setter Property="LineHeight" Value="0.95" />
+        <Setter Property="AutomationProperties.IsInAccessibleTree" Value="False" />
+    </Style>
+
+</ResourceDictionary>

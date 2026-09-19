@@ -1,4 +1,5 @@
 using CommunityToolkit.Maui.Behaviors;
+using CommunityToolkit.Maui.Core;
 using OvertonesPlayground.Themes;
 
 namespace OvertonesPlayground.Controls;
@@ -37,6 +38,17 @@ public class LongPressBorder : Border
         };
 #pragma warning restore CA2000
         touch.LongPressCompleted += (_, _) => LongPressed?.Invoke(this, EventArgs.Empty);
+        touch.CurrentTouchStateChanged += (_, e) =>
+        {
+            if (e.State == TouchState.Pressed)
+            {
+                Pressed?.Invoke(this, EventArgs.Empty);
+            }
+            else if (e.State == TouchState.Default)
+            {
+                Released?.Invoke(this, EventArgs.Empty);
+            }
+        };
         Behaviors.Add(touch);
     }
     #endregion
@@ -46,5 +58,15 @@ public class LongPressBorder : Border
     /// Raised when the border has been pressed and held for the long-press duration.
     /// </summary>
     public event EventHandler? LongPressed;
+
+    /// <summary>
+    /// Raised when a finger goes down on the border.
+    /// </summary>
+    public event EventHandler? Pressed;
+
+    /// <summary>
+    /// Raised when the finger comes off the border (or is dragged off it, or the touch is canceled).
+    /// </summary>
+    public event EventHandler? Released;
     #endregion
 }

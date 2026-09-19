@@ -1,5 +1,5 @@
 using System.Collections.ObjectModel;
-using System.Text.Json;
+using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using OvertonesPlayground.Models;
@@ -8,8 +8,10 @@ using OvertonesPlayground.Services.Interfaces;
 namespace OvertonesPlayground.ViewModels;
 
 ///<summary>
-///View model for the Launchpad screen. Manages a grid of pads and exposes commands to trigger, assign and control pad
-///playback.
+///View model for the Launchpad screen, a copy of the Novation Launchpad Pro MK3: an 8 x 8 grid of pads ringed by buttons. The
+///pads are samples, notes, chords or sequencer steps depending on the mode; the ring of buttons around them each does one
+///different job (see <see cref="LaunchpadControl"/>). The class is split by concern: this file holds the state and the pad
+///and key entry points, and the other files hold the pad drawing, the buttons, the sound, the sequencer and the saved state.
 ///</summary>
 public partial class LaunchpadViewModel : BaseViewModel
 {
@@ -19,44 +21,62 @@ public partial class LaunchpadViewModel : BaseViewModel
     ///Number of pad columns in the grid.
     ///</summary>
     public const int Columns = 8;
+
     ///<summary>
     ///Number of pad rows in the grid.
     ///</summary>
     public const int Rows = 8;
 
-    private const string LayoutFileName = "launchpad.json";
     private const string EditHint = "Edit mode: tap a pad to assign a sample, turn looping on or off, stop it, or clear it";
-    private const string PlayHint = "Tap a pad to play it \u2022 Long-press it, or use the pencil, to assign a sample, loop or clear it";
+    private const string PlayHint = "Tap a pad to play it • Long-press it, or use the pencil, to assign a sample, loop or clear it";
     #endregion
 
     #region Fields
-    private static string LayoutFilePath => Path.Combine(FileSystem.AppDataDirectory, LayoutFileName);
 
     ///<summary>
-    ///Colors assigned round-robin to pads as they're given a sample.
+    ///How long a pad or button flashes to acknowledge a press that has no other visible effect.
     ///</summary>
-    private static readonly string[] PadPalette = ["#512BD4", "#D600AA", "#2B9348", "#F77F00", "#0077B6", "#9D4EDD", "#E5383B", "#FFB703",];
+    private static readonly TimeSpan FlashTime = TimeSpan.FromMilliseconds(140);
+
+    ///<summary>
+    ///The colors of the eight pad columns, taken from the hardware; a sample's pad is lit in its column's color.
+    ///</summary>
+    private static readonly string[] ColumnColors = ["#E9EC9E", "#EE857F", "#82C2EE", "#DC8AEB", "#72E6E6", "#84E68E", "#EADF8E", "#AA90F5",];
+
+    private readonly LaunchpadPad[][] _banks;
+    private readonly Stopwatch _clock = Stopwatch.StartNew();
     private readonly IAudioLibraryService _libraryService;
+    private readonly IMixdownService _mixdownService;
     private readonly IAudioPlaybackService _playbackService;
+    private readonly Random _random = new();
+    private readonly ISoundSynthesisService _synthesisService;
+    private LaunchpadPadViewModel? _flashedPad;
+    private LaunchpadProject _project = new();
     #endregion
 
     #region Constructors
     ///<summary>
-    ///Creates the view model and fills the grid with <see cref="Rows"/> x <see cref="Columns"/> empty pads.
+    ///Creates the view model, fills the grid with <see cref="Rows"/> x <see cref="Columns"/> empty pads, builds the ring of
+    ///buttons and restores the layout the app last saved.
     ///</summary>
-    public LaunchpadViewModel(IAudioPlaybackService playbackService, IAudioLibraryService libraryService, ILogger<LaunchpadViewModel> logger) : base(logger)
+    public LaunchpadViewModel(IAudioPlaybackService playbackService, IAudioLibraryService libraryService, ISoundSynthesisService synthesisService, IMixdownService mixdownService, ILogger<LaunchpadViewModel> logger) : base(logger)
     {
         ConstructorLog(Rows, Columns);
         _playbackService = playbackService;
         _libraryService = libraryService;
+        _synthesisService = synthesisService;
+        _mixdownService = mixdownService;
         Title = "Launchpad";
 
-        for (int i = 0; i < Rows * Columns; i++)
+        _banks = [.. Enumerable.Range(0, LaunchpadProject.BankCount).Select(bank => Enumerable.Range(0, LaunchpadProject.PadsPerBank).Select(index => new LaunchpadPad { Bank = bank, Index = index }).ToArray())];
+        foreach (LaunchpadPad pad in _banks[0])
         {
-            Pads.Add(new LaunchpadPadViewModel(new LaunchpadPad { Index = i }));
+            Pads.Add(new LaunchpadPadViewModel(pad));
         }
 
+        BuildKeys();
         RestoreLayout();
+        RefreshAll();
     }
     #endregion
 
@@ -71,11 +91,25 @@ public partial class LaunchpadViewModel : BaseViewModel
 
         OnPropertyChanged(nameof(EditModeText));
         OnPropertyChanged(nameof(EditModeGlyph));
-        OnPropertyChanged(nameof(HintText));
+        RefreshTexts();
     }
 
+    partial void OnIsPlayingChanged(bool value) => RefreshAll();
+
+    partial void OnIsShiftLatchedChanged(bool value) => RefreshKeys();
+
+    partial void OnLayerChanged(LaunchpadLayer value) => RefreshAll();
+
+    partial void OnModeChanged(LaunchpadMode value) => RefreshAll();
+
+    partial void OnPlayheadStepChanged(int value) => RefreshPads();
+
+    partial void OnSelectedTrackChanged(int value) => RefreshAll();
+
+    partial void OnToolChanged(LaunchpadTool value) => RefreshAll();
+
     ///<summary>
-    ///Opens the file picker and assigns the chosen sample (and a palette color) to a pad.
+    ///Opens the file picker and assigns the chosen sample to a pad, lit in its column's color.
     ///</summary>
     [RelayCommand]
     private async Task AssignAsync(LaunchpadPadViewModel? pad)
@@ -93,10 +127,10 @@ public partial class LaunchpadViewModel : BaseViewModel
                 return;
             }
 
-            string color = PadPalette[pad.Index % PadPalette.Length];
+            PushUndo();
             Log_AssignedClip(clip.Name, pad.Index);
-            pad.Assign(clip.FilePath, clip.Name, color);
-            SaveLayout();
+            pad.Assign(clip.FilePath, clip.Name, ColumnColors[pad.Column]);
+            Changed();
         }
         catch (Exception ex)
         {
@@ -116,124 +150,22 @@ public partial class LaunchpadViewModel : BaseViewModel
             return;
         }
 
+        PushUndo();
         StopPad(pad);
         Log_PadCleared(pad.Index);
         pad.Clear();
-        SaveLayout();
+        Changed();
     }
 
     ///<summary>
-    ///Puts back the pads that had a sample when the app last ran. A pad whose sample file has since been deleted stays empty.
-    ///The layout is saved after every change, so it is already on disk whenever Android stops or reclaims the app.
-    ///</summary>
-    private void RestoreLayout()
-    {
-        try
-        {
-            if (!File.Exists(LayoutFilePath))
-            {
-                return;
-            }
-
-            List<LaunchpadPad> saved = JsonSerializer.Deserialize<List<LaunchpadPad>>(File.ReadAllText(LayoutFilePath)) ?? [];
-            int restored = 0;
-            foreach (LaunchpadPad pad in saved)
-            {
-                if (pad.Index < 0 || pad.Index >= Pads.Count || !pad.HasClip || !File.Exists(pad.ClipPath))
-                {
-                    continue;
-                }
-
-                LaunchpadPadViewModel target = Pads[pad.Index];
-                target.Assign(pad.ClipPath, pad.Label, pad.ColorHex);
-                target.Pad.Volume = pad.Volume;
-                if (pad.IsLooping)
-                {
-                    target.ToggleLoop();
-                }
-
-                restored++;
-            }
-
-            Log_LayoutRestored(restored);
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
-        {
-            Log_LayoutRestoreFailed(ex);
-        }
-    }
-
-    ///<summary>
-    ///Writes the assigned pads to app storage.
-    ///</summary>
-    private void SaveLayout()
-    {
-        try
-        {
-            File.WriteAllText(LayoutFilePath, JsonSerializer.Serialize(Pads.Where(p => p.HasClip).Select(p => p.Pad).ToList()));
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            Log_LayoutSaveFailed(ex);
-        }
-    }
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Restored {PadCount} launchpad pads.")]
-    private partial void Log_LayoutRestored(int padCount);
-
-    [LoggerMessage(Level = LogLevel.Warning, Message = "Couldn't restore the launchpad layout.")]
-    private partial void Log_LayoutRestoreFailed(Exception exception);
-
-    [LoggerMessage(Level = LogLevel.Warning, Message = "Couldn't save the launchpad layout.")]
-    private partial void Log_LayoutSaveFailed(Exception exception);
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Creating LaunchpadViewModel with {Rows} rows and {Columns} columns.")]
-    partial void ConstructorLog(int Rows, int Columns);
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Assigned clip '{ClipName}' to pad {PadIndex}.")]
-    private partial void Log_AssignedClip(string clipName, int padIndex);
-
-    [LoggerMessage(Level = LogLevel.Error, Message = "Failed to assign a sample to pad {PadIndex}.")]
-    private partial void Log_AssignSampleFailed(Exception exception, int padIndex);
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Edit mode set to {IsEditMode}.")]
-    private partial void Log_EditModeChanged(bool isEditMode);
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Pad {PadIndex} cleared.")]
-    private partial void Log_PadCleared(int padIndex);
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Pad {PadIndex} loop toggled.")]
-    private partial void Log_PadLoopToggled(int padIndex);
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Opening the menu for pad {PadIndex}.")]
-    private partial void Log_PadMenuOpened(int padIndex);
-
-    [LoggerMessage(Level = LogLevel.Error, Message = "Failed to stop all pads.")]
-    private partial void Log_StopAllPadsFailed(Exception exception);
-
-    [LoggerMessage(Level = LogLevel.Error, Message = "Failed to stop pad {PadIndex}.")]
-    private partial void Log_StopPadFailed(Exception exception, int padIndex);
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Stopping all pads.")]
-    private partial void Log_StoppingAllPads();
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Stopping pad {PadIndex}.")]
-    private partial void Log_StoppingPad(int padIndex);
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Triggering pad {PadIndex}.")]
-    private partial void Log_TriggeringPad(int padIndex);
-
-    [LoggerMessage(Level = LogLevel.Error, Message = "Failed to trigger pad {PadIndex}.")]
-    private partial void Log_TriggerPadFailed(Exception exception, int padIndex);
-
-    ///<summary>
-    ///Asks the page to show the pad's action menu (assign, loop, stop, clear). Reached by long-pressing a pad, or by
-    ///tapping it in edit mode.
+    ///Asks the page to show the pad's action menu (assign, loop, stop, clear). Reached by long-pressing a pad (except in Custom
+    ///mode, where holding plays it), or by tapping it in edit mode.
     ///</summary>
     [RelayCommand]
     private void OpenPadMenu(LaunchpadPadViewModel? pad)
     {
-        if (pad is null)
+        // In Custom mode a pad is held to be played, so holding it must not open the menu; edit mode still can.
+        if (pad is null || IsGateActive)
         {
             return;
         }
@@ -243,7 +175,7 @@ public partial class LaunchpadViewModel : BaseViewModel
     }
 
     ///<summary>
-    ///Stops every currently-sounding pad voice.
+    ///Stops every currently-sounding pad voice, and the sequencer.
     ///</summary>
     [RelayCommand]
     private void StopAll()
@@ -251,6 +183,7 @@ public partial class LaunchpadViewModel : BaseViewModel
         try
         {
             Log_StoppingAllPads();
+            StopTransport();
             _playbackService.StopAllPads();
         }
         catch (Exception ex)
@@ -273,7 +206,7 @@ public partial class LaunchpadViewModel : BaseViewModel
         try
         {
             Log_StoppingPad(pad.Index);
-            _playbackService.StopPad(pad.Index);
+            _playbackService.StopPad(pad.Pad.VoiceKey);
         }
         catch (Exception ex)
         {
@@ -299,34 +232,103 @@ public partial class LaunchpadViewModel : BaseViewModel
             return;
         }
 
+        PushUndo();
         Log_PadLoopToggled(pad.Index);
         pad.ToggleLoop();
-        SaveLayout();
+        Changed();
     }
 
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Creating LaunchpadViewModel with {Rows} rows and {Columns} columns.")]
+    partial void ConstructorLog(int Rows, int Columns);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Assigned clip '{ClipName}' to pad {PadIndex}.")]
+    private partial void Log_AssignedClip(string clipName, int padIndex);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Failed to assign a sample to pad {PadIndex}.")]
+    private partial void Log_AssignSampleFailed(Exception exception, int padIndex);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Edit mode set to {IsEditMode}.")]
+    private partial void Log_EditModeChanged(bool isEditMode);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Launchpad key {Control} pressed (shifted: {Shifted}).")]
+    private partial void Log_KeyPressed(LaunchpadControl control, bool shifted);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Pad {PadIndex} cleared.")]
+    private partial void Log_PadCleared(int padIndex);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Pad {PadIndex} loop toggled.")]
+    private partial void Log_PadLoopToggled(int padIndex);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Opening the menu for pad {PadIndex}.")]
+    private partial void Log_PadMenuOpened(int padIndex);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Failed to stop all pads.")]
+    private partial void Log_StopAllPadsFailed(Exception exception);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Failed to stop pad {PadIndex}.")]
+    private partial void Log_StopPadFailed(Exception exception, int padIndex);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Stopping all pads.")]
+    private partial void Log_StoppingAllPads();
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Stopping pad {PadIndex}.")]
+    private partial void Log_StoppingPad(int padIndex);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Failed to trigger pad {PadIndex}.")]
+    private partial void Log_TriggerPadFailed(Exception exception, int padIndex);
+    #endregion
+
+    #region Public methods
     ///<summary>
-    ///Fires a new voice for the tapped pad, if it has a sample assigned.
+    ///A pad was pressed down. Only Custom mode acts on this, playing the pad for as long as it is held.
     ///</summary>
-    [RelayCommand]
-    private void Trigger(LaunchpadPadViewModel? pad)
+    public void PadPressed(LaunchpadPadViewModel? pad)
     {
-        if (IsEditMode)
+        if (pad is null || !IsGateActive || !pad.HasClip)
         {
-            OpenPadMenu(pad);
             return;
         }
 
-        if (pad is null || !pad.HasClip)
+        PlaySample(pad, live: true);
+    }
+
+    ///<summary>
+    ///A pad was let go. Ends the sound of a pad held in Custom mode.
+    ///</summary>
+    public void PadReleased(LaunchpadPadViewModel? pad)
+    {
+        if (pad is not null && IsGateActive && pad.HasClip)
+        {
+            StopPad(pad);
+        }
+    }
+
+    ///<summary>
+    ///A pad was tapped. What that does depends on the armed tool, the active layer and the mode.
+    ///</summary>
+    public void PadTapped(LaunchpadPadViewModel? pad)
+    {
+        if (pad is null)
         {
             return;
         }
 
         try
         {
-            Log_TriggeringPad(pad.Index);
-            _playbackService.TriggerPad(pad.Pad);
+            if (Tool != LaunchpadTool.None)
+            {
+                ApplyTool(pad);
+            }
+            else if (TryEditLayer(pad))
+            {
+                // A fader, tempo or sequencer-settings view took the tap.
+            }
+            else
+            {
+                PlayPadByMode(pad);
+            }
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is IOException or InvalidOperationException or NotSupportedException)
         {
             Log_TriggerPadFailed(ex, pad.Index);
             StatusMessage = "Couldn't play that pad.";
@@ -335,6 +337,17 @@ public partial class LaunchpadViewModel : BaseViewModel
     #endregion
 
     #region Public properties
+    ///<summary>
+    ///Whether pads currently sound only while held: Custom mode with no tool, layer or edit mode in the way.
+    ///</summary>
+    private bool IsGateActive => Mode == LaunchpadMode.Custom && Tool == LaunchpadTool.None && !IsEditMode && ShowsSamples;
+
+    ///<summary>
+    ///Which of the four pad banks (0 to 3) is on screen.
+    ///</summary>
+    [ObservableProperty]
+    public partial int Bank { get; set; }
+
     ///<summary>
     ///Icon of the toolbar button that toggles edit mode: a check mark while editing, a pencil otherwise.
     ///</summary>
@@ -347,26 +360,76 @@ public partial class LaunchpadViewModel : BaseViewModel
     public string EditModeText => IsEditMode ? "Done" : "Edit";
 
     ///<summary>
-    ///Hint line above the grid, describing the gestures for the current mode.
-    ///</summary>
-    public string HintText => IsEditMode ? EditHint : PlayHint;
-
-    ///<summary>
     ///Whether tapping a pad opens its menu (true) or plays it (false).
     ///</summary>
     [ObservableProperty]
     public partial bool IsEditMode { get; set; }
 
     ///<summary>
+    ///Whether the sequencer is running.
+    ///</summary>
+    [ObservableProperty]
+    public partial bool IsPlaying { get; set; }
+
+    ///<summary>
+    ///Whether Shift is latched, so the next button press runs its second function.
+    ///</summary>
+    [ObservableProperty]
+    public partial bool IsShiftLatched { get; set; }
+
+    ///<summary>
+    ///The button layer on top of the mode: a column function, a shifted function or a sequencer layer.
+    ///</summary>
+    [ObservableProperty]
+    public partial LaunchpadLayer Layer { get; set; }
+
+    ///<summary>
+    ///What the pads do.
+    ///</summary>
+    [ObservableProperty]
+    public partial LaunchpadMode Mode { get; set; }
+
+    ///<summary>
     ///Collection of pad view models backing the UI grid.
     ///</summary>
     public ObservableCollection<LaunchpadPadViewModel> Pads { get; } = [];
+
+    ///<summary>
+    ///The step the sequencer just played, or -1 when it is stopped.
+    ///</summary>
+    [ObservableProperty]
+    public partial int PlayheadStep { get; set; } = -1;
+
+    ///<summary>
+    ///The sequencer track (0 to 3) that steps are edited on.
+    ///</summary>
+    [ObservableProperty]
+    public partial int SelectedTrack { get; set; }
+
+    ///<summary>
+    ///The edit tool armed from the left-hand buttons.
+    ///</summary>
+    [ObservableProperty]
+    public partial LaunchpadTool Tool { get; set; }
     #endregion
 
     #region Public events
     ///<summary>
+    ///Raised when a list of choices should be shown (the Setup and Projects menus). The page owns the native action sheet.
+    ///</summary>
+    public event EventHandler<LaunchpadMenuEventArgs>? MenuRequested;
+
+    ///<summary>
     ///Raised when a pad's action menu should be shown. The page owns the native action sheet.
     ///</summary>
     public event EventHandler<LaunchpadPadEventArgs>? PadMenuRequested;
+    #endregion
+
+    #region Public delegates
+    ///<summary>
+    ///Asks the user for a line of text (title, message, initial value) and returns it, or null if they cancel. Set by the
+    ///page, which owns the native prompt.
+    ///</summary>
+    public Func<string, string, string, Task<string?>>? TextPrompt { get; set; }
     #endregion
 }

@@ -3,100 +3,180 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:models="clr-namespace:OvertonesPlayground.Models"
              xmlns:controls="clr-namespace:OvertonesPlayground.Controls"
+             xmlns:shapes="clr-namespace:Microsoft.Maui.Controls.Shapes;assembly=Microsoft.Maui.Controls"
+             xmlns:themes="clr-namespace:OvertonesPlayground.Themes"
              xmlns:vm="clr-namespace:OvertonesPlayground.ViewModels"
              x:Class="OvertonesPlayground.Views.LaunchpadPage" AutomationId="launchpad-page"
              x:DataType="vm:LaunchpadViewModel"
              Title="{Binding Title}">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <themes:LaunchpadDeviceTheme />
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- Sizes that scale with the device. The code-behind replaces these whenever the device is resized. -->
+            <x:Double x:Key="KeyFontSize">9</x:Double>
+            <x:Double x:Key="KeySubFontSize">7</x:Double>
+            <x:Double x:Key="KeyIconSize">18</x:Double>
+            <x:Double x:Key="KeyChevronSize">14</x:Double>
+            <x:Double x:Key="PadFontSize">8</x:Double>
+            <Thickness x:Key="KeyGap">2</Thickness>
+            <Thickness x:Key="PadGap">2</Thickness>
+
+            <!-- A button in the ring around the pads. It sits in a FlexLayout, where Grow with a zero Basis shares the row (or column)
+                 out evenly. The whole key is one tap target; the tap is routed through the code-behind, like the pads. A lit key gets
+                 a teal edge and lighter labels. -->
+            <DataTemplate x:Key="KeyTemplate" x:DataType="vm:LaunchpadKeyViewModel">
+                <Border FlexLayout.Grow="1" FlexLayout.Basis="0"
+                        Margin="{DynamicResource KeyGap}"
+                        Style="{StaticResource DeviceKeyStyle}"
+                        AutomationId="{Binding Id, StringFormat='launchpad-key-{0}'}"
+                        SemanticProperties.Description="{Binding AccessibleName}"
+                        SemanticProperties.Hint="{Binding Description}"
+                        ToolTipProperties.Text="{Binding Description}">
+                    <Border.Triggers>
+                        <DataTrigger TargetType="Border" Binding="{Binding IsLit}" Value="True">
+                            <Setter Property="Background" Value="{StaticResource KeyFaceLitBrush}" />
+                            <Setter Property="Stroke" Value="{StaticResource LedEdgeLitBrush}" />
+                        </DataTrigger>
+                    </Border.Triggers>
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnKeyTapped" CommandParameter="{Binding .}" />
+                    </Border.GestureRecognizers>
+                    <VerticalStackLayout VerticalOptions="Center" Spacing="0">
+                        <Label Style="{StaticResource IconTextBlockStyle}" Text="{Binding DisplayGlyph}" IsVisible="{Binding HasGlyph}"
+                               FontSize="{DynamicResource KeyIconSize}" TextColor="{StaticResource LedTextColor}">
+                            <Label.Triggers>
+                                <DataTrigger TargetType="Label" Binding="{Binding IsLit}" Value="True">
+                                    <Setter Property="TextColor" Value="{StaticResource LedTextLitColor}" />
+                                </DataTrigger>
+                                <DataTrigger TargetType="Label" Binding="{Binding IsSmallGlyph}" Value="True">
+                                    <Setter Property="FontSize" Value="{DynamicResource KeyChevronSize}" />
+                                </DataTrigger>
+                            </Label.Triggers>
+                        </Label>
+                        <Label Style="{StaticResource DeviceKeyLabelStyle}" Text="{Binding Label}" IsVisible="{Binding HasLabel}"
+                               FontSize="{DynamicResource KeyFontSize}" Opacity="{Binding PrimaryOpacity}">
+                            <Label.Triggers>
+                                <DataTrigger TargetType="Label" Binding="{Binding IsLit}" Value="True">
+                                    <Setter Property="TextColor" Value="{StaticResource LedTextLitColor}" />
+                                </DataTrigger>
+                            </Label.Triggers>
+                        </Label>
+                        <Label Style="{StaticResource DeviceKeyLabelStyle}" Text="{Binding ShiftLabel}" IsVisible="{Binding HasShiftLabel}"
+                               FontSize="{DynamicResource KeySubFontSize}" TextColor="{StaticResource LedTextDimColor}" Opacity="{Binding SecondaryOpacity}" />
+                    </VerticalStackLayout>
+                </Border>
+            </DataTemplate>
+
+            <!-- A pad. It is lit in the color the view model works out for the current mode and layer. It has one tap gesture and no
+                 shadow: on Android a Shadow (or any container change) on a view that owns gesture recognizers or a TouchBehavior
+                 silently kills its touch handling. Multi-tap gestures don't work either (a double tap also fires the single tap
+                 first), so every other action is on the long-press menu, in edit mode, or on the buttons around the pads. The taps go
+                 through code-behind rather than a RelativeSource command binding, which throws (and is caught) once for each pad
+                 created before it is attached to the page. -->
+            <DataTemplate x:Key="PadTemplate" x:DataType="vm:LaunchpadPadViewModel">
+                <controls:LongPressBorder Grid.Row="{Binding Row}" Grid.Column="{Binding Column}"
+                                          AutomationId="{Binding Index, StringFormat='launchpad-pad-{0}'}"
+                                          StrokeShape="RoundRectangle 6" StrokeThickness="0"
+                                          Margin="{DynamicResource PadGap}"
+                                          SemanticProperties.Description="{Binding AccessibleName}"
+                                          SemanticProperties.Hint="Plays or edits this pad. Long-press, or turn on edit mode, for more options"
+                                          LongPressed="OnPadLongPressed" Pressed="OnPadPressed" Released="OnPadReleased">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnPadTapped" CommandParameter="{Binding .}" />
+                    </Border.GestureRecognizers>
+                    <Grid>
+                        <!-- The color is drawn by this box, not by the border's own BackgroundColor: the touch behavior on the border
+                             writes that property itself, which would silently remove a binding to it. -->
+                        <BoxView Color="{Binding DisplayColorHex, Converter={StaticResource HexColor}}" InputTransparent="True" />
+                        <Label Margin="2" Text="{Binding Caption}"
+                               Style="{StaticResource CaptionTextBlockStyle}"
+                               FontSize="{DynamicResource PadFontSize}"
+                               TextColor="{Binding CaptionColorHex, Converter={StaticResource HexColor}}"
+                               HorizontalOptions="Center" VerticalOptions="Center" HorizontalTextAlignment="Center"
+                               LineBreakMode="TailTruncation" MaxLines="2" InputTransparent="True" />
+                        <Label Margin="2" Text="loop" FontSize="{DynamicResource PadFontSize}" TextColor="{StaticResource PadBadgeColor}"
+                               HorizontalOptions="Center" VerticalOptions="End" InputTransparent="True" IsVisible="{Binding IsLoopBadgeVisible}" />
+                        <!-- Edit-mode badge: a plain tap opens the pad menu instead of playing the pad. -->
+                        <Label Style="{StaticResource IconTextBlockStyle}" Text="{x:Static models:IconFont.Edit}"
+                               Margin="2" FontSize="14" TextColor="{StaticResource PadBadgeColor}"
+                               HorizontalOptions="End" VerticalOptions="Start"
+                               InputTransparent="True" IsVisible="{Binding IsEditMode}" />
+                    </Grid>
+                </controls:LongPressBorder>
+            </DataTemplate>
+        </ResourceDictionary>
+    </ContentPage.Resources>
 
     <ContentPage.ToolbarItems>
         <ToolbarItem AutomationId="launchpad-edit" Text="{Binding EditModeText}" controls:Icon.Glyph="{Binding EditModeGlyph}" controls:Icon.Size="24" Command="{Binding ToggleEditModeCommand}" />
         <ToolbarItem AutomationId="launchpad-stop-all" Text="Stop All" controls:Icon.Glyph="{x:Static models:IconFont.Stop}" controls:Icon.Size="24" Command="{Binding StopAllCommand}" />
     </ContentPage.ToolbarItems>
 
-    <Grid RowDefinitions="Auto,*" Margin="12" RowSpacing="8">
-    <Label x:Name="HintLabel" HorizontalOptions="Start" Style="{StaticResource CaptionTextBlockStyle}" AutomationId="launchpad-hint" Grid.Row="0" TextColor="{DynamicResource TextFillColorSecondary}"
-           Text="{Binding HintText}" />
-    <CollectionView AutomationId="launchpad-pads" Grid.Row="1" ItemsSource="{Binding Pads}">
-        <CollectionView.ItemsLayout>
-            <GridItemsLayout Orientation="Vertical" Span="8" HorizontalItemSpacing="6" VerticalItemSpacing="6" />
-        </CollectionView.ItemsLayout>
-        <CollectionView.ItemTemplate>
-            <DataTemplate x:DataType="vm:LaunchpadPadViewModel">
-                <!-- Long-press opens the pad menu (assign / loop / stop / clear): the alternative to the double- and triple-tap
-                     gestures. LongPressBorder is used because a behavior declared in a template gets no binding context. -->
-                <!-- A filled pad rises off the grid. The shadow must NOT be on the pad itself: on Android a Shadow (or any
-                     container change) on a view that owns gesture recognizers or a TouchBehavior silently kills its touch
-                     handling, so the pad would ignore taps. The shadow is cast by this separate, input-transparent card behind
-                     the pad instead; the pad's own opaque card covers all of it except the soft edge. -->
-                <Grid>
-                    <Border InputTransparent="True" HeightRequest="90" IsVisible="{Binding HasClip}" />
-                    <controls:LongPressBorder AutomationId="{Binding Index, StringFormat='launchpad-pad-{0}'}" StrokeShape="RoundRectangle 8" LongPressed="OnPadLongPressed"
-                            SemanticProperties.Description="{Binding AccessibleName}"
-                            SemanticProperties.Hint="Plays this pad. Long-press, or turn on edit mode, for more options"
-                            ToolTipProperties.Text="Tap to play this pad. Press and hold, or use edit mode, to give it a sample, loop it or clear it."
-                            BackgroundColor="{DynamicResource CardBackgroundFillColorDefault}"
-                            Stroke="{DynamicResource CardStrokeColorDefaultBrush}"
-                            StrokeThickness="1"
-                            HeightRequest="90">
-                        <!-- One tap gesture. Multi-tap gestures don't work here: Android reports only single and double taps, so a
-                             triple tap never fires, and a double tap also fires the single tap first (the pad would play and then
-                             open the picker). Every other action is on the long-press menu and in edit mode. The tap is routed
-                             through code-behind rather than a RelativeSource command binding, which throws (and is caught) once for
-                             each pad created before it is attached to the page. -->
-                        <Border.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnPadTapped" CommandParameter="{Binding .}" />
-                        </Border.GestureRecognizers>
-                        <Grid>
-                            <!-- A filled pad is drawn in its sample's palette color, over the card. Empty pads show just the card, so
-                                 they follow the light/dark theme; the color is a data value and stays the same in both themes. -->
-                            <BoxView Color="{Binding ColorHex, Converter={StaticResource HexColor}}" IsVisible="{Binding HasClip}" />
-                            <Grid RowDefinitions="*,Auto" Padding="6">
-                                <!-- Text on the palette color is white; on the empty card it takes the theme's text colors. -->
-                                <Label Grid.Row="0"
-                                       Text="{Binding Label}"
-                                       Style="{StaticResource CaptionTextBlockStyle}"
-                                       TextColor="{DynamicResource TextFillColorSecondary}"
-                                       VerticalOptions="Center"
-                                       HorizontalOptions="Center"
-                                       LineBreakMode="TailTruncation">
-                                    <Label.Triggers>
-                                        <DataTrigger TargetType="Label" Binding="{Binding HasClip}" Value="True">
-                                            <Setter Property="TextColor" Value="White" />
-                                        </DataTrigger>
-                                    </Label.Triggers>
-                                </Label>
-                                <Label Grid.Row="1"
-                                       Text="loop"
-                                       FontSize="10"
-                                       TextColor="White"
-                                       HorizontalOptions="Center"
-                                       IsVisible="{Binding IsLooping}" />
-                                <!-- Edit-mode badge: a plain tap opens the pad menu instead of playing the pad. -->
-                                <Label Grid.Row="0"
-                                       Style="{StaticResource IconTextBlockStyle}" Text="{x:Static models:IconFont.Edit}"
-                                       FontSize="16"
-                                       TextColor="{DynamicResource TextFillColorPrimary}"
-                                       HorizontalOptions="End"
-                                       VerticalOptions="Start"
-                                       InputTransparent="True"
-                                       IsVisible="{Binding IsEditMode}">
-                                    <Label.Triggers>
-                                        <DataTrigger TargetType="Label" Binding="{Binding HasClip}" Value="True">
-                                            <Setter Property="TextColor" Value="White" />
-                                        </DataTrigger>
-                                    </Label.Triggers>
-                                </Label>
-                            </Grid>
-                        </Grid>
-                    </controls:LongPressBorder>
-                </Grid>
-            </DataTemplate>
-        </CollectionView.ItemTemplate>
-    </CollectionView>
+    <!-- The rows and columns of Root are set by the code-behind: in portrait the text sits above the device; in landscape it sits in a
+         column beside it, so the device gets the full height. -->
+    <Grid x:Name="Root" Margin="12">
 
-    <controls:TeachingPopover x:Name="LaunchpadTip" Grid.RowSpan="2" Target="{x:Reference HintLabel}" TipKey="launchpad" Glyph="{x:Static models:IconFont.Lightbulb}"
-                              Title="Play the pads"
-                              Message="Tap a pad to play its sample. To give a pad a sample, loop it or clear it, turn on edit mode with the pencil in the top bar, or press and hold the pad." />
+        <VerticalStackLayout x:Name="TextPanel" Grid.Row="0" Grid.Column="0" Spacing="2">
+            <Label x:Name="HintLabel" HorizontalOptions="Start" Style="{StaticResource CaptionTextBlockStyle}" AutomationId="launchpad-hint" TextColor="{DynamicResource TextFillColorSecondary}"
+                   Text="{Binding HintText}" MaxLines="1" LineBreakMode="TailTruncation" MinimumHeightRequest="17" />
+            <Label AutomationId="launchpad-status" Style="{StaticResource CaptionTextBlockStyle}" Text="{Binding StatusText}" TextColor="{DynamicResource TextFillColorTertiary}"
+                   MaxLines="2" LineBreakMode="TailTruncation" MinimumHeightRequest="17" />
+            <Label x:Name="MessageLabel" AutomationId="launchpad-message" Style="{StaticResource CaptionTextBlockStyle}" Text="{Binding StatusMessage}" TextColor="{DynamicResource AccentTextFillColorPrimary}"
+                   MaxLines="1" LineBreakMode="TailTruncation" MinimumHeightRequest="17" />
+        </VerticalStackLayout>
+
+        <!-- The Launchpad Pro: a square, ten columns by eleven rows of cells. The middle eight columns and rows are the pads; around
+             them are the shift key and mode row above, the two side columns, and the two rows of keys below (the short row of
+             track buttons, and the labeled function buttons). The code-behind sizes the square to fit and scales its text. -->
+        <Grid x:Name="DeviceHost" Grid.Row="1" Grid.Column="0" SizeChanged="OnDeviceHostSizeChanged">
+            <Border x:Name="DeviceBody" Style="{StaticResource DeviceBodyStyle}" HorizontalOptions="Center" VerticalOptions="Center" Padding="6">
+                <Grid x:Name="Surface" ColumnDefinitions="*,*,*,*,*,*,*,*,*,*" RowDefinitions="0.9*,*,*,*,*,*,*,*,*,0.45*,0.7*">
+
+                    <FlexLayout Grid.Row="0" Grid.Column="0" Direction="Row"
+                                BindableLayout.ItemsSource="{Binding ShiftKeys}" BindableLayout.ItemTemplate="{StaticResource KeyTemplate}" />
+                    <FlexLayout Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="8" Direction="Row"
+                                BindableLayout.ItemsSource="{Binding TopKeys}" BindableLayout.ItemTemplate="{StaticResource KeyTemplate}" />
+
+                    <!-- The logo. It isn't a control on the hardware, so here it opens the guide to what every button does. -->
+                    <Border Grid.Row="0" Grid.Column="9" AutomationId="launchpad-logo" Margin="{DynamicResource KeyGap}" StrokeShape="RoundRectangle 5" StrokeThickness="0"
+                            Background="{StaticResource LogoFaceBrush}"
+                            SemanticProperties.Description="Novation logo. Tap for a guide to what every button does."
+                            ToolTipProperties.Text="Tap for a guide to what every button does.">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnLogoTapped" />
+                        </Border.GestureRecognizers>
+                        <shapes:Polygon Points="18,80 58,12 82,12 42,80" Fill="{StaticResource LogoMarkBrush}" Aspect="Uniform"
+                                        HorizontalOptions="Center" VerticalOptions="Center" Margin="8" InputTransparent="True" />
+                    </Border>
+
+                    <FlexLayout Grid.Row="1" Grid.RowSpan="8" Grid.Column="0" Direction="Column"
+                                BindableLayout.ItemsSource="{Binding LeftKeys}" BindableLayout.ItemTemplate="{StaticResource KeyTemplate}" />
+
+                    <Grid x:Name="PadGrid" AutomationId="launchpad-pads" Grid.Row="1" Grid.RowSpan="8" Grid.Column="1" Grid.ColumnSpan="8"
+                          RowDefinitions="*,*,*,*,*,*,*,*" ColumnDefinitions="*,*,*,*,*,*,*,*"
+                          BindableLayout.ItemsSource="{Binding Pads}" BindableLayout.ItemTemplate="{StaticResource PadTemplate}" />
+
+                    <FlexLayout Grid.Row="1" Grid.RowSpan="8" Grid.Column="9" Direction="Column"
+                                BindableLayout.ItemsSource="{Binding RightKeys}" BindableLayout.ItemTemplate="{StaticResource KeyTemplate}" />
+
+                    <FlexLayout Grid.Row="9" Grid.Column="1" Grid.ColumnSpan="8" Direction="Row"
+                                BindableLayout.ItemsSource="{Binding TrackKeys}" BindableLayout.ItemTemplate="{StaticResource KeyTemplate}" />
+
+                    <FlexLayout Grid.Row="10" Grid.Column="0" Direction="Row"
+                                BindableLayout.ItemsSource="{Binding SetupKeys}" BindableLayout.ItemTemplate="{StaticResource KeyTemplate}" />
+                    <FlexLayout Grid.Row="10" Grid.Column="1" Grid.ColumnSpan="8" Direction="Row"
+                                BindableLayout.ItemsSource="{Binding FunctionKeys}" BindableLayout.ItemTemplate="{StaticResource KeyTemplate}" />
+                </Grid>
+            </Border>
+        </Grid>
+
+        <controls:TeachingPopover x:Name="LaunchpadTip" Grid.RowSpan="2" Grid.ColumnSpan="2" Target="{x:Reference HintLabel}" TipKey="launchpad" Glyph="{x:Static models:IconFont.Lightbulb}"
+                                  Title="Play the pads"
+                                  Message="Tap a pad to play its sample. To give a pad a sample, loop it or clear it, turn on edit mode with the pencil in the top bar, or press and hold the pad. The buttons around the pads work like the ones on a Launchpad Pro: tap the logo for a guide to each." />
     </Grid>
 
 </ContentPage>

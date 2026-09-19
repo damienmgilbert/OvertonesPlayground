@@ -8,6 +8,11 @@ public class LaunchpadPad
     #region Public properties
 
     ///<summary>
+    ///The bank (0 to 3) the pad is in.
+    ///</summary>
+    public int Bank { get; set; }
+
+    ///<summary>
     ///Path to the audio clip assigned to this pad, if any.
     ///</summary>
     public string? ClipPath { get; set; }
@@ -41,5 +46,10 @@ public class LaunchpadPad
     ///Playback volume multiplier for this pad.
     ///</summary>
     public double Volume { get; set; } = 1.0;
+
+    ///<summary>
+    ///Identifies this pad's sounding voices to the playback service; different for the same position in different banks.
+    ///</summary>
+    public int VoiceKey => (Bank * LaunchpadProject.PadsPerBank) + Index;
     #endregion
 }

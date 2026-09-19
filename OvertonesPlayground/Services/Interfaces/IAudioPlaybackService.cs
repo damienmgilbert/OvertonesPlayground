@@ -74,15 +74,22 @@ public interface IAudioPlaybackService
     void StopEverything();
 
     ///<summary>
-    ///Stops every currently-sounding voice for the given pad.
+    ///Stops every currently-sounding voice started under <paramref name="voiceKey"/> (a pad's
+    ///<see cref="LaunchpadPad.VoiceKey"/>, or a sequencer track's key).
     ///</summary>
-    void StopPad(int padIndex);
+    void StopPad(int voiceKey);
 
     // Launchpad one-shots
     ///<summary>
     ///Fires a new, independent voice for the given pad (multiple triggers can overlap).
     ///</summary>
     void TriggerPad(LaunchpadPad pad);
+
+    ///<summary>
+    ///Fires a new, independent voice playing <paramref name="clipPath"/>, tracked under <paramref name="voiceKey"/> so that
+    ///<see cref="StopPad"/> and <see cref="StopAllPads"/> can silence it.
+    ///</summary>
+    void TriggerVoice(int voiceKey, string clipPath, PadVoiceOptions options);
 
     ///<summary>
     ///Applies a channel's current volume/pan/mute settings to its live voice, without restarting it.

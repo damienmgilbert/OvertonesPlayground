@@ -53,6 +53,33 @@ public class AudioPlaybackService : IAudioPlaybackService
     }
 
     ///<summary>
+    ///Forgets a pad voice and frees its player. Does nothing if the voice was already released (it ended, or was stopped).
+    ///</summary>
+    private static void Release(List<IAudioPlayer> owner, IAudioPlayer voice)
+    {
+        bool wasTracked = owner.Remove(voice);
+        if (wasTracked)
+        {
+            voice.Dispose();
+        }
+    }
+
+    ///<summary>
+    ///Cuts a pad voice off once it has played for <paramref name="length"/>. It carries on from the caller's thread, so the
+    ///player is touched from the same thread that created it.
+    ///</summary>
+    private static async Task ReleaseAfterAsync(List<IAudioPlayer> owner, IAudioPlayer voice, TimeSpan length)
+    {
+        await Task.Delay(length);
+        bool isStillPlaying = owner.Contains(voice);
+        if (isStillPlaying)
+        {
+            voice.Stop();
+            Release(owner, voice);
+        }
+    }
+
+    ///<summary>
     ///Forwards the main player's own end-of-clip event as both state-changed and playback-ended.
     ///</summary>
     private void OnMainPlaybackEnded(object? sender, EventArgs e)
@@ -163,9 +190,9 @@ public class AudioPlaybackService : IAudioPlaybackService
     }
 
     ///<inheritdoc/>
-    public void StopPad(int padIndex)
+    public void StopPad(int voiceKey)
     {
-        bool found = !_padVoices.TryGetValue(padIndex, out List<IAudioPlayer>? voices);
+        bool found = !_padVoices.TryGetValue(voiceKey, out List<IAudioPlayer>? voices);
         if (found)
         {
             return;
@@ -184,33 +211,47 @@ public class AudioPlaybackService : IAudioPlaybackService
     ///<inheritdoc/>
     public void TriggerPad(LaunchpadPad pad)
     {
-        bool hasClip = !pad.HasClip;
-        if (hasClip)
+        bool hasNoClip = !pad.HasClip;
+        if (hasNoClip)
         {
             return;
         }
 
-        _audioFocusService.RequestFocus();
-        IAudioPlayer voice = _audioManager.CreatePlayer(pad.ClipPath!);
-        voice.Volume = pad.Volume;
-        voice.Loop = pad.IsLooping;
+        TriggerVoice(pad.VoiceKey, pad.ClipPath!, new PadVoiceOptions(pad.Volume, Loop: pad.IsLooping));
+    }
 
-        bool found = !_padVoices.TryGetValue(pad.Index, out List<IAudioPlayer>? voices);
-        if (found)
+    ///<inheritdoc/>
+    public void TriggerVoice(int voiceKey, string clipPath, PadVoiceOptions options)
+    {
+        _audioFocusService.RequestFocus();
+        IAudioPlayer voice = _audioManager.CreatePlayer(clipPath);
+        voice.Volume = Math.Clamp(options.Volume, 0, 1);
+        voice.Balance = Math.Clamp(options.Balance, -1, 1);
+        voice.Loop = options.Loop;
+
+        // Speed also changes pitch. It isn't available on every player, and each has its own limits.
+        bool changesSpeed = Math.Abs(options.Speed - 1) > 0.001 && voice.CanSetSpeed;
+        if (changesSpeed)
         {
-            voices = [];
-            _padVoices[pad.Index] = voices;
+            voice.Speed = Math.Clamp(options.Speed, voice.MinimumSpeed, voice.MaximumSpeed);
         }
 
-        voices?.Add(voice);
-
-        voice.PlaybackEnded += (_, _) =>
+        bool isNew = !_padVoices.TryGetValue(voiceKey, out List<IAudioPlayer>? voices);
+        if (isNew)
         {
-            voices?.Remove(voice);
-            voice?.Dispose();
-        };
+            voices = [];
+            _padVoices[voiceKey] = voices;
+        }
 
+        List<IAudioPlayer> owner = voices!;
+        owner.Add(voice);
+        voice.PlaybackEnded += (_, _) => Release(owner, voice);
         voice.Play();
+
+        if (options.MaxLength is { } maxLength)
+        {
+            _ = ReleaseAfterAsync(owner, voice, maxLength);
+        }
     }
 
     ///<inheritdoc/>
