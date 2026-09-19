@@ -14,10 +14,10 @@
 
     <Grid RowDefinitions="Auto,*">
 
-        <HorizontalStackLayout Grid.Row="0" Spacing="8" Padding="16,10">
-            <Button AutomationId="library-view-list" Text="List" controls:Icon.Glyph="{x:Static models:IconFont.View_list}" Padding="12,6" Command="{Binding SetViewModeCommand}" CommandParameter="{x:Static models:LibraryViewMode.List}" />
-            <Button AutomationId="library-view-detail" Text="Detail" controls:Icon.Glyph="{x:Static models:IconFont.Table_rows}" Padding="12,6" Command="{Binding SetViewModeCommand}" CommandParameter="{x:Static models:LibraryViewMode.Detail}" />
-            <Button AutomationId="library-view-tile" Text="Tile" controls:Icon.Glyph="{x:Static models:IconFont.Grid_view}" Padding="12,6" Command="{Binding SetViewModeCommand}" CommandParameter="{x:Static models:LibraryViewMode.Tile}" />
+        <HorizontalStackLayout x:Name="ViewModes" HorizontalOptions="Start" Grid.Row="0" Spacing="8" Padding="16,10">
+            <Button AutomationId="library-view-list" ToolTipProperties.Text="Show the clips as a compact list" Text="List" controls:Icon.Glyph="{x:Static models:IconFont.View_list}" Padding="12,6" Command="{Binding SetViewModeCommand}" CommandParameter="{x:Static models:LibraryViewMode.List}" />
+            <Button AutomationId="library-view-detail" ToolTipProperties.Text="Show each clip as a card with its details." Text="Detail" controls:Icon.Glyph="{x:Static models:IconFont.Table_rows}" Padding="12,6" Command="{Binding SetViewModeCommand}" CommandParameter="{x:Static models:LibraryViewMode.Detail}" />
+            <Button AutomationId="library-view-tile" ToolTipProperties.Text="Show the clips as a grid of tiles. Tap a tile to play it, double-tap to edit." Text="Tile" controls:Icon.Glyph="{x:Static models:IconFont.Grid_view}" Padding="12,6" Command="{Binding SetViewModeCommand}" CommandParameter="{x:Static models:LibraryViewMode.Tile}" />
         </HorizontalStackLayout>
 
         <RefreshView AutomationId="library-refresh" Grid.Row="1" IsRefreshing="{Binding IsBusy}" Command="{Binding LoadCommand}">
@@ -78,18 +78,18 @@
                                            IsVisible="{Binding PublicStorageLocation, Converter={StaticResource StringToBool}}"
                                            LineBreakMode="TailTruncation" />
                                     <HorizontalStackLayout Grid.Row="3" Spacing="10">
-                                        <Button AutomationId="{Binding Id, StringFormat='library-detail-clip-{0}-play'}" Text="Play" controls:Icon.Glyph="{x:Static models:IconFont.Play_arrow}"
+                                        <Button AutomationId="{Binding Id, StringFormat='library-detail-clip-{0}-play'}" ToolTipProperties.Text="{Binding Name, StringFormat='Play {0}.'}" Text="Play" controls:Icon.Glyph="{x:Static models:IconFont.Play_arrow}"
                                                 Padding="14,6"
                                                 Command="{Binding Source={RelativeSource AncestorType={x:Type vm:LibraryViewModel}}, Path=PlayCommand}"
                                                 CommandParameter="{Binding .}" />
-                                        <Button AutomationId="{Binding Id, StringFormat='library-detail-clip-{0}-edit'}" Text="Edit" controls:Icon.Glyph="{x:Static models:IconFont.Edit}"
+                                        <Button AutomationId="{Binding Id, StringFormat='library-detail-clip-{0}-edit'}" ToolTipProperties.Text="{Binding Name, StringFormat='Edit {0}: trim it, mix it or change its sound.'}" Text="Edit" controls:Icon.Glyph="{x:Static models:IconFont.Edit}"
                                                 Padding="14,6"
                                                 Command="{Binding Source={RelativeSource AncestorType={x:Type vm:LibraryViewModel}}, Path=EditCommand}"
                                                 CommandParameter="{Binding .}" />
-                                        <Button AutomationId="{Binding Id, StringFormat='library-detail-clip-{0}-export'}" Text="Export" controls:Icon.Glyph="{x:Static models:IconFont.Download}"
+                                        <Button AutomationId="{Binding Id, StringFormat='library-detail-clip-{0}-export'}" ToolTipProperties.Text="{Binding Name, StringFormat='Save a copy of {0} to the Music folder on your device.'}" Text="Export" controls:Icon.Glyph="{x:Static models:IconFont.Download}"
                                                 Padding="14,6"
                                                 Clicked="OnExportClicked" />
-                                        <Button AutomationId="{Binding Id, StringFormat='library-detail-clip-{0}-delete'}" Text="Delete" controls:Icon.Glyph="{x:Static models:IconFont.Delete}"
+                                        <Button AutomationId="{Binding Id, StringFormat='library-detail-clip-{0}-delete'}" ToolTipProperties.Text="{Binding Name, StringFormat='Delete {0} from your library.'}" Text="Delete" controls:Icon.Glyph="{x:Static models:IconFont.Delete}"
                                                 Padding="14,6"
                                                 TextColor="{DynamicResource SystemFillColorCritical}"
                                                 Command="{Binding Source={RelativeSource AncestorType={x:Type vm:LibraryViewModel}}, Path=DeleteCommand}"
@@ -116,7 +116,7 @@
                     </CollectionView.ItemsLayout>
                     <CollectionView.ItemTemplate>
                         <DataTemplate x:DataType="models:AudioClip">
-                            <Border AutomationId="{Binding Id, StringFormat='library-tile-{0}'}" StrokeShape="RoundRectangle 12" Padding="8" HeightRequest="120">
+                            <Border AutomationId="{Binding Id, StringFormat='library-tile-{0}'}" ToolTipProperties.Text="{Binding Name, StringFormat='Tap to play {0}. Double-tap to edit it.'}" StrokeShape="RoundRectangle 12" Padding="8" HeightRequest="120">
                                 <Grid RowDefinitions="*,Auto" RowSpacing="4">
                                     <Grid.GestureRecognizers>
                                         <TapGestureRecognizer
@@ -137,6 +137,10 @@
 
             </Grid>
         </RefreshView>
+
+        <controls:TeachingPopover x:Name="LibraryTip" Grid.RowSpan="2" Target="{x:Reference ViewModes}" TipKey="library" Glyph="{x:Static models:IconFont.Lightbulb}"
+                                  Title="Your clips"
+                                  Message="Switch between the list, detail and tile views here. Play a clip with its play button, or tap a tile; edit it to trim, mix or change its sound. Import adds a file from your device." />
     </Grid>
 
 </ContentPage>

@@ -38,8 +38,8 @@
 
                 <VerticalStackLayout Spacing="10">
                     <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6">
-                        <Entry AutomationId="{Binding Number, StringFormat='multitrack-track-{0}-name'}" Grid.Column="0" Text="{Binding Name}" FontAttributes="Bold" FontSize="15" />
-<Button AutomationId="{Binding Number, StringFormat='multitrack-track-{0}-mute'}" Grid.Column="1" Text="M" WidthRequest="48" HeightRequest="48" Padding="0" FontSize="12"
+                        <Entry AutomationId="{Binding Number, StringFormat='multitrack-track-{0}-name'}" ToolTipProperties.Text="Name this track." Grid.Column="0" Text="{Binding Name}" FontAttributes="Bold" FontSize="15" />
+<Button AutomationId="{Binding Number, StringFormat='multitrack-track-{0}-mute'}" ToolTipProperties.Text="Silence this track." Grid.Column="1" Text="M" WidthRequest="48" HeightRequest="48" Padding="0" FontSize="12"
                                 Command="{Binding ToggleMuteCommand}">
                             <Button.Triggers>
                                 <DataTrigger TargetType="Button" Binding="{Binding IsMuted}" Value="True">
@@ -49,7 +49,7 @@
                                 </DataTrigger>
                             </Button.Triggers>
                         </Button>
-<Button AutomationId="{Binding Number, StringFormat='multitrack-track-{0}-solo'}" Grid.Column="2" Text="S" WidthRequest="48" HeightRequest="48" Padding="0" FontSize="12"
+<Button AutomationId="{Binding Number, StringFormat='multitrack-track-{0}-solo'}" ToolTipProperties.Text="Play only this track, and any others that are soloed." Grid.Column="2" Text="S" WidthRequest="48" HeightRequest="48" Padding="0" FontSize="12"
                                 Command="{Binding ToggleSoloCommand}">
                             <Button.Triggers>
                                 <DataTrigger TargetType="Button" Binding="{Binding IsSoloed}" Value="True">
@@ -68,8 +68,8 @@
                                          BindableLayout.ItemTemplate="{StaticResource TrackClipTemplate}" />
 
                     <HorizontalStackLayout Spacing="10">
-                        <Button AutomationId="{Binding Number, StringFormat='multitrack-track-{0}-add-clip'}" Text="Add Clip" controls:Icon.Glyph="{x:Static models:IconFont.Add}" Clicked="OnAddClipClicked" />
-                        <Button AutomationId="{Binding Number, StringFormat='multitrack-track-{0}-merge'}" Text="Merge" controls:Icon.Glyph="{x:Static models:IconFont.Link}" Command="{Binding MergeClipsCommand}" />
+                        <Button AutomationId="{Binding Number, StringFormat='multitrack-track-{0}-add-clip'}" ToolTipProperties.Text="Add a clip from your library to this track." Text="Add Clip" controls:Icon.Glyph="{x:Static models:IconFont.Add}" Clicked="OnAddClipClicked" />
+                        <Button AutomationId="{Binding Number, StringFormat='multitrack-track-{0}-merge'}" ToolTipProperties.Text="Merge this track's clips into one clip." Text="Merge" controls:Icon.Glyph="{x:Static models:IconFont.Link}" Command="{Binding MergeClipsCommand}" />
                     </HorizontalStackLayout>
                 </VerticalStackLayout>
             </Border>
@@ -86,7 +86,7 @@
 
             <VerticalStackLayout Spacing="2">
                 <Label Style="{StaticResource CaptionTextBlockStyle}" Text="Project name" TextColor="{DynamicResource TextFillColorSecondary}" />
-                <Entry AutomationId="multitrack-project-name" Text="{Binding ProjectName}" FontAttributes="Bold" FontSize="16" Placeholder="Mix" />
+                <Entry AutomationId="multitrack-project-name" ToolTipProperties.Text="The name of the mix. Bounce saves it under this name." Text="{Binding ProjectName}" FontAttributes="Bold" FontSize="16" Placeholder="Mix" />
             </VerticalStackLayout>
 
             <VerticalStackLayout AutomationId="multitrack-tracks" BindableLayout.ItemsSource="{Binding Tracks}"

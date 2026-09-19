@@ -22,7 +22,7 @@
         <Grid Grid.Row="1" ColumnDefinitions="*,Auto,*" ColumnSpacing="8">
             <HorizontalStackLayout Grid.Column="0" Spacing="4" HorizontalOptions="Start">
                 <Button AutomationId="trim-start-decrease" controls:Icon.Glyph="{x:Static models:IconFont.Remove}" controls:Icon.Size="22" SemanticProperties.Description="Decrease start time" Padding="12,6" Command="{Binding DecreaseStartCommand}" />
-                <Label Style="{StaticResource BodyStrongTextBlockStyle}" SemanticProperties.Hint="Enter an exact start time" AutomationId="trim-start-time" Text="{Binding StartTimeText}" VerticalOptions="Center" MinimumWidthRequest="60" HorizontalTextAlignment="Center">
+                <Label Style="{StaticResource BodyStrongTextBlockStyle}" SemanticProperties.Hint="Enter an exact start time" AutomationId="trim-start-time" ToolTipProperties.Text="Tap to type an exact start time." Text="{Binding StartTimeText}" VerticalOptions="Center" MinimumWidthRequest="60" HorizontalTextAlignment="Center">
                     <Label.GestureRecognizers>
                         <TapGestureRecognizer Tapped="OnStartTimeTapped" />
                     </Label.GestureRecognizers>
@@ -37,7 +37,7 @@
 
             <HorizontalStackLayout Grid.Column="2" Spacing="4" HorizontalOptions="End">
                 <Button AutomationId="trim-end-decrease" controls:Icon.Glyph="{x:Static models:IconFont.Remove}" controls:Icon.Size="22" SemanticProperties.Description="Decrease end time" Padding="12,6" Command="{Binding DecreaseEndCommand}" />
-                <Label Style="{StaticResource BodyStrongTextBlockStyle}" SemanticProperties.Hint="Enter an exact end time" AutomationId="trim-end-time" Text="{Binding EndTimeText}" VerticalOptions="Center" MinimumWidthRequest="60" HorizontalTextAlignment="Center">
+                <Label Style="{StaticResource BodyStrongTextBlockStyle}" SemanticProperties.Hint="Enter an exact end time" AutomationId="trim-end-time" ToolTipProperties.Text="Tap to type an exact end time." Text="{Binding EndTimeText}" VerticalOptions="Center" MinimumWidthRequest="60" HorizontalTextAlignment="Center">
                     <Label.GestureRecognizers>
                         <TapGestureRecognizer Tapped="OnEndTimeTapped" />
                     </Label.GestureRecognizers>
@@ -47,7 +47,7 @@
         </Grid>
 
         <!-- Waveform, with draggable start/end handles and a scrub-to-seek gesture -->
-        <Grid AutomationId="trim-waveform" Grid.Row="2" x:Name="WaveformContainer" SizeChanged="OnWaveformContainerSizeChanged" VerticalOptions="Center" IsClippedToBounds="True" Padding="24,0">
+        <Grid AutomationId="trim-waveform" ToolTipProperties.Text="Tap to move the playhead." Grid.Row="2" x:Name="WaveformContainer" SizeChanged="OnWaveformContainerSizeChanged" VerticalOptions="Center" IsClippedToBounds="True" Padding="24,0">
             <Grid.GestureRecognizers>
                 <TapGestureRecognizer Tapped="OnWaveformTapped" />
             </Grid.GestureRecognizers>
@@ -58,7 +58,7 @@
                      Margin="-1,0,0,0" TranslationX="{Binding StartHandleX}" InputTransparent="True" />
             <!-- A 48dp touch target (the recommended minimum) around the 32dp visual, so the handle is easy to grab. The
                  gesture, id and semantics sit on the target; the margin is half of 48 so the center stays on the trim point. -->
-            <Grid SemanticProperties.Description="Trim start handle" SemanticProperties.Hint="Drag to move the start. The minus and plus buttons do the same" AutomationId="trim-start-handle" WidthRequest="48" HeightRequest="48" BackgroundColor="Transparent"
+            <Grid x:Name="StartHandle" SemanticProperties.Description="Trim start handle" SemanticProperties.Hint="Drag to move the start. The minus and plus buttons do the same" AutomationId="trim-start-handle" ToolTipProperties.Text="Drag to move where the kept part starts." WidthRequest="48" HeightRequest="48" BackgroundColor="Transparent"
                   HorizontalOptions="Start" VerticalOptions="Center" Margin="-24,0,0,0" TranslationX="{Binding StartHandleX}">
                 <Border WidthRequest="32" HeightRequest="32" StrokeShape="RoundRectangle 16" Stroke="Transparent" BackgroundColor="{DynamicResource AccentFillColorDefault}"
                         HorizontalOptions="Center" VerticalOptions="Center" InputTransparent="True">
@@ -73,7 +73,7 @@
                      Margin="-1,0,0,0" TranslationX="{Binding EndHandleX}" InputTransparent="True" />
             <!-- A 48dp touch target (the recommended minimum) around the 32dp visual, so the handle is easy to grab. The
                  gesture, id and semantics sit on the target; the margin is half of 48 so the center stays on the trim point. -->
-            <Grid SemanticProperties.Description="Trim end handle" SemanticProperties.Hint="Drag to move the end. The minus and plus buttons do the same" AutomationId="trim-end-handle" WidthRequest="48" HeightRequest="48" BackgroundColor="Transparent"
+            <Grid SemanticProperties.Description="Trim end handle" SemanticProperties.Hint="Drag to move the end. The minus and plus buttons do the same" AutomationId="trim-end-handle" ToolTipProperties.Text="Drag to move where the kept part ends." WidthRequest="48" HeightRequest="48" BackgroundColor="Transparent"
                   HorizontalOptions="Start" VerticalOptions="Center" Margin="-24,0,0,0" TranslationX="{Binding EndHandleX}">
                 <Border WidthRequest="32" HeightRequest="32" StrokeShape="RoundRectangle 16" Stroke="Transparent" BackgroundColor="{DynamicResource AccentFillColorDefault}"
                         HorizontalOptions="Center" VerticalOptions="Center" InputTransparent="True">
@@ -88,7 +88,7 @@
         <!-- Trim mode toggle + zoom/pan controls -->
         <Grid Grid.Row="3" ColumnDefinitions="*,Auto" ColumnSpacing="10">
             <HorizontalStackLayout Grid.Column="0" Spacing="10" HorizontalOptions="Start">
-                <Button AutomationId="trim-mode-trim" Style="{StaticResource AccentButtonStyle}" Text="Trim" controls:Icon.Glyph="{x:Static models:IconFont.Content_cut}" Command="{Binding SetModeCommand}" CommandParameter="{x:Static models:TrimMode.Trim}">
+                <Button AutomationId="trim-mode-trim" ToolTipProperties.Text="Keep only the part between the handles." Style="{StaticResource AccentButtonStyle}" Text="Trim" controls:Icon.Glyph="{x:Static models:IconFont.Content_cut}" Command="{Binding SetModeCommand}" CommandParameter="{x:Static models:TrimMode.Trim}">
                     <Button.Triggers>
                         <DataTrigger TargetType="Button" Binding="{Binding Mode}" Value="{x:Static models:TrimMode.TrimMiddle}">
                             <Setter Property="BackgroundColor" Value="{DynamicResource ControlFillColorDefault}" />
@@ -97,7 +97,7 @@
                         </DataTrigger>
                     </Button.Triggers>
                 </Button>
-                <Button AutomationId="trim-mode-trim-middle" Style="{StaticResource AccentButtonStyle}" Text="Trim Middle" controls:Icon.Glyph="{x:Static models:IconFont.Content_cut}" Command="{Binding SetModeCommand}" CommandParameter="{x:Static models:TrimMode.TrimMiddle}">
+                <Button AutomationId="trim-mode-trim-middle" ToolTipProperties.Text="Cut out the part between the handles and join the rest together." Style="{StaticResource AccentButtonStyle}" Text="Trim Middle" controls:Icon.Glyph="{x:Static models:IconFont.Content_cut}" Command="{Binding SetModeCommand}" CommandParameter="{x:Static models:TrimMode.TrimMiddle}">
                     <Button.Triggers>
                         <DataTrigger TargetType="Button" Binding="{Binding Mode}" Value="{x:Static models:TrimMode.Trim}">
                             <Setter Property="BackgroundColor" Value="{DynamicResource ControlFillColorDefault}" />
@@ -119,8 +119,8 @@
 
         <!-- Split / insert at playhead -->
         <HorizontalStackLayout Grid.Row="4" Spacing="10" HorizontalOptions="Center">
-            <Button AutomationId="trim-split" Text="Split at Playhead" controls:Icon.Glyph="{x:Static models:IconFont.Content_cut}" Command="{Binding SplitAtPlayheadCommand}" />
-            <Button AutomationId="trim-insert-clip" Text="Insert Clip Here" controls:Icon.Glyph="{x:Static models:IconFont.Attach_file}" Clicked="OnInsertClipClicked" />
+            <Button AutomationId="trim-split" ToolTipProperties.Text="Cut the clip in two at the playhead." Text="Split at Playhead" controls:Icon.Glyph="{x:Static models:IconFont.Content_cut}" Command="{Binding SplitAtPlayheadCommand}" />
+            <Button AutomationId="trim-insert-clip" ToolTipProperties.Text="Insert another clip at the playhead." Text="Insert Clip Here" controls:Icon.Glyph="{x:Static models:IconFont.Attach_file}" Clicked="OnInsertClipClicked" />
         </HorizontalStackLayout>
 
         <!-- Playback transport + bottom quick-action bar -->
@@ -128,7 +128,7 @@
 
             <HorizontalStackLayout Spacing="20" HorizontalOptions="Center">
                 <Button AutomationId="trim-skip-start" controls:Icon.Glyph="{x:Static models:IconFont.Skip_previous}" controls:Icon.Size="24" SemanticProperties.Description="Skip to start" Command="{Binding SkipToStartCommand}" WidthRequest="52" HeightRequest="52" CornerRadius="26" />
-                <Button AutomationId="trim-play-pause" Style="{StaticResource AccentButtonStyle}" controls:Icon.Glyph="{Binding IsPlaying, Converter={StaticResource PlayPauseIcon}}" controls:Icon.Size="32" SemanticProperties.Description="{Binding IsPlaying, Converter={StaticResource PlayPauseLabel}}" Command="{Binding PlayPauseCommand}"
+                <Button AutomationId="trim-play-pause" Style="{StaticResource AccentButtonStyle}" Shadow="{DynamicResource CardShadow}" controls:Icon.Glyph="{Binding IsPlaying, Converter={StaticResource PlayPauseIcon}}" controls:Icon.Size="32" SemanticProperties.Description="{Binding IsPlaying, Converter={StaticResource PlayPauseLabel}}" Command="{Binding PlayPauseCommand}"
                         WidthRequest="72" HeightRequest="72" CornerRadius="36" />
                 <Button AutomationId="trim-skip-end" controls:Icon.Glyph="{x:Static models:IconFont.Skip_next}" controls:Icon.Size="24" SemanticProperties.Description="Skip to end" Command="{Binding SkipToEndCommand}" WidthRequest="52" HeightRequest="52" CornerRadius="26" />
             </HorizontalStackLayout>
@@ -137,7 +137,7 @@
                 <VerticalStackLayout Padding="16,12" Spacing="10">
 
                     <HorizontalStackLayout Spacing="16" HorizontalOptions="Center">
-                        <Button AutomationId="trim-tool-volume" Text="Volume" controls:Icon.Glyph="{x:Static models:IconFont.Volume_up}" Padding="12,8" Command="{Binding ToggleToolCommand}" CommandParameter="{x:Static models:TrimTool.Volume}">
+                        <Button AutomationId="trim-tool-volume" ToolTipProperties.Text="Change the volume of the kept part." Text="Volume" controls:Icon.Glyph="{x:Static models:IconFont.Volume_up}" Padding="12,8" Command="{Binding ToggleToolCommand}" CommandParameter="{x:Static models:TrimTool.Volume}">
                             <Button.Triggers>
                                 <DataTrigger TargetType="Button" Binding="{Binding ActiveTool}" Value="{x:Static models:TrimTool.Volume}">
                                     <Setter Property="BackgroundColor" Value="{DynamicResource AccentFillColorDefault}" />
@@ -146,7 +146,7 @@
                                 </DataTrigger>
                             </Button.Triggers>
                         </Button>
-                        <Button AutomationId="trim-tool-fade-in" Text="Fade In" controls:Icon.Glyph="{x:Static models:IconFont.Trending_up}" Padding="12,8" Command="{Binding ToggleToolCommand}" CommandParameter="{x:Static models:TrimTool.FadeIn}">
+                        <Button AutomationId="trim-tool-fade-in" ToolTipProperties.Text="Fade the start of the kept part in." Text="Fade In" controls:Icon.Glyph="{x:Static models:IconFont.Trending_up}" Padding="12,8" Command="{Binding ToggleToolCommand}" CommandParameter="{x:Static models:TrimTool.FadeIn}">
                             <Button.Triggers>
                                 <DataTrigger TargetType="Button" Binding="{Binding ActiveTool}" Value="{x:Static models:TrimTool.FadeIn}">
                                     <Setter Property="BackgroundColor" Value="{DynamicResource AccentFillColorDefault}" />
@@ -155,7 +155,7 @@
                                 </DataTrigger>
                             </Button.Triggers>
                         </Button>
-                        <Button AutomationId="trim-tool-fade-out" Text="Fade Out" controls:Icon.Glyph="{x:Static models:IconFont.Trending_down}" Padding="12,8" Command="{Binding ToggleToolCommand}" CommandParameter="{x:Static models:TrimTool.FadeOut}">
+                        <Button AutomationId="trim-tool-fade-out" ToolTipProperties.Text="Fade the end of the kept part out." Text="Fade Out" controls:Icon.Glyph="{x:Static models:IconFont.Trending_down}" Padding="12,8" Command="{Binding ToggleToolCommand}" CommandParameter="{x:Static models:TrimTool.FadeOut}">
                             <Button.Triggers>
                                 <DataTrigger TargetType="Button" Binding="{Binding ActiveTool}" Value="{x:Static models:TrimTool.FadeOut}">
                                     <Setter Property="BackgroundColor" Value="{DynamicResource AccentFillColorDefault}" />
@@ -179,6 +179,9 @@
             </Border>
         </VerticalStackLayout>
 
+        <controls:TeachingPopover x:Name="TrimTip" Grid.RowSpan="6" Target="{x:Reference StartHandle}" TipKey="trim" Glyph="{x:Static models:IconFont.Lightbulb}"
+                                  Title="Choose what to keep"
+                                  Message="Drag the round handles along the waveform. For an exact cut, tap a time to type it, or nudge it with the minus and plus buttons. Undo and Redo are in the top bar." />
     </Grid>
 
 </ContentPage>

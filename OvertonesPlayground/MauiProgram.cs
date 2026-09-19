@@ -4,6 +4,7 @@ using OvertonesPlayground.Controls;
 using OvertonesPlayground.Platforms.Android.Services;
 using OvertonesPlayground.Services.Implementations;
 using OvertonesPlayground.Services.Interfaces;
+using OvertonesPlayground.Themes;
 using OvertonesPlayground.ViewModels;
 using OvertonesPlayground.Views;
 using Plugin.Maui.Audio;
@@ -106,14 +107,17 @@ public static class MauiProgram
             fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
             fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
 
-            // The icon font: every glyph in Models/MaterialSymbolsRoundedIcons.cs (IconFont) comes from this file.
+            // The icon font: only the glyphs the app uses, cut down from the full Material Symbols font by
+            // tools/IconFont/subset-icons.py. Re-run that script after using another IconFont icon, or it draws as an empty box.
             fonts.AddFont("MaterialSymbolsRounded.ttf", Icon.FontFamily);
         });
 
         builder.AddAudio();
+        FluentMotion.Register();
 
 #if ANDROID
         FluentTextInputs.Register();
+        AutoTooltips.Register();
 #endif
 
         RegisterServices(builder.Services);

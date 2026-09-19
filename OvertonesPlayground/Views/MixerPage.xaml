@@ -33,7 +33,7 @@
                         <BoxView Grid.Row="0" HeightRequest="4" CornerRadius="2"
                                  Color="{Binding ColorHex, Converter={StaticResource HexColor}}" />
 
-                        <Entry AutomationId="{Binding Number, StringFormat='mixer-channel-{0}-name'}" Grid.Row="1" Text="{Binding Name}" FontAttributes="Bold" FontSize="13"
+                        <Entry AutomationId="{Binding Number, StringFormat='mixer-channel-{0}-name'}" ToolTipProperties.Text="Name this channel." Grid.Row="1" Text="{Binding Name}" FontAttributes="Bold" FontSize="13"
                                HorizontalTextAlignment="Center" />
 
                         <Label Style="{StaticResource CaptionTextBlockStyle}" AutomationId="{Binding Number, StringFormat='mixer-channel-{0}-source'}" Grid.Row="2" Text="{Binding SourceLabel}"
@@ -60,7 +60,7 @@
                                TextColor="{DynamicResource TextFillColorSecondary}" HorizontalTextAlignment="Center" />
 
                         <HorizontalStackLayout Grid.Row="7" Spacing="6" HorizontalOptions="Center">
-<Button AutomationId="{Binding Number, StringFormat='mixer-channel-{0}-mute'}" Text="M" WidthRequest="48" HeightRequest="48" Padding="0" FontSize="12"
+<Button AutomationId="{Binding Number, StringFormat='mixer-channel-{0}-mute'}" ToolTipProperties.Text="Silence this channel." Text="M" WidthRequest="48" HeightRequest="48" Padding="0" FontSize="12"
                                     Command="{Binding ToggleMuteCommand}">
                                 <Button.Triggers>
                                     <DataTrigger TargetType="Button" Binding="{Binding IsMuted}" Value="True">
@@ -70,7 +70,7 @@
                                     </DataTrigger>
                                 </Button.Triggers>
                             </Button>
-<Button AutomationId="{Binding Number, StringFormat='mixer-channel-{0}-solo'}" Text="S" WidthRequest="48" HeightRequest="48" Padding="0" FontSize="12"
+<Button AutomationId="{Binding Number, StringFormat='mixer-channel-{0}-solo'}" ToolTipProperties.Text="Play only this channel, and any others that are soloed." Text="S" WidthRequest="48" HeightRequest="48" Padding="0" FontSize="12"
                                     Command="{Binding ToggleSoloCommand}">
                                 <Button.Triggers>
                                     <DataTrigger TargetType="Button" Binding="{Binding IsSoloed}" Value="True">

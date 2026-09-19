@@ -15,11 +15,11 @@
             <Label Style="{StaticResource CaptionTextBlockStyle}" Text="Type something, Generate &amp; Play to preview it, then Save to keep it in your library (and your device's Music folder)."
                    TextColor="{DynamicResource TextFillColorSecondary}" />
 
-            <Editor AutomationId="texttospeech-text" Placeholder="Type the text to speak..." Text="{Binding Text}" AutoSize="TextChanges" MinimumHeightRequest="120" />
+            <Editor AutomationId="texttospeech-text" ToolTipProperties.Text="The text to be spoken." Placeholder="Type the text to speak..." Text="{Binding Text}" AutoSize="TextChanges" MinimumHeightRequest="120" />
 
             <HorizontalStackLayout Spacing="12">
-                <Button AutomationId="texttospeech-generate" Style="{StaticResource AccentButtonStyle}" Text="Generate &amp; Play" controls:Icon.Glyph="{x:Static models:IconFont.Play_arrow}" Command="{Binding GenerateCommand}" />
-                <Button AutomationId="texttospeech-save" Style="{StaticResource AccentButtonStyle}" Text="Save" controls:Icon.Glyph="{x:Static models:IconFont.Save}" Command="{Binding SaveCommand}" IsEnabled="{Binding CanSave}" />
+                <Button AutomationId="texttospeech-generate" ToolTipProperties.Text="Turn the text into speech and play it." Style="{StaticResource AccentButtonStyle}" Text="Generate &amp; Play" controls:Icon.Glyph="{x:Static models:IconFont.Play_arrow}" Command="{Binding GenerateCommand}" />
+                <Button AutomationId="texttospeech-save" ToolTipProperties.Text="Save the speech to your library." Style="{StaticResource AccentButtonStyle}" Text="Save" controls:Icon.Glyph="{x:Static models:IconFont.Save}" Command="{Binding SaveCommand}" IsEnabled="{Binding CanSave}" />
             </HorizontalStackLayout>
 
             <GraphicsView SemanticProperties.Description="Waveform preview of the generated speech" AutomationId="texttospeech-waveform" x:Name="WaveformView" HeightRequest="120" BackgroundColor="{DynamicResource SolidBackgroundFillColorTertiary}" />

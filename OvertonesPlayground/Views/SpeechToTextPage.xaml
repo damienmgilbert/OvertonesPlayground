@@ -15,25 +15,25 @@
             <Label Style="{StaticResource CaptionTextBlockStyle}" Text="Listen live through the microphone and watch the transcript build up, then Copy or Share it. There's no reliable way to transcribe an existing recording - only live listening."
                    TextColor="{DynamicResource TextFillColorSecondary}" />
 
-            <Button AutomationId="speechtotext-start" Style="{StaticResource AccentButtonStyle}" Text="Start Listening" controls:Icon.Glyph="{x:Static models:IconFont.Mic}"
+            <Button AutomationId="speechtotext-start" ToolTipProperties.Text="Start listening through the microphone." Style="{StaticResource AccentButtonStyle}" Text="Start Listening" controls:Icon.Glyph="{x:Static models:IconFont.Mic}"
                     Command="{Binding StartListeningCommand}"
                     IsVisible="{Binding IsListening, Converter={StaticResource InvertedBool}}" />
 
-            <Button AutomationId="speechtotext-stop" Style="{StaticResource AccentButtonStyle}" Text="Stop Listening" controls:Icon.Glyph="{x:Static models:IconFont.Stop}"
+            <Button AutomationId="speechtotext-stop" ToolTipProperties.Text="Stop listening. The words heard so far stay in the transcript." Style="{StaticResource AccentButtonStyle}" Text="Stop Listening" controls:Icon.Glyph="{x:Static models:IconFont.Stop}"
                     Command="{Binding StopListeningCommand}"
                     IsVisible="{Binding IsListening}" />
 
             <ActivityIndicator AutomationId="speechtotext-listening" IsRunning="{Binding IsListening}" IsVisible="{Binding IsListening}" />
 
-            <Editor AutomationId="speechtotext-transcript" Text="{Binding Transcript}"
+            <Editor AutomationId="speechtotext-transcript" ToolTipProperties.Text="The words heard so far, updated as you speak." Text="{Binding Transcript}"
                     IsReadOnly="True"
                     Placeholder="Your transcript will appear here as you speak..."
                     AutoSize="TextChanges"
                     MinimumHeightRequest="150" />
 
             <HorizontalStackLayout Spacing="12">
-                <Button AutomationId="speechtotext-copy" Text="Copy" controls:Icon.Glyph="{x:Static models:IconFont.Content_copy}" Command="{Binding CopyCommand}" />
-                <Button AutomationId="speechtotext-share" Text="Share" controls:Icon.Glyph="{x:Static models:IconFont.Share}" Command="{Binding ShareCommand}" />
+                <Button AutomationId="speechtotext-copy" ToolTipProperties.Text="Copy the transcript so you can paste it elsewhere." Text="Copy" controls:Icon.Glyph="{x:Static models:IconFont.Content_copy}" Command="{Binding CopyCommand}" />
+                <Button AutomationId="speechtotext-share" ToolTipProperties.Text="Send the transcript to another app." Text="Share" controls:Icon.Glyph="{x:Static models:IconFont.Share}" Command="{Binding ShareCommand}" />
             </HorizontalStackLayout>
 
             <Label AutomationId="speechtotext-status" Text="{Binding StatusMessage}" TextColor="{DynamicResource TextFillColorSecondary}" />

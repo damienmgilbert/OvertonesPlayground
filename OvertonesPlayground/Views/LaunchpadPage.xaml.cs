@@ -96,12 +96,31 @@ public partial class LaunchpadPage : ContentPage
     {
         base.OnAppearing();
         Log_PageAppeared();
+
+        // Show the one-time tip once the page has settled in (its entrance animation is 250 ms).
+        _ = Dispatcher.DispatchDelayed(TimeSpan.FromMilliseconds(500), () => _ = LaunchpadTip.ShowOnceAsync());
     }
 
     protected override void OnDisappearing()
     {
         base.OnDisappearing();
         Log_PageDisappeared();
+
+        _ = LaunchpadTip.CloseAsync();
+    }
+
+    ///<summary>
+    ///Back closes an open tip before it leaves the page.
+    ///</summary>
+    protected override bool OnBackButtonPressed()
+    {
+        if (LaunchpadTip.IsOpen)
+        {
+            _ = LaunchpadTip.CloseAsync();
+            return true;
+        }
+
+        return base.OnBackButtonPressed();
     }
     #endregion
 }

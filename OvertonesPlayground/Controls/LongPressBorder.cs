@@ -1,4 +1,5 @@
 using CommunityToolkit.Maui.Behaviors;
+using OvertonesPlayground.Themes;
 
 namespace OvertonesPlayground.Controls;
 
@@ -12,6 +13,7 @@ public class LongPressBorder : Border
 {
     #region Constants
     private const int LongPressMilliseconds = 500;
+    private const double PressedScale = 0.96;
     #endregion
 
     #region Constructors
@@ -23,7 +25,16 @@ public class LongPressBorder : Border
         // The behavior lives in this border's Behaviors collection for the border's whole lifetime, so there is nothing for
         // the constructor to dispose.
 #pragma warning disable CA2000
-        TouchBehavior touch = new() { LongPressDuration = LongPressMilliseconds, };
+        TouchBehavior touch = new()
+        {
+            LongPressDuration = LongPressMilliseconds,
+            // The border shrinks a little while pressed, like a Button does (see FluentMotion), unless animations are turned off.
+            PressedScale = FluentMotion.IsReduced ? 1 : PressedScale,
+            PressedAnimationDuration = (int)FluentMotion.Faster,
+            PressedAnimationEasing = FluentMotion.Easing,
+            DefaultAnimationDuration = (int)FluentMotion.Fast,
+            DefaultAnimationEasing = FluentMotion.Easing,
+        };
 #pragma warning restore CA2000
         touch.LongPressCompleted += (_, _) => LongPressed?.Invoke(this, EventArgs.Empty);
         Behaviors.Add(touch);

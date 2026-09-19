@@ -245,6 +245,9 @@ public partial class TrimPage : ContentPage
         Application.Current!.RequestedThemeChanged += OnRequestedThemeChanged;
         Log_PageAppeared();
         _viewModel.StartTicking(Dispatcher);
+
+        // Show the one-time tip once the page has settled in (its entrance animation is 250 ms).
+        _ = Dispatcher.DispatchDelayed(TimeSpan.FromMilliseconds(500), () => _ = TrimTip.ShowOnceAsync());
     }
 
     protected override void OnDisappearing()
@@ -253,6 +256,22 @@ public partial class TrimPage : ContentPage
         Application.Current!.RequestedThemeChanged -= OnRequestedThemeChanged;
         Log_PageDisappeared();
         _viewModel.StopTicking();
+
+        _ = TrimTip.CloseAsync();
+    }
+
+    ///<summary>
+    ///Back closes an open tip before it leaves the page.
+    ///</summary>
+    protected override bool OnBackButtonPressed()
+    {
+        if (TrimTip.IsOpen)
+        {
+            _ = TrimTip.CloseAsync();
+            return true;
+        }
+
+        return base.OnBackButtonPressed();
     }
     #endregion
 

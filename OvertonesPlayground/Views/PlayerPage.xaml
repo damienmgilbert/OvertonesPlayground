@@ -18,7 +18,7 @@
         <Border Grid.Row="1" StrokeShape="Rectangle">
             <VerticalStackLayout Padding="24,18" Spacing="14">
 
-                <Slider AutomationId="player-position-slider" x:Name="PositionSlider"
+                <Slider AutomationId="player-position-slider" ToolTipProperties.Text="Drag to jump to another point in the clip." x:Name="PositionSlider"
                         Minimum="0"
                         Maximum="{Binding DurationSeconds}"
                         Value="{Binding PositionSeconds, Mode=OneWay}"
@@ -30,12 +30,12 @@
                 </Grid>
 
                 <HorizontalStackLayout Spacing="20" HorizontalOptions="Center">
-                    <Button AutomationId="player-play-pause" Style="{StaticResource AccentButtonStyle}" controls:Icon.Glyph="{Binding IsPlaying, Converter={StaticResource PlayPauseIcon}}" controls:Icon.Size="40" SemanticProperties.Description="{Binding IsPlaying, Converter={StaticResource PlayPauseLabel}}"
+                    <Button AutomationId="player-play-pause" Style="{StaticResource AccentButtonStyle}" Shadow="{DynamicResource CardShadow}" controls:Icon.Glyph="{Binding IsPlaying, Converter={StaticResource PlayPauseIcon}}" controls:Icon.Size="40" SemanticProperties.Description="{Binding IsPlaying, Converter={StaticResource PlayPauseLabel}}"
                             WidthRequest="90"
                             HeightRequest="90"
                             CornerRadius="45"
                             Command="{Binding PlayPauseCommand}" />
-                    <Button AutomationId="player-stop" controls:Icon.Glyph="{x:Static models:IconFont.Stop}" controls:Icon.Size="32" SemanticProperties.Description="Stop" WidthRequest="70" HeightRequest="70" CornerRadius="35"
+                    <Button AutomationId="player-stop" Shadow="{DynamicResource CardShadow}" controls:Icon.Glyph="{x:Static models:IconFont.Stop}" controls:Icon.Size="32" SemanticProperties.Description="Stop" WidthRequest="70" HeightRequest="70" CornerRadius="35"
                             VerticalOptions="Center"
                             Command="{Binding StopCommand}" />
                 </HorizontalStackLayout>

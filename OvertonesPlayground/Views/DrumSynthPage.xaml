@@ -22,7 +22,7 @@
                 </CollectionView.ItemsLayout>
                 <CollectionView.ItemTemplate>
                     <DataTemplate x:DataType="models:DrumType">
-                        <Button AutomationId="{Binding ., StringFormat='drumsynth-type-{0}'}" Text="{Binding .}"
+                        <Button AutomationId="{Binding ., StringFormat='drumsynth-type-{0}'}" ToolTipProperties.Text="{Binding ., StringFormat='Load the default settings for {0}.'}" Text="{Binding .}"
                                 Command="{Binding Source={RelativeSource AncestorType={x:Type vm:DrumSynthViewModel}}, Path=SelectDrumCommand}"
                                 CommandParameter="{Binding .}" />
                     </DataTemplate>
@@ -39,7 +39,7 @@
 
                 <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12" RowSpacing="12">
                     <Label Grid.Row="0" Grid.Column="0" Text="Sample rate" VerticalOptions="Center" />
-                    <Picker AutomationId="drumsynth-sample-rate" Grid.Row="0" Grid.Column="1"
+                    <Picker AutomationId="drumsynth-sample-rate" ToolTipProperties.Text="Samples per second of the generated sound. Higher is cleaner but makes bigger files." Grid.Row="0" Grid.Column="1"
                             ItemsSource="{x:Static vm:DrumSynthParametersViewModel.SampleRateOptions}"
                             SelectedItem="{Binding SampleRate}" />
                 </Grid>
@@ -78,7 +78,7 @@
                     <VerticalStackLayout Spacing="12" Padding="0,4,0,12">
                         <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
                             <Label Grid.Column="0" Text="Burst count" VerticalOptions="Center" />
-                            <Stepper AutomationId="drumsynth-clap-burst-count" Grid.Column="1" Minimum="1" Maximum="8" Increment="1" Value="{Binding BurstCount}" HorizontalOptions="Start" />
+                            <Stepper AutomationId="drumsynth-clap-burst-count" ToolTipProperties.Text="How many quick claps make up the clap sound." Grid.Column="1" Minimum="1" Maximum="8" Increment="1" Value="{Binding BurstCount}" HorizontalOptions="Start" />
                             <Label AutomationId="drumsynth-clap-burst-count-text" Grid.Column="2" Text="{Binding BurstCount}" VerticalOptions="Center" />
                         </Grid>
                         <controls:LabeledSlider AutomationId="drumsynth-clap-spacing" LabelText="Spacing" Minimum="0" Maximum="0.05" Digits="3" Value="{Binding BurstSpacingSeconds}" />
@@ -92,7 +92,7 @@
                     <VerticalStackLayout Spacing="12" Padding="0,4,0,12">
                         <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12" RowSpacing="12">
                             <Label Grid.Row="0" Grid.Column="0" Text="Type" VerticalOptions="Center" />
-                            <Picker AutomationId="drumsynth-filter-type" Grid.Row="0" Grid.Column="1"
+                            <Picker AutomationId="drumsynth-filter-type" ToolTipProperties.Text="Which frequencies the filter lets through." Grid.Row="0" Grid.Column="1"
                                     ItemsSource="{x:Static vm:DrumSynthParametersViewModel.FilterOptions}"
                                     SelectedItem="{Binding FilterType}" />
                         </Grid>
@@ -103,8 +103,8 @@
             </VerticalStackLayout>
 
             <HorizontalStackLayout Spacing="12">
-                <Button AutomationId="drumsynth-generate" Style="{StaticResource AccentButtonStyle}" Text="Generate &amp; Play" controls:Icon.Glyph="{x:Static models:IconFont.Play_arrow}" Command="{Binding GenerateCommand}" />
-                <Button AutomationId="drumsynth-save" Style="{StaticResource AccentButtonStyle}" Text="Save" controls:Icon.Glyph="{x:Static models:IconFont.Save}" Command="{Binding SaveCommand}" IsEnabled="{Binding CanSave}" />
+                <Button AutomationId="drumsynth-generate" ToolTipProperties.Text="Make the sound with these settings and play it." Style="{StaticResource AccentButtonStyle}" Text="Generate &amp; Play" controls:Icon.Glyph="{x:Static models:IconFont.Play_arrow}" Command="{Binding GenerateCommand}" />
+                <Button AutomationId="drumsynth-save" ToolTipProperties.Text="Save the sound to your library." Style="{StaticResource AccentButtonStyle}" Text="Save" controls:Icon.Glyph="{x:Static models:IconFont.Save}" Command="{Binding SaveCommand}" IsEnabled="{Binding CanSave}" />
             </HorizontalStackLayout>
 
             <ActivityIndicator AutomationId="drumsynth-busy" IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />

@@ -67,6 +67,9 @@ public partial class LibraryPage : ContentPage
         base.OnAppearing();
         Log_PageAppeared();
         _viewModel.LoadCommand.Execute(null);
+
+        // Show the one-time tip once the page has settled in (its entrance animation is 250 ms).
+        _ = Dispatcher.DispatchDelayed(TimeSpan.FromMilliseconds(500), () => _ = LibraryTip.ShowOnceAsync());
     }
 
     ///<summary>
@@ -76,6 +79,22 @@ public partial class LibraryPage : ContentPage
     {
         base.OnDisappearing();
         Log_PageDisappeared();
+
+        _ = LibraryTip.CloseAsync();
+    }
+
+    ///<summary>
+    ///Back closes an open tip before it leaves the page.
+    ///</summary>
+    protected override bool OnBackButtonPressed()
+    {
+        if (LibraryTip.IsOpen)
+        {
+            _ = LibraryTip.CloseAsync();
+            return true;
+        }
+
+        return base.OnBackButtonPressed();
     }
     #endregion
 }

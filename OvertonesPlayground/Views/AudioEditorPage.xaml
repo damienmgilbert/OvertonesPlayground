@@ -17,8 +17,8 @@
             <GraphicsView SemanticProperties.Description="Waveform of the clip being edited" AutomationId="audioeditor-waveform" x:Name="WaveformView" HeightRequest="160" BackgroundColor="{DynamicResource SolidBackgroundFillColorTertiary}" />
 
             <HorizontalStackLayout Spacing="12">
-                <Button AutomationId="audioeditor-preview" Style="{StaticResource AccentButtonStyle}" Text="Preview" controls:Icon.Glyph="{x:Static models:IconFont.Play_arrow}" Command="{Binding PreviewCommand}" />
-                <Button AutomationId="audioeditor-open-trim" Text="Open Trim Editor" controls:Icon.Glyph="{x:Static models:IconFont.Content_cut}" Command="{Binding OpenTrimEditorCommand}" />
+                <Button AutomationId="audioeditor-preview" ToolTipProperties.Text="Play the clip you are editing." Style="{StaticResource AccentButtonStyle}" Text="Preview" controls:Icon.Glyph="{x:Static models:IconFont.Play_arrow}" Command="{Binding PreviewCommand}" />
+                <Button AutomationId="audioeditor-open-trim" ToolTipProperties.Text="Open the trim editor: drag handles, zoom, split and fade." Text="Open Trim Editor" controls:Icon.Glyph="{x:Static models:IconFont.Content_cut}" Command="{Binding OpenTrimEditorCommand}" />
             </HorizontalStackLayout>
 
             <toolkit:Expander IsExpanded="True">
@@ -28,7 +28,7 @@
                 <VerticalStackLayout Spacing="12" Padding="0,4,0,12">
                     <controls:LabeledSlider AutomationId="audioeditor-trim-start" LabelText="Start (s)" Minimum="0" Maximum="{Binding DurationSeconds}" Digits="2" Value="{Binding TrimStartSeconds}" />
                     <controls:LabeledSlider AutomationId="audioeditor-trim-end" LabelText="End (s)" Minimum="0" Maximum="{Binding DurationSeconds}" Digits="2" Value="{Binding TrimEndSeconds}" />
-                    <Button AutomationId="audioeditor-trim-apply" Style="{StaticResource AccentButtonStyle}" Text="Apply Trim" Command="{Binding TrimCommand}" />
+                    <Button AutomationId="audioeditor-trim-apply" ToolTipProperties.Text="Keep only the part between Start and End. Saves a new clip and leaves the original as it is." Style="{StaticResource AccentButtonStyle}" Text="Apply Trim" Command="{Binding TrimCommand}" />
                 </VerticalStackLayout>
             </toolkit:Expander>
 
@@ -38,7 +38,7 @@
                 </toolkit:Expander.Header>
                 <VerticalStackLayout Spacing="12" Padding="0,4,0,12">
                     <controls:LabeledSlider AutomationId="audioeditor-gain" LabelText="Gain (dB)" Minimum="-24" Maximum="24" Digits="1" Value="{Binding GainDb}" />
-                    <Button AutomationId="audioeditor-gain-apply" Style="{StaticResource AccentButtonStyle}" Text="Apply Gain" Command="{Binding ApplyGainCommand}" />
+                    <Button AutomationId="audioeditor-gain-apply" ToolTipProperties.Text="Make the clip louder or quieter by the gain above. Saves a new clip and leaves the original as it is." Style="{StaticResource AccentButtonStyle}" Text="Apply Gain" Command="{Binding ApplyGainCommand}" />
                 </VerticalStackLayout>
             </toolkit:Expander>
 
@@ -49,7 +49,7 @@
                 <VerticalStackLayout Spacing="12" Padding="0,4,0,12">
                     <controls:LabeledSlider AutomationId="audioeditor-fade-in" LabelText="Fade in" Minimum="0" Maximum="5" Digits="2" Value="{Binding FadeInSeconds}" />
                     <controls:LabeledSlider AutomationId="audioeditor-fade-out" LabelText="Fade out" Minimum="0" Maximum="5" Digits="2" Value="{Binding FadeOutSeconds}" />
-                    <Button AutomationId="audioeditor-fade-apply" Style="{StaticResource AccentButtonStyle}" Text="Apply Fade" Command="{Binding ApplyFadeCommand}" />
+                    <Button AutomationId="audioeditor-fade-apply" ToolTipProperties.Text="Fade the clip in and out by the times above. Saves a new clip and leaves the original as it is." Style="{StaticResource AccentButtonStyle}" Text="Apply Fade" Command="{Binding ApplyFadeCommand}" />
                 </VerticalStackLayout>
             </toolkit:Expander>
 
@@ -61,7 +61,7 @@
                     <controls:LabeledSlider AutomationId="audioeditor-eq-low" LabelText="Low (dB)" Minimum="-12" Maximum="12" Digits="1" Value="{Binding EqLowGainDb}" />
                     <controls:LabeledSlider AutomationId="audioeditor-eq-mid" LabelText="Mid (dB)" Minimum="-12" Maximum="12" Digits="1" Value="{Binding EqMidGainDb}" />
                     <controls:LabeledSlider AutomationId="audioeditor-eq-high" LabelText="High (dB)" Minimum="-12" Maximum="12" Digits="1" Value="{Binding EqHighGainDb}" />
-                    <Button AutomationId="audioeditor-eq-apply" Style="{StaticResource AccentButtonStyle}" Text="Apply EQ" Command="{Binding ApplyEqualizerCommand}" />
+                    <Button AutomationId="audioeditor-eq-apply" ToolTipProperties.Text="Boost or cut the low, mid and high bands as set above. Saves a new clip and leaves the original as it is." Style="{StaticResource AccentButtonStyle}" Text="Apply EQ" Command="{Binding ApplyEqualizerCommand}" />
                 </VerticalStackLayout>
             </toolkit:Expander>
 
@@ -74,7 +74,7 @@
                     <controls:LabeledSlider AutomationId="audioeditor-compression-ratio" LabelText="Ratio" Minimum="1" Maximum="20" Digits="1" Value="{Binding CompressionRatio}" />
                     <controls:LabeledSlider AutomationId="audioeditor-compression-attack" LabelText="Attack (ms)" Minimum="1" Maximum="200" Digits="0" Value="{Binding CompressionAttackMs}" />
                     <controls:LabeledSlider AutomationId="audioeditor-compression-release" LabelText="Release (ms)" Minimum="10" Maximum="1000" Digits="0" Value="{Binding CompressionReleaseMs}" />
-                    <Button AutomationId="audioeditor-compression-apply" Style="{StaticResource AccentButtonStyle}" Text="Apply Compression" Command="{Binding ApplyCompressionCommand}" />
+                    <Button AutomationId="audioeditor-compression-apply" ToolTipProperties.Text="Even out loud and quiet parts with the compressor settings above. Saves a new clip and leaves the original as it is." Style="{StaticResource AccentButtonStyle}" Text="Apply Compression" Command="{Binding ApplyCompressionCommand}" />
                 </VerticalStackLayout>
             </toolkit:Expander>
 
@@ -85,7 +85,7 @@
                 <VerticalStackLayout Spacing="12" Padding="0,4,0,12">
                     <Label Style="{StaticResource CaptionTextBlockStyle}" Text="Uses the first stretch of the clip as its noise sample - trim to hum/hiss-only audio before running this for the best result." TextColor="{DynamicResource TextFillColorSecondary}" />
                     <controls:LabeledSlider AutomationId="audioeditor-noise-sample" LabelText="Noise sample (s)" Minimum="0.1" Maximum="5" Digits="2" Value="{Binding NoiseSampleSeconds}" />
-                    <Button AutomationId="audioeditor-noise-apply" Style="{StaticResource AccentButtonStyle}" Text="Reduce Noise" Command="{Binding ReduceNoiseCommand}" />
+                    <Button AutomationId="audioeditor-noise-apply" ToolTipProperties.Text="Reduce steady background noise, using the noise sample length above. Saves a new clip and leaves the original as it is." Style="{StaticResource AccentButtonStyle}" Text="Reduce Noise" Command="{Binding ReduceNoiseCommand}" />
                 </VerticalStackLayout>
             </toolkit:Expander>
 
@@ -95,7 +95,7 @@
                 </toolkit:Expander.Header>
                 <VerticalStackLayout Spacing="12" Padding="0,4,0,12">
                     <Label Style="{StaticResource CaptionTextBlockStyle}" Text="Cancels audio that's identical in both channels - works best on true-stereo tracks with a centered vocal. Mono clips aren't supported." TextColor="{DynamicResource TextFillColorSecondary}" />
-                    <Button AutomationId="audioeditor-vocals-apply" Style="{StaticResource AccentButtonStyle}" Text="Remove Vocals" Command="{Binding RemoveVocalsCommand}" />
+                    <Button AutomationId="audioeditor-vocals-apply" ToolTipProperties.Text="Try to remove the vocals from the clip. Saves a new clip and leaves the original as it is." Style="{StaticResource AccentButtonStyle}" Text="Remove Vocals" Command="{Binding RemoveVocalsCommand}" />
                 </VerticalStackLayout>
             </toolkit:Expander>
 
@@ -106,15 +106,15 @@
                 <VerticalStackLayout Spacing="12" Padding="0,4,0,12">
                     <Label Style="{StaticResource CaptionTextBlockStyle}" Text="Shifts pitch by changing playback speed - like a record played at the wrong RPM. Duration changes along with pitch." TextColor="{DynamicResource TextFillColorSecondary}" />
                     <controls:LabeledSlider AutomationId="audioeditor-voice-pitch" LabelText="Pitch (semitones)" Minimum="-12" Maximum="12" Digits="1" Value="{Binding VoiceChangeSemitones}" />
-                    <Button AutomationId="audioeditor-voice-apply" Style="{StaticResource AccentButtonStyle}" Text="Apply Voice Change" Command="{Binding ApplyVoiceChangeCommand}" />
+                    <Button AutomationId="audioeditor-voice-apply" ToolTipProperties.Text="Shift the pitch by the semitones above. Saves a new clip and leaves the original as it is." Style="{StaticResource AccentButtonStyle}" Text="Apply Voice Change" Command="{Binding ApplyVoiceChangeCommand}" />
                 </VerticalStackLayout>
             </toolkit:Expander>
 
             <BoxView HeightRequest="1" />
 
             <HorizontalStackLayout Spacing="12">
-                <Button AutomationId="audioeditor-reverse" Text="Reverse" controls:Icon.Glyph="{x:Static models:IconFont.Fast_rewind}" Command="{Binding ReverseCommand}" />
-                <Button AutomationId="audioeditor-normalize" Text="Normalize" controls:Icon.Glyph="{x:Static models:IconFont.Balance}" Command="{Binding NormalizeCommand}" />
+                <Button AutomationId="audioeditor-reverse" ToolTipProperties.Text="Play the clip backwards. Saves a new clip and leaves the original as it is." Text="Reverse" controls:Icon.Glyph="{x:Static models:IconFont.Fast_rewind}" Command="{Binding ReverseCommand}" />
+                <Button AutomationId="audioeditor-normalize" ToolTipProperties.Text="Adjust the clip to a standard level. Saves a new clip and leaves the original as it is." Text="Normalize" controls:Icon.Glyph="{x:Static models:IconFont.Balance}" Command="{Binding NormalizeCommand}" />
             </HorizontalStackLayout>
 
             <ActivityIndicator AutomationId="audioeditor-busy" IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />

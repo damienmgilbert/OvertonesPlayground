@@ -449,17 +449,11 @@
         <Setter Property="Stroke" Value="{DynamicResource CardStrokeColorDefaultBrush}" />
         <Setter Property="StrokeThickness" Value="1" />
         <Setter Property="StrokeShape" Value="RoundRectangle 8" />
+        <Setter Property="Shadow" Value="{DynamicResource CardShadow}" />
     </Style>
 
     <Style TargetType="BoxView">
         <Setter Property="Color" Value="{DynamicResource DividerStrokeColorDefault}" />
-    </Style>
-
-    <Style TargetType="Shadow">
-        <Setter Property="Brush" Value="Black" />
-        <Setter Property="Radius" Value="8" />
-        <Setter Property="Opacity" Value="0.14" />
-        <Setter Property="Offset" Value="0,4" />
     </Style>
 
     <Style TargetType="SwipeItem">

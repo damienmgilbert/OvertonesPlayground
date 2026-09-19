@@ -30,6 +30,23 @@ public partial class App : Application
         FluentTheme.Apply(RequestedTheme);
         RequestedThemeChanged += (_, e) => FluentTheme.Apply(e.RequestedTheme);
 
+        // Every page's content eases in when the page appears, and is put back at rest when it goes, so an interrupted
+        // animation can never leave a page faded or offset.
+        PageAppearing += (_, page) =>
+        {
+            if (page is ContentPage { Content: { } content })
+            {
+                _ = FluentMotion.EnterAsync(content);
+            }
+        };
+        PageDisappearing += (_, page) =>
+        {
+            if (page is ContentPage { Content: { } content })
+            {
+                FluentMotion.Settle(content);
+            }
+        };
+
         AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
         AppDomain.CurrentDomain.FirstChanceException += CurrentDomain_FirstChanceException;
     }

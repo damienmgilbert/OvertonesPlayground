@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- A coach mark: a small card that points at one control and explains it (WinUI's TeachingTip). Put it as the LAST child of
+     the page's root Grid, spanning every row and column, and give it a Target:
+
+         <controls:TeachingPopover x:Name="Tip" Grid.RowSpan="2" Target="{x:Reference SomeButton}"
+                                   Title="Trim precisely" Message="Drag a handle, or use the minus and plus buttons." TipKey="trim" />
+
+     It is invisible, and takes no input, until ShowAsync / ShowOnceAsync opens it. -->
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:OvertonesPlayground.Controls"
+             xmlns:shapes="clr-namespace:Microsoft.Maui.Controls.Shapes;assembly=Microsoft.Maui.Controls"
+             x:Class="OvertonesPlayground.Controls.TeachingPopover"
+             x:Name="Root"
+             IsVisible="False">
+
+    <Grid x:Name="Overlay" SizeChanged="OnOverlaySizeChanged">
+
+        <!-- Light dismiss: a transparent sheet over the page, so a tap anywhere outside the bubble closes it. It is left out of
+             the accessibility tree: a screen reader user closes the popover with its button. -->
+        <BoxView x:Name="Scrim" Color="Transparent" AutomationProperties.IsInAccessibleTree="False">
+            <BoxView.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnScrimTapped" />
+            </BoxView.GestureRecognizers>
+        </BoxView>
+
+        <!-- The bubble is a card plus a tail. Code puts the tail on the side facing the target and lines it up with the
+             target's center; the bubble itself is positioned with margins, so its height can be whatever the text needs. -->
+        <Grid x:Name="Bubble" RowDefinitions="Auto,Auto" HorizontalOptions="Start" VerticalOptions="Start">
+
+            <Border x:Name="Card"
+                    Grid.Row="1"
+                    Padding="16"
+                    BackgroundColor="{DynamicResource ControlSolidFillColorDefault}"
+                    Stroke="{DynamicResource SurfaceStrokeColorFlyoutBrush}"
+                    StrokeShape="RoundRectangle 8"
+                    Shadow="{DynamicResource OverlayShadow}">
+                <VerticalStackLayout Spacing="12">
+                    <controls:IconLabel Style="{StaticResource BodyStrongTextBlockStyle}"
+                                        Caption="{Binding Title, Source={x:Reference Root}}"
+                                        Glyph="{Binding Glyph, Source={x:Reference Root}}"
+                                        SemanticProperties.HeadingLevel="Level1" />
+                    <Label Style="{StaticResource BodyTextBlockStyle}"
+                           Text="{Binding Message, Source={x:Reference Root}}"
+                           TextColor="{DynamicResource TextFillColorSecondary}" />
+                    <HorizontalStackLayout HorizontalOptions="End" Spacing="8">
+                        <Button x:Name="ActionButton"
+                                Style="{StaticResource AccentButtonStyle}"
+                                Text="{Binding ActionText, Source={x:Reference Root}}"
+                                IsVisible="{Binding ActionText, Source={x:Reference Root}, Converter={StaticResource StringToBool}}"
+                                ToolTipProperties.Text="Do what this tip describes"
+                                Clicked="OnActionClicked" />
+                        <Button x:Name="CloseButton"
+                                Text="{Binding CloseText, Source={x:Reference Root}}"
+                                ToolTipProperties.Text="Close this tip"
+                                Clicked="OnCloseClicked" />
+                    </HorizontalStackLayout>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- The tail, drawn after the card so it sits on top of it. The filled shape reaches 1.5 units into the card to
+                 hide the card's own border where the tail joins it, and the outline is drawn only along the two outer sides,
+                 so the tail and the card read as one shape. Points up; a rotation of 180 points it down. -->
+            <Grid x:Name="Tail" Grid.Row="0" WidthRequest="18" HeightRequest="10.5" HorizontalOptions="Start" VerticalOptions="Start"
+                  AutomationProperties.IsInAccessibleTree="False">
+                <shapes:Polygon Points="0,9 9,0 18,9 18,10.5 0,10.5" Fill="{DynamicResource ControlSolidFillColorDefaultBrush}" StrokeThickness="0" />
+                <shapes:Polyline Points="0,9 9,0 18,9" Stroke="{DynamicResource SurfaceStrokeColorFlyoutBrush}" StrokeThickness="1" />
+            </Grid>
+        </Grid>
+    </Grid>
+
+</ContentView>

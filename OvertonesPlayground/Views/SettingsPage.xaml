@@ -12,19 +12,21 @@
 
         <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
             <controls:IconLabel Style="{StaticResource BodyTextBlockStyle}" Grid.Column="0" Caption="Theme" Glyph="{x:Static models:IconFont.Palette}" VerticalOptions="Center" />
-            <Picker AutomationId="settings-theme" Grid.Column="1" ItemsSource="{Binding ThemeOptions}" SelectedItem="{Binding SelectedTheme}" />
+            <Picker AutomationId="settings-theme" ToolTipProperties.Text="Choose the light or dark look, or follow the device setting." Grid.Column="1" ItemsSource="{Binding ThemeOptions}" SelectedItem="{Binding SelectedTheme}" />
         </Grid>
 
         <Grid ColumnDefinitions="*,Auto">
             <Label Grid.Column="0" Text="Keep screen on while using OvertonesPlayground" VerticalOptions="Center" />
-            <Switch AutomationId="settings-keep-screen-on" Grid.Column="1" IsToggled="{Binding KeepScreenOn}" />
+            <Switch AutomationId="settings-keep-screen-on" ToolTipProperties.Text="Keep the screen awake while the app is open." Grid.Column="1" IsToggled="{Binding KeepScreenOn}" />
         </Grid>
 
         <BoxView HeightRequest="1" />
 
-        <Button AutomationId="settings-stop-all-audio" Text="Stop All Audio" controls:Icon.Glyph="{x:Static models:IconFont.Stop}" Command="{Binding StopAllAudioCommand}" />
+        <Button AutomationId="settings-stop-all-audio" ToolTipProperties.Text="Stop everything that is playing." Text="Stop All Audio" controls:Icon.Glyph="{x:Static models:IconFont.Stop}" Command="{Binding StopAllAudioCommand}" />
 
-        <Button AutomationId="settings-clear-library" Text="Clear Library" controls:Icon.Glyph="{x:Static models:IconFont.Delete}" TextColor="{DynamicResource SystemFillColorCritical}" Command="{Binding ClearLibraryCommand}" />
+        <Button AutomationId="settings-show-tips" Text="Show tips again" controls:Icon.Glyph="{x:Static models:IconFont.Lightbulb}" ToolTipProperties.Text="Show the one-time tips on the Library, Launchpad and Trim pages again" Command="{Binding ShowTipsAgainCommand}" />
+
+        <Button AutomationId="settings-clear-library" ToolTipProperties.Text="Delete every clip from your library." Text="Clear Library" controls:Icon.Glyph="{x:Static models:IconFont.Delete}" TextColor="{DynamicResource SystemFillColorCritical}" Command="{Binding ClearLibraryCommand}" />
 
         <Label AutomationId="settings-status" Text="{Binding StatusMessage}" TextColor="{DynamicResource TextFillColorSecondary}" />
 

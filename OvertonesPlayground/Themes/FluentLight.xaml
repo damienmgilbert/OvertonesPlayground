@@ -221,4 +221,10 @@
         <GradientStop Offset="0.33" Color="{StaticResource ControlStrokeColorOnAccentSecondary}" />
         <GradientStop Offset="1" Color="{StaticResource ControlStrokeColorOnAccentDefault}" />
     </LinearGradientBrush>
+    <!-- Elevation. Fluent has two depths: a card resting on the page, and an overlay (popover, flyout) floating above it.
+         Shadows are theme resources because a shadow on a dark surface has to be stronger to read at all. On Android a shadow
+         is drawn from the view's elevation, so the blur radius sets the depth and the offset is ignored there. -->
+    <Shadow x:Key="CardShadow" Brush="Black" Opacity="0.14" Radius="4" Offset="0,2" />
+    <Shadow x:Key="OverlayShadow" Brush="Black" Opacity="0.26" Radius="16" Offset="0,8" />
+
 </ResourceDictionary>

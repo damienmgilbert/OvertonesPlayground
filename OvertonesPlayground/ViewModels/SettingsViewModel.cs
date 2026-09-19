@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using OvertonesPlayground.Controls;
 using OvertonesPlayground.Models;
 using OvertonesPlayground.Services.Interfaces;
 
@@ -86,6 +87,17 @@ public partial class SettingsViewModel : BaseViewModel
     ///<summary>
     ///Immediately silences every playing/looping voice across the app.
     ///</summary>
+    ///<summary>
+    ///Brings back the one-time tips (the <see cref="TeachingPopover"/> on the Library, Launchpad and Trim pages), so each shows
+    ///again the next time its page opens.
+    ///</summary>
+    [RelayCommand]
+    private void ShowTipsAgain()
+    {
+        TeachingTips.ResetAll();
+        StatusMessage = "Tips will show again the next time you open the Library, Launchpad and Trim pages.";
+    }
+
     [RelayCommand]
     private void StopAllAudio()
     {

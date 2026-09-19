@@ -22,7 +22,7 @@
                 </CollectionView.ItemsLayout>
                 <CollectionView.ItemTemplate>
                     <DataTemplate x:DataType="models:TonePreset">
-                        <Button AutomationId="{Binding AutomationKey, StringFormat='tonegenerator-preset-{0}'}" Text="{Binding Name}"
+                        <Button AutomationId="{Binding AutomationKey, StringFormat='tonegenerator-preset-{0}'}" ToolTipProperties.Text="{Binding Name, StringFormat='Load the {0} preset.'}" Text="{Binding Name}"
                                 Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ToneGeneratorViewModel}}, Path=SelectPresetCommand}"
                                 CommandParameter="{Binding .}" />
                     </DataTemplate>
@@ -31,7 +31,7 @@
 
             <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12" RowSpacing="14">
                 <Label Grid.Row="0" Grid.Column="0" Text="Wave" VerticalOptions="Center" />
-                <Picker AutomationId="tonegenerator-wave" Grid.Row="0" Grid.Column="1"
+                <Picker AutomationId="tonegenerator-wave" ToolTipProperties.Text="The shape of the tone's waveform." Grid.Row="0" Grid.Column="1"
                         ItemsSource="{Binding WaveformOptions}"
                         SelectedItem="{Binding SelectedWaveform}" />
             </Grid>
@@ -41,8 +41,8 @@
             <controls:LabeledSlider AutomationId="tonegenerator-level" LabelText="Level" Minimum="0" Maximum="1" Digits="2" Value="{Binding Amplitude}" />
 
             <HorizontalStackLayout Spacing="12">
-                <Button AutomationId="tonegenerator-generate" Style="{StaticResource AccentButtonStyle}" Text="Generate &amp; Play" controls:Icon.Glyph="{x:Static models:IconFont.Play_arrow}" Command="{Binding GenerateCommand}" />
-                <Button AutomationId="tonegenerator-save" Style="{StaticResource AccentButtonStyle}" Text="Save" controls:Icon.Glyph="{x:Static models:IconFont.Save}" Command="{Binding SaveCommand}" IsEnabled="{Binding CanSave}" />
+                <Button AutomationId="tonegenerator-generate" ToolTipProperties.Text="Make the tone with these settings and play it." Style="{StaticResource AccentButtonStyle}" Text="Generate &amp; Play" controls:Icon.Glyph="{x:Static models:IconFont.Play_arrow}" Command="{Binding GenerateCommand}" />
+                <Button AutomationId="tonegenerator-save" ToolTipProperties.Text="Save the tone to your library." Style="{StaticResource AccentButtonStyle}" Text="Save" controls:Icon.Glyph="{x:Static models:IconFont.Save}" Command="{Binding SaveCommand}" IsEnabled="{Binding CanSave}" />
             </HorizontalStackLayout>
 
             <GraphicsView SemanticProperties.Description="Waveform preview of the generated tone" AutomationId="tonegenerator-waveform" x:Name="WaveformView" HeightRequest="120" BackgroundColor="{DynamicResource SolidBackgroundFillColorTertiary}" />

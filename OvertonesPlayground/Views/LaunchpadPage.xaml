@@ -14,7 +14,7 @@
     </ContentPage.ToolbarItems>
 
     <Grid RowDefinitions="Auto,*" Margin="12" RowSpacing="8">
-    <Label Style="{StaticResource CaptionTextBlockStyle}" AutomationId="launchpad-hint" Grid.Row="0" TextColor="{DynamicResource TextFillColorSecondary}"
+    <Label x:Name="HintLabel" HorizontalOptions="Start" Style="{StaticResource CaptionTextBlockStyle}" AutomationId="launchpad-hint" Grid.Row="0" TextColor="{DynamicResource TextFillColorSecondary}"
            Text="{Binding HintText}" />
     <CollectionView AutomationId="launchpad-pads" Grid.Row="1" ItemsSource="{Binding Pads}">
         <CollectionView.ItemsLayout>
@@ -27,10 +27,16 @@
                 <controls:LongPressBorder AutomationId="{Binding Index, StringFormat='launchpad-pad-{0}'}" StrokeShape="RoundRectangle 8" LongPressed="OnPadLongPressed"
                         SemanticProperties.Description="{Binding AccessibleName}"
                         SemanticProperties.Hint="Plays this pad. Long-press, or turn on edit mode, for more options"
+                        ToolTipProperties.Text="Tap to play this pad. Press and hold, or use edit mode, to give it a sample, loop it or clear it."
                         BackgroundColor="{DynamicResource CardBackgroundFillColorDefault}"
                         Stroke="{DynamicResource CardStrokeColorDefaultBrush}"
                         StrokeThickness="1"
                         HeightRequest="90">
+                    <Border.Triggers>
+                        <DataTrigger TargetType="Border" Binding="{Binding HasClip}" Value="True">
+                            <Setter Property="Shadow" Value="{DynamicResource CardShadow}" />
+                        </DataTrigger>
+                    </Border.Triggers>
                     <Border.GestureRecognizers>
                         <TapGestureRecognizer
                             Command="{Binding Source={RelativeSource AncestorType={x:Type vm:LaunchpadViewModel}}, Path=TriggerCommand}"
@@ -88,6 +94,10 @@
             </DataTemplate>
         </CollectionView.ItemTemplate>
     </CollectionView>
+
+    <controls:TeachingPopover x:Name="LaunchpadTip" Grid.RowSpan="2" Target="{x:Reference HintLabel}" TipKey="launchpad" Glyph="{x:Static models:IconFont.Lightbulb}"
+                              Title="Play the pads"
+                              Message="Tap a pad to play its sample. To give a pad a sample, loop it or clear it, turn on edit mode with the pencil in the top bar, or press and hold the pad." />
     </Grid>
 
 </ContentPage>

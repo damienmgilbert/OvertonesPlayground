@@ -13,11 +13,11 @@
         <controls:IconLabel Style="{StaticResource SubtitleTextBlockStyle}" Caption="Audio Recorder" Glyph="{x:Static models:IconFont.Mic}" HorizontalTextAlignment="Center" />
         <Label Text="Record a new sample to use in the Launchpad, Mixer, or Editor." HorizontalTextAlignment="Center" TextColor="{DynamicResource TextFillColorSecondary}" />
 
-        <Entry AutomationId="soundcreator-name" Placeholder="Recording name" Text="{Binding NewClipName}" IsEnabled="{Binding IsRecording, Converter={StaticResource InvertedBool}}" />
+        <Entry AutomationId="soundcreator-name" ToolTipProperties.Text="The name the recording is saved under." Placeholder="Recording name" Text="{Binding NewClipName}" IsEnabled="{Binding IsRecording, Converter={StaticResource InvertedBool}}" />
 
         <Label Style="{StaticResource TitleLargeTextBlockStyle}" AutomationId="soundcreator-elapsed" Text="{Binding ElapsedText}" HorizontalTextAlignment="Center" />
 
-<Button AutomationId="soundcreator-record" Style="{StaticResource AccentButtonStyle}" Text="{Binding IsRecording, Converter={StaticResource RecordButtonLabel}}"
+<Button x:Name="RecordButton" AutomationId="soundcreator-record" ToolTipProperties.Text="Start recording from the microphone, or stop and save the recording." Style="{StaticResource AccentButtonStyle}" Text="{Binding IsRecording, Converter={StaticResource RecordButtonLabel}}"
                 controls:Icon.Glyph="{x:Static models:IconFont.Radio_button_checked}" controls:Icon.Size="24"
                 HeightRequest="70"
                 Command="{Binding ToggleRecordingCommand}">
@@ -31,7 +31,7 @@
             </Button.Triggers>
         </Button>
 
-        <Button AutomationId="soundcreator-cancel" Text="Cancel Recording" controls:Icon.Glyph="{x:Static models:IconFont.Close}"
+        <Button AutomationId="soundcreator-cancel" ToolTipProperties.Text="Stop and throw away this recording." Text="Cancel Recording" controls:Icon.Glyph="{x:Static models:IconFont.Close}"
                 IsVisible="{Binding IsRecording}"
                 Command="{Binding CancelRecordingCommand}" />
 
