@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -181,6 +182,7 @@ public partial class SoundBankViewModel : BaseViewModel
             return;
         }
 
+        long started = Stopwatch.GetTimestamp();
         SampleSpecification? filter = null;
         foreach (SampleSpecification specification in AllSpecifications())
         {
@@ -200,6 +202,7 @@ public partial class SoundBankViewModel : BaseViewModel
         ResultSummary = $"{Results.Count:N0} of {_index.Count:N0} sounds";
         HasActiveFilters = HasAnyFilter();
         OnPropertyChanged(nameof(IsSimilarMode));
+        Log_Refreshed(Results.Count, Stopwatch.GetElapsedTime(started).TotalMilliseconds);
     }
 
     ///<summary>
@@ -251,6 +254,9 @@ public partial class SoundBankViewModel : BaseViewModel
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Sound Bank loaded {Count} sounds in {Milliseconds} ms.")]
     private partial void Log_Loaded(int count, double milliseconds);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Sound Bank query matched {Count} sounds in {Milliseconds:0.0} ms.")]
+    private partial void Log_Refreshed(int count, double milliseconds);
 
     [LoggerMessage(Level = LogLevel.Error, Message = "Sound Bank could not be loaded.")]
     private partial void Log_LoadFailed(Exception ex);

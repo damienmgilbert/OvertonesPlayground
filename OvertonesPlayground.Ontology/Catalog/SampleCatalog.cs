@@ -14,7 +14,7 @@ public sealed record SampleCatalog(int SchemaVersion, string AnalyzerVersion, IR
     public const int CurrentSchemaVersion = 1;
 
     ///<summary>Version of the analysis and classification logic.</summary>
-    public const string CurrentAnalyzerVersion = "1.0.0";
+    public const string CurrentAnalyzerVersion = "1.1.0";
     #endregion
 
     #region Public methods

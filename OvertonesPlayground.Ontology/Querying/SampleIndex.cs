@@ -4,7 +4,8 @@ namespace OvertonesPlayground.Ontology.Querying;
 
 ///<summary>
 ///In-memory index over a catalog: lookup by id, free-text and specification queries, similarity search, collections
-///(kits, variations, tempo and key groups) and per-facet counts for building filter UIs. Built once, then read-only.
+///(kits, variations, tempo and key groups, sound families) and per-facet counts for building filter UIs. Built once, then
+///read-only.
 ///</summary>
 public sealed class SampleIndex
 {
@@ -17,6 +18,7 @@ public sealed class SampleIndex
     private readonly Dictionary<string, string> _searchText;
     private readonly Dictionary<string, List<Sample>> _byStem = new(StringComparer.Ordinal);
     private readonly Lazy<IReadOnlyList<Kit>> _kits;
+    private readonly Lazy<(IReadOnlyList<SoundFamily> Families, Dictionary<string, SoundFamily> BySample)> _families;
     #endregion
 
     #region Constructors
@@ -47,6 +49,7 @@ public sealed class SampleIndex
         }
 
         _kits = new Lazy<IReadOnlyList<Kit>>(BuildKits);
+        _families = new Lazy<(IReadOnlyList<SoundFamily>, Dictionary<string, SoundFamily>)>(BuildFamilies);
     }
     #endregion
 
@@ -79,6 +82,21 @@ public sealed class SampleIndex
                 .OrderByDescending(kit => kit.Members.Count)
                 .ThenBy(kit => kit.Name, StringComparer.OrdinalIgnoreCase),
         ];
+    }
+
+    private (IReadOnlyList<SoundFamily> Families, Dictionary<string, SoundFamily> BySample) BuildFamilies()
+    {
+        IReadOnlyList<SoundFamily> families = SoundFamilyClusterer.Cluster(All, Space);
+        Dictionary<string, SoundFamily> bySample = new(StringComparer.Ordinal);
+        foreach (SoundFamily family in families)
+        {
+            foreach (Sample member in family.Members)
+            {
+                bySample[member.Id] = family;
+            }
+        }
+
+        return (families, bySample);
     }
 
     ///<summary>Tempo ratio folded to half / double time: 60 and 120 count as compatible.</summary>
@@ -199,6 +217,15 @@ public sealed class SampleIndex
 
     ///<summary>The kits present in the corpus, largest first.</summary>
     public IReadOnlyList<Kit> GetKits() => _kits.Value;
+
+    ///<summary>
+    ///The sound families of the corpus, largest first: clusters of sounds that sound alike, found from the audio alone. They are
+    ///computed the first time they are asked for and are always the same for the same catalog.
+    ///</summary>
+    public IReadOnlyList<SoundFamily> GetSoundFamilies() => _families.Value.Families;
+
+    ///<summary>The family <paramref name="sample"/> belongs to, or null when it has no acoustic analysis to cluster on.</summary>
+    public SoundFamily? GetSoundFamily(Sample sample) => _families.Value.BySample.GetValueOrDefault(sample.Id);
 
     ///<summary>Samples that share the effective pitch class <paramref name="pitchClass"/>.</summary>
     public KeyGroup GetKeyGroup(int pitchClass) => new(pitchClass, [.. All.Where(sample => sample.EffectivePitchClass == pitchClass)]);

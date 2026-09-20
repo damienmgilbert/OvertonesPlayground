@@ -127,6 +127,8 @@ internal static class ReportCommand
         List<Sample> named = [.. samples.Where(s => s.Classification.Attributes.TempoBpm is not null && s.Rhythm?.DetectedBpm is not null)];
         int agree = named.Count(s => s.Rhythm!.TempoAgreesWithName == true);
         Console.WriteLine($"{named.Count} files with both: {agree} agree ({Percent(agree, named.Count)}), half/double time and dotted/triplet relations allowed");
+        int exact = named.Count(s => Math.Abs(s.Rhythm!.DetectedBpm!.Value - s.Classification.Attributes.TempoBpm!.Value) <= 2.0);
+        Console.WriteLine($"{exact} of them match the name to within 2 BPM ({Percent(exact, named.Count)}); the rest were detected at another octave or feel");
         foreach (Sample s in named.Where(s => s.Rhythm!.TempoAgreesWithName == false).Take(12))
         {
             Console.WriteLine($"  {s.Id,-44} name {s.Classification.Attributes.TempoBpm,5:0}  detected {s.Rhythm!.DetectedBpm,6:0.0}  (conf {s.Rhythm.TempoConfidence:0.00})");
@@ -145,6 +147,18 @@ internal static class ReportCommand
         foreach (Sample s in keyed.Where(s => s.Classification.Attributes.KeyPitchClass != s.Tonality!.PitchClass).Take(12))
         {
             Console.WriteLine($"  {s.Id,-44} name {s.Classification.Attributes.KeyName(),-8} measured {s.Tonality!.NoteName} ({s.Tonality.FundamentalHz:0.0} Hz, conf {s.Tonality.PitchConfidence:0.00})");
+        }
+
+        Heading("Sound families (clusters found from the audio alone)");
+        IReadOnlyList<SoundFamily> families = new SampleIndex(samples).GetSoundFamilies();
+        int clustered = families.Sum(family => family.Members.Count);
+        double weightedPurity = clustered == 0 ? 0 : families.Sum(family => family.Purity * family.Members.Count) / clustered;
+        int pure = families.Count(family => family.Purity >= 0.8);
+        Console.WriteLine($"{families.Count} families over {clustered} sounds (sizes {families.Min(f => f.Members.Count)} to {families.Max(f => f.Members.Count)}); "
+            + $"on average {100.0 * weightedPurity:0.0} % of a sound's family shares its instrument family; {pure} families are at least 80 % one instrument family.");
+        foreach (SoundFamily family in families.OrderBy(family => family.Purity).Take(6))
+        {
+            Console.WriteLine($"  least uniform: {family.Name,-46} {family.Members.Count,4} sounds, {100.0 * family.Purity:0} % {family.DominantInstrument?.DisplayName}");
         }
 
         Heading($"Flagged for review (first {reviewLimit})");

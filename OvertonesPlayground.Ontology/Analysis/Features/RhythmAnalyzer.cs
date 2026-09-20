@@ -16,7 +16,7 @@ public sealed class RhythmAnalyzer : IFeatureExtractor<RhythmFacet?>
     private const double MaxBpm = 200.0;
     private const double PriorBpm = 120.0;
     private const double NameTolerance = 0.04;
-    private const double LoopMinConfidence = 0.30;
+    private const double LoopMinConfidence = RhythmFacet.MinTrustedConfidence;
     private const double NormalizedPeak = 0.5;
 
     private static readonly double[] _combWeights = [1.0, 0.5, 0.33, 0.25];
@@ -26,6 +26,18 @@ public sealed class RhythmAnalyzer : IFeatureExtractor<RhythmFacet?>
     private static readonly double[] _relatedRatios = [1.0, 2.0, 0.5, 1.5, 2.0 / 3.0, 4.0 / 3.0, 0.75];
     private const double MinOnsetPeak = 20.0;
     private const double LoopBeatTolerance = 0.10;
+
+    // Loops are cut to whole bars, and almost always to a power-of-two number of beats: in this corpus 106 of the 112 files
+    // with a tempo in the name are within 1 % of a whole beat count, and 103 of those 106 hold 4, 8, 16 or 32 beats.
+    private const double GridMinBpm = 60.0;
+    private const double GridMaxBpm = 210.0;
+    // The usual range of a written tempo is asymmetric in log terms: between a slow tempo and its double, names lean slow
+    // (a "80 bpm" hip-hop loop is more common than a "160 bpm" one), so ties go to the tempo nearer this value.
+    private const double GridPriorBpm = 110.0;
+    private const double GridTolerance = 0.02;
+    private static readonly int[] _gridBeatCounts = [4, 8, 16, 32, 64];
+    private static readonly double[] _octaveRatios = [1.0, 2.0, 0.5];
+    private static readonly double[] _feelRatios = [1.5, 2.0 / 3.0, 4.0 / 3.0, 0.75];
     #endregion
 
     #region Private methods
@@ -183,6 +195,39 @@ public sealed class RhythmAnalyzer : IFeatureExtractor<RhythmFacet?>
         return (60.0 * framesPerSecond / refined, Math.Clamp(correlation[best], 0.0, 1.0));
     }
 
+    ///<summary>
+    ///The tempo, among those a loop of the given length can have, that <paramref name="detected"/> stands for: the grid tempo
+    ///(<c>60 * beats / duration</c> for 4, 8, 16, 32 or 64 beats) that the detected tempo or its double or half is within
+    ///2 % of, nearest the usual range when there are two.
+    ///</summary>
+    private static double? NearestGridTempo(double detected, double durationSeconds, double[] ratios)
+    {
+        double? best = null;
+        double bestDistance = double.MaxValue;
+        foreach (double ratio in ratios)
+        {
+            double candidate = detected * ratio;
+            if (candidate < GridMinBpm || candidate > GridMaxBpm)
+            {
+                continue;
+            }
+
+            foreach (int beats in _gridBeatCounts)
+            {
+                double gridTempo = 60.0 * beats / durationSeconds;
+                bool isOnGrid = gridTempo is >= GridMinBpm and <= GridMaxBpm && Math.Abs(candidate - gridTempo) / gridTempo <= GridTolerance;
+                double distance = Math.Abs(Math.Log2(gridTempo / GridPriorBpm));
+                if (isOnGrid && distance < bestDistance)
+                {
+                    best = gridTempo;
+                    bestDistance = distance;
+                }
+            }
+        }
+
+        return best;
+    }
+
     private static bool Agrees(double detected, double named)
     {
         foreach (double factor in _relatedRatios)
@@ -198,6 +243,40 @@ public sealed class RhythmAnalyzer : IFeatureExtractor<RhythmFacet?>
     #endregion
 
     #region Public methods
+    ///<summary>
+    ///Corrects a detected tempo using the length of the clip. The strongest pulse of a drum loop is often not its written beat:
+    ///it can be the double or half, or a dotted or triplet relative, and the estimate is only good to a percent or two. But a
+    ///loop is cut to whole bars, so its tempo is one of <c>60 * beats / duration</c>. In order:
+    ///<list type="number">
+    ///<item>if the detected tempo, its double or its half is on that grid, take the grid tempo (the one nearest 110 BPM when
+    ///two are);</item>
+    ///<item>otherwise, if the detected tempo already gives a whole number of beats, keep it (a 3-bar loop is a loop too);</item>
+    ///<item>otherwise, if a dotted or triplet relative (3:2, 2:3, 4:3, 3:4) is on the grid, take that;</item>
+    ///<item>otherwise keep the detected tempo.</item>
+    ///</list>
+    ///Whether a loop is felt at 80 or at 160 is a convention of whoever named it, so the octave choice is a prior, not a
+    ///measurement.
+    ///</summary>
+    ///<param name="detectedBpm">Tempo from the onset envelope.</param>
+    ///<param name="durationSeconds">Length of the clip.</param>
+    public static double SnapToLoopGrid(double detectedBpm, double durationSeconds)
+    {
+        if (detectedBpm <= 0 || durationSeconds <= 0)
+        {
+            return detectedBpm;
+        }
+
+        double? sameOrOctave = NearestGridTempo(detectedBpm, durationSeconds, _octaveRatios);
+        if (sameOrOctave is { } snapped)
+        {
+            return snapped;
+        }
+
+        double ownBeats = durationSeconds * detectedBpm / 60.0;
+        bool isWholeBeats = ownBeats >= 2.0 && Math.Abs(ownBeats - Math.Round(ownBeats)) <= LoopBeatTolerance;
+        return isWholeBeats ? detectedBpm : NearestGridTempo(detectedBpm, durationSeconds, _feelRatios) ?? detectedBpm;
+    }
+
     ///<inheritdoc/>
     public RhythmFacet? Extract(AnalysisContext context)
     {
@@ -229,14 +308,24 @@ public sealed class RhythmAnalyzer : IFeatureExtractor<RhythmFacet?>
         bool hasRealOnsets = strength.Max() >= MinOnsetPeak;
         int onsets = hasRealOnsets ? CountOnsets(strength, framesPerSecond) : 0;
         double activeSeconds = Math.Max(0.1, (double)context.Active.Length / sampleRate);
-        (double? detected, double confidence) = hasRealOnsets ? EstimateTempo(strength, framesPerSecond) : (null, 0.0);
+        (double? measured, double confidence) = hasRealOnsets ? EstimateTempo(strength, framesPerSecond) : (null, 0.0);
+
+        // A clip that is cut to whole bars can only have a tempo that fits its length; use that to correct octave and
+        // triplet-feel mistakes and to make the estimate exact. Only when the periodicity is real, and not for very long files.
+        bool canUseLoopLength = measured is not null && confidence >= LoopMinConfidence && duration <= MaxSeconds;
+        double? detected = canUseLoopLength ? SnapToLoopGrid(measured!.Value, duration) : measured;
 
         double? named = context.Named.TempoBpm;
         bool? agrees = detected is null || named is null ? null : Agrees(detected.Value, named.Value);
         double? best = named ?? (confidence >= LoopMinConfidence ? detected : null);
         double? beats = best is null ? null : duration * best.Value / 60.0;
         double? bars = beats is null ? null : beats.Value / 4.0;
-        bool isWholeBeats = beats is { } b && b >= 2.0 && Math.Abs(b - Math.Round(b)) <= LoopBeatTolerance;
+
+        // Whether the clip is a loop is judged on the tempo as measured (or as named), not on the loop-length correction above:
+        // that correction always lands on a whole number of beats, so it cannot be allowed to vouch for the loop.
+        double? measuredBest = named ?? (confidence >= LoopMinConfidence ? measured : null);
+        double? measuredBeats = measuredBest is null ? null : duration * measuredBest.Value / 60.0;
+        bool isWholeBeats = measuredBeats is { } b && b >= 2.0 && Math.Abs(b - Math.Round(b)) <= LoopBeatTolerance;
         bool isPeriodic = named is not null || confidence >= LoopMinConfidence;
 
         return new RhythmFacet(

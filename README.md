@@ -17,7 +17,7 @@ app, the tests and the analyzer tool all share it):
 | `Facets/` | One immutable record per acoustic category: `TechnicalFacet` (format), `TonalityFacet` (pitch, harmonicity, character flags), `SpectralFacet` (centroid, rolloff, flatness, seven Hz-defined bands, MFCCs), `DynamicsFacet` (peak, true peak, BS.1770 loudness, crest, clipping, attack/decay, envelope shape), `StereoFacet` (correlation, width, mono compatibility, phase), `RhythmFacet` (onsets, tempo, loop-ness). |
 | `Concepts/` + `Data/taxonomy.json` | Is-a trees for instruments, kits and styles, loaded from JSON, not hard-coded. `Data/lexicon.json` holds the content-type and origin keywords. |
 | `Classification/` | Classifiers vote (file-name lexicon, embedded metadata, and a nearest-neighbour vote on the audio itself); `EvidenceFusion` combines the votes, keeps every label's evidence and confidence, and flags disagreements for review instead of hiding them. `overrides.json` corrections are applied last. |
-| `Querying/` | Composable specifications (`SampleSpecs.InstrumentIs("kick") & SampleSpecs.Mono()`), free-text search, sorting, similarity and relations, in `SampleIndex`. |
+| `Querying/` | Composable specifications (`SampleSpecs.InstrumentIs("kick") & SampleSpecs.Mono()`), free-text search, sorting, similarity, relations, and collections (kits, variations, tempo and key groups, and *sound families*: k-means clusters of the acoustic fingerprint, found without looking at names), in `SampleIndex`. |
 | `Analysis/` | A tolerant WAV reader (8/16/24/32-bit, float, `WAVE_FORMAT_EXTENSIBLE`, odd chunks, truncated data) and one analyzer per facet. |
 
 The audio is analysed **once, on a PC**, into `Resources/Raw/sample-catalog.json` (about 4 MB, one sample per line so diffs stay
@@ -49,6 +49,15 @@ Things worth knowing about the data:
   (kick, snare, hi-hat, tom, cymbal, clap, rim), the sample is flagged `NeedsReview` rather than silently trusted.
 * The name is authoritative for tempo. Detected tempo often lands on a related pulse of a drum loop (dotted or triplet feel), so
   `RhythmFacet.TempoAgreesWithName` means "metrically related", not "equal".
+* Loops are cut to whole bars, so `RhythmAnalyzer.SnapToLoopGrid` uses the clip's length to correct a confident detection: it
+  moves an octave or triplet-feel mistake, and a slightly-off estimate, onto `60 * beats / duration` for 4, 8, 16, 32 or 64 beats
+  (`report` prints the effect: 72 % of the files that name a tempo now match it to within 2 BPM, up from 43 %). Whether a loop is
+  felt at 80 or at 160 is a naming convention the audio cannot settle, so when both fit, the one nearer 110 BPM wins; the
+  remaining misses are almost all that choice. Whether a clip is a loop (`IsLoopLike`) is judged on the tempo *before* this
+  correction, so the correction cannot vouch for itself.
+* A detected tempo is only believed at a periodicity confidence of 0.30 or more (`RhythmFacet.TrustedBpm`): below that it matched
+  the name for only 3 of 14 files. So `Sample.EffectiveTempoBpm` (the tempo filter, sort and badge) is the name's tempo, else a
+  confident detection, else none: 127 of the 2,220 sounds have a tempo, 112 of them from the name.
 * Octave numbers in names (`Bass Sub C#0`) use a different convention from the detected pitch (measured octave is usually one
   higher), so only the pitch class is compared.
 * The bundled samples are mostly 24-bit (or `WAVE_FORMAT_EXTENSIBLE`). Android plays them as they are, so auditioning uses the

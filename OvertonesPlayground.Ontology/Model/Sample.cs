@@ -38,10 +38,11 @@ public sealed record Sample(
     public string Name => Asset.DisplayName;
 
     ///<summary>
-    ///Tempo to use: the tempo in the name when present (people wrote it deliberately), otherwise the detected tempo.
+    ///Tempo to use: the tempo in the name when present (people wrote it deliberately), otherwise the detected tempo when its
+    ///periodicity is strong enough to believe (<see cref="RhythmFacet.TrustedBpm"/>), otherwise none.
     ///</summary>
     [JsonIgnore]
-    public double? EffectiveTempoBpm => Classification.Attributes.TempoBpm ?? Rhythm?.DetectedBpm;
+    public double? EffectiveTempoBpm => Classification.Attributes.TempoBpm ?? Rhythm?.TrustedBpm;
 
     ///<summary>
     ///Pitch class (0 = C) to use: the key written in the name when present, otherwise the detected pitch.
