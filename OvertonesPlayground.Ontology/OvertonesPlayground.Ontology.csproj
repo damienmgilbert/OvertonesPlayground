@@ -18,6 +18,7 @@
 		     suggestions, null-argument guards on internal-facing APIs, "Long"/"Short" enum names ...) and would bury real
 		     diagnostics; the app suppresses the same ones per type in GlobalSuppressions.cs. -->
 		<NoWarn>$(NoWarn);CA1062;CA1819;CA1308;CA1711;CA1720;CA2225;IDE0290;IDE0028;IDE0047;IDE0048;IDE0024;IDE0004;IDE0072;IDE0078;IDE0200;IDE0058</NoWarn>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
 	</PropertyGroup>
 
 	<!-- The app's radix-2 FFT is platform-neutral, so it is compiled into this assembly instead of being duplicated. It is
@@ -42,6 +43,13 @@
 		<Using Include="OvertonesPlayground.Ontology.Model" />
 		<Using Include="OvertonesPlayground.Ontology.Querying" />
 		<Using Include="OvertonesPlayground.Ontology.Concepts" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Update="README.md">
+	    <Pack>True</Pack>
+	    <PackagePath>\</PackagePath>
+	  </None>
 	</ItemGroup>
 
 </Project>

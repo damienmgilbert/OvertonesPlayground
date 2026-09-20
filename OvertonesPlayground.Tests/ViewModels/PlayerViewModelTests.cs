@@ -2,8 +2,11 @@ namespace OvertonesPlayground.Tests.ViewModels;
 
 public sealed class PlayerViewModelTests
 {
+    #region Fields
     private readonly IAudioPlaybackService _playback = Substitute.For<IAudioPlaybackService>();
+    #endregion
 
+    #region Private methods
     private PlayerViewModel Create() => new(_playback, NullLogger<PlayerViewModel>.Instance);
 
     private static (IDispatcher Dispatcher, IDispatcherTimer Timer) CreateDispatcher()
@@ -13,20 +16,9 @@ public sealed class PlayerViewModelTests
         dispatcher.CreateTimer().Returns(timer);
         return (dispatcher, timer);
     }
+    #endregion
 
-    #region State from the playback service
-    [Fact]
-    public void Constructor_NothingLoaded_ShowsAPlaceholder()
-    {
-        PlayerViewModel viewModel = Create();
-
-        Assert.Equal("Player", viewModel.Title);
-        Assert.Equal("Nothing loaded", viewModel.ClipName);
-        Assert.False(viewModel.IsPlaying);
-        Assert.Equal(0, viewModel.PositionSeconds);
-        Assert.Equal(1, viewModel.DurationSeconds);
-    }
-
+    #region Public methods
     [Fact]
     public void Constructor_ClipAlreadyPlaying_PicksUpItsState()
     {
@@ -44,6 +36,33 @@ public sealed class PlayerViewModelTests
     }
 
     [Fact]
+    public void Constructor_NothingLoaded_ShowsAPlaceholder()
+    {
+        PlayerViewModel viewModel = Create();
+
+        Assert.Equal("Player", viewModel.Title);
+        Assert.Equal("Nothing loaded", viewModel.ClipName);
+        Assert.False(viewModel.IsPlaying);
+        Assert.Equal(0, viewModel.PositionSeconds);
+        Assert.Equal(1, viewModel.DurationSeconds);
+    }
+
+    [Fact]
+    public void Dispose_StopsTheTimerAndStopsListeningToThePlaybackService()
+    {
+        (IDispatcher dispatcher, IDispatcherTimer timer) = CreateDispatcher();
+        PlayerViewModel viewModel = Create();
+        viewModel.StartTicking(dispatcher);
+
+        viewModel.Dispose();
+        _playback.CurrentClip.Returns(TestData.Clip("Ignored"));
+        _playback.PlaybackStateChanged += Raise.Event();
+
+        timer.Received(1).Stop();
+        Assert.Equal("Nothing loaded", viewModel.ClipName);
+    }
+
+    [Fact]
     public void DurationSeconds_ClipShorterThanASecond_IsNeverLessThanOne()
     {
         _playback.Duration.Returns(TimeSpan.FromMilliseconds(120));
@@ -52,15 +71,16 @@ public sealed class PlayerViewModelTests
     }
 
     [Fact]
-    public void PositionAndDurationText_AreFormattedAsMinutesAndSeconds()
+    public void PlaybackStateChanged_RaisesTheTimeTexts()
     {
-        _playback.Position.Returns(TimeSpan.FromSeconds(65));
-        _playback.Duration.Returns(TimeSpan.FromSeconds(605));
-
         PlayerViewModel viewModel = Create();
+        List<string?> raised = [];
+        viewModel.PropertyChanged += (_, e) => raised.Add(e.PropertyName);
 
-        Assert.Equal("01:05", viewModel.PositionText);
-        Assert.Equal("10:05", viewModel.DurationText);
+        _playback.PlaybackStateChanged += Raise.Event();
+
+        Assert.Contains(nameof(PlayerViewModel.PositionText), raised);
+        Assert.Contains(nameof(PlayerViewModel.DurationText), raised);
     }
 
     [Fact]
@@ -76,21 +96,6 @@ public sealed class PlayerViewModelTests
         Assert.True(viewModel.IsPlaying);
     }
 
-    [Fact]
-    public void PlaybackStateChanged_RaisesTheTimeTexts()
-    {
-        PlayerViewModel viewModel = Create();
-        List<string?> raised = [];
-        viewModel.PropertyChanged += (_, e) => raised.Add(e.PropertyName);
-
-        _playback.PlaybackStateChanged += Raise.Event();
-
-        Assert.Contains(nameof(PlayerViewModel.PositionText), raised);
-        Assert.Contains(nameof(PlayerViewModel.DurationText), raised);
-    }
-    #endregion
-
-    #region Commands
     [Fact]
     public void PlayPause_WhilePlaying_Pauses()
     {
@@ -114,6 +119,18 @@ public sealed class PlayerViewModelTests
     }
 
     [Fact]
+    public void PositionAndDurationText_AreFormattedAsMinutesAndSeconds()
+    {
+        _playback.Position.Returns(TimeSpan.FromSeconds(65));
+        _playback.Duration.Returns(TimeSpan.FromSeconds(605));
+
+        PlayerViewModel viewModel = Create();
+
+        Assert.Equal("01:05", viewModel.PositionText);
+        Assert.Equal("10:05", viewModel.DurationText);
+    }
+
+    [Fact]
     public void Seek_MovesTheTransportToThatSecond()
     {
         Create().SeekCommand.Execute(42.5);
@@ -122,25 +139,17 @@ public sealed class PlayerViewModelTests
     }
 
     [Fact]
-    public void Stop_StopsTheTransport()
+    public void StartTicking_CalledTwice_StillUsesOneTimer()
     {
-        Create().StopCommand.Execute(null);
-
-        _playback.Received(1).Stop();
-    }
-
-    [Fact]
-    public void Volume_Changed_IsPassedToThePlaybackService()
-    {
+        (IDispatcher dispatcher, _) = CreateDispatcher();
         PlayerViewModel viewModel = Create();
 
-        viewModel.Volume = 0.25;
+        viewModel.StartTicking(dispatcher);
+        viewModel.StartTicking(dispatcher);
 
-        _playback.Received().Volume = 0.25;
+        dispatcher.Received(1).CreateTimer();
     }
-    #endregion
 
-    #region Position timer
     [Fact]
     public void StartTicking_StartsAFastRepeatingTimerThatRefreshesTheView()
     {
@@ -157,17 +166,15 @@ public sealed class PlayerViewModelTests
     }
 
     [Fact]
-    public void StartTicking_CalledTwice_StillUsesOneTimer()
+    public void Stop_StopsTheTransport()
     {
-        (IDispatcher dispatcher, _) = CreateDispatcher();
-        PlayerViewModel viewModel = Create();
+        Create().StopCommand.Execute(null);
 
-        viewModel.StartTicking(dispatcher);
-        viewModel.StartTicking(dispatcher);
-
-        dispatcher.Received(1).CreateTimer();
+        _playback.Received(1).Stop();
     }
 
+    [Fact]
+    public void StopTicking_NeverStarted_IsHarmless() { Create().StopTicking(); }
     [Fact]
     public void StopTicking_StopsTheTimer()
     {
@@ -181,24 +188,13 @@ public sealed class PlayerViewModelTests
     }
 
     [Fact]
-    public void StopTicking_NeverStarted_IsHarmless()
+    public void Volume_Changed_IsPassedToThePlaybackService()
     {
-        Create().StopTicking();
-    }
-
-    [Fact]
-    public void Dispose_StopsTheTimerAndStopsListeningToThePlaybackService()
-    {
-        (IDispatcher dispatcher, IDispatcherTimer timer) = CreateDispatcher();
         PlayerViewModel viewModel = Create();
-        viewModel.StartTicking(dispatcher);
 
-        viewModel.Dispose();
-        _playback.CurrentClip.Returns(TestData.Clip("Ignored"));
-        _playback.PlaybackStateChanged += Raise.Event();
+        viewModel.Volume = 0.25;
 
-        timer.Received(1).Stop();
-        Assert.Equal("Nothing loaded", viewModel.ClipName);
+        _playback.Received().Volume = 0.25;
     }
     #endregion
 }

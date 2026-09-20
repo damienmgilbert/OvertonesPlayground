@@ -22,36 +22,36 @@ namespace OvertonesPlayground.Ontology.Facets;
 ///<param name="DecayMs">Time from the envelope peak until it has fallen 30 dB (or until the end when it never does).</param>
 ///<param name="Shape">Envelope archetype.</param>
 public sealed record DynamicsFacet(
-    double PeakDb,
-    double TruePeakDb,
-    double RmsDb,
-    double ActiveRmsDb,
-    double IntegratedLufs,
-    bool LufsIsGated,
-    double LoudnessRangeLu,
-    double CrestDb,
-    double DcOffset,
-    int ClippedSamples,
-    double LeadSilenceMs,
-    double TrailSilenceMs,
-    double ActiveSeconds,
-    double AttackMs,
-    double DecayMs,
-    EnvelopeShape Shape)
+                     double PeakDb,
+                     double TruePeakDb,
+                     double RmsDb,
+                     double ActiveRmsDb,
+                     double IntegratedLufs,
+                     bool LufsIsGated,
+                     double LoudnessRangeLu,
+                     double CrestDb,
+                     double DcOffset,
+                     int ClippedSamples,
+                     double LeadSilenceMs,
+                     double TrailSilenceMs,
+                     double ActiveSeconds,
+                     double AttackMs,
+                     double DecayMs,
+                     EnvelopeShape Shape)
 {
     #region Public properties
+
     ///<summary>
-    ///Loudness bucket for browsing. The cut points (-18, -14.5 and -11.5 LUFS) are the quartiles of the bundled corpus, because
-    ///nearly every sample is peak-normalised and an absolute scale would put most of them in one bucket.
+    ///Loudness bucket for browsing. The cut points (-18, -14.5 and -11.5 LUFS) are the quartiles of the bundled corpus,
+    ///because nearly every sample is peak-normalised and an absolute scale would put most of them in one bucket.
     ///</summary>
     [JsonIgnore]
-    public LoudnessClass Loudness =>
-        IntegratedLufs switch
-        {
-            < -18.0 => LoudnessClass.Quiet,
-            < -14.5 => LoudnessClass.Moderate,
-            < -11.5 => LoudnessClass.Loud,
-            _ => LoudnessClass.VeryLoud,
-        };
+    public LoudnessClass Loudness => IntegratedLufs switch
+    {
+        < -18.0 => LoudnessClass.Quiet,
+        < -14.5 => LoudnessClass.Moderate,
+        < -11.5 => LoudnessClass.Loud,
+        _ => LoudnessClass.VeryLoud,
+    };
     #endregion
 }

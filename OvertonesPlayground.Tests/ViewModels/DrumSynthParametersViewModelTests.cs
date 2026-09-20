@@ -2,6 +2,7 @@ namespace OvertonesPlayground.Tests.ViewModels;
 
 public sealed class DrumSynthParametersViewModelTests
 {
+    #region Public methods
     public static TheoryData<DrumType> AllDrums() => [.. Enum.GetValues<DrumType>()];
 
     [Theory]
@@ -32,6 +33,33 @@ public sealed class DrumSynthParametersViewModelTests
         Assert.Equal(7, viewModel.BurstCount);
         Assert.Equal(FilterType.BandPass, viewModel.FilterType);
         Assert.Equal(DrumType.Snare, viewModel.DrumType);
+    }
+
+    [Fact]
+    public void TheChoicesOffered_CoverEveryFilterAndTheCommonSampleRates()
+    {
+        Assert.Equal(Enum.GetValues<FilterType>(), DrumSynthParametersViewModel.FilterOptions);
+        Assert.Equal([8_000, 11_025, 22_050, 44_100, 48_000], DrumSynthParametersViewModel.SampleRateOptions);
+    }
+
+    [Theory]
+    [InlineData(DrumType.Kick, true, false, false)]
+    [InlineData(DrumType.Bass, true, false, false)]
+    [InlineData(DrumType.Tom, true, false, false)]
+    [InlineData(DrumType.Snare, false, true, false)]
+    [InlineData(DrumType.Rimshot, false, true, false)]
+    [InlineData(DrumType.Clap, false, false, true)]
+    [InlineData(DrumType.HiHat, false, false, false)]
+    [InlineData(DrumType.OpenHiHat, false, false, false)]
+    [InlineData(DrumType.Crash, false, false, false)]
+    [InlineData(DrumType.Shaker, false, false, false)]
+    public void TheControlsShownDependOnTheDrum(DrumType drum, bool pitchSweep, bool snare, bool clap)
+    {
+        DrumSynthParametersViewModel viewModel = new(drum);
+
+        Assert.Equal(pitchSweep, viewModel.ShowPitchSweep);
+        Assert.Equal(snare, viewModel.ShowSnareControls);
+        Assert.Equal(clap, viewModel.ShowClapControls);
     }
 
     [Fact]
@@ -76,31 +104,5 @@ public sealed class DrumSynthParametersViewModelTests
         Assert.Equal(900, parameters.FilterCutoffHz);
         Assert.Equal(2.5, parameters.FilterResonance);
     }
-
-    [Theory]
-    [InlineData(DrumType.Kick, true, false, false)]
-    [InlineData(DrumType.Bass, true, false, false)]
-    [InlineData(DrumType.Tom, true, false, false)]
-    [InlineData(DrumType.Snare, false, true, false)]
-    [InlineData(DrumType.Rimshot, false, true, false)]
-    [InlineData(DrumType.Clap, false, false, true)]
-    [InlineData(DrumType.HiHat, false, false, false)]
-    [InlineData(DrumType.OpenHiHat, false, false, false)]
-    [InlineData(DrumType.Crash, false, false, false)]
-    [InlineData(DrumType.Shaker, false, false, false)]
-    public void TheControlsShownDependOnTheDrum(DrumType drum, bool pitchSweep, bool snare, bool clap)
-    {
-        DrumSynthParametersViewModel viewModel = new(drum);
-
-        Assert.Equal(pitchSweep, viewModel.ShowPitchSweep);
-        Assert.Equal(snare, viewModel.ShowSnareControls);
-        Assert.Equal(clap, viewModel.ShowClapControls);
-    }
-
-    [Fact]
-    public void TheChoicesOffered_CoverEveryFilterAndTheCommonSampleRates()
-    {
-        Assert.Equal(Enum.GetValues<FilterType>(), DrumSynthParametersViewModel.FilterOptions);
-        Assert.Equal([8_000, 11_025, 22_050, 44_100, 48_000], DrumSynthParametersViewModel.SampleRateOptions);
-    }
+    #endregion
 }

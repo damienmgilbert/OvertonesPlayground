@@ -1,13 +1,6 @@
 namespace OvertonesPlayground.Ontology.Catalog;
 
 ///<summary>
-///An audio file found on disk, as far as planning an update needs to know it.
-///</summary>
-///<param name="Name">File name with extension; the sample id.</param>
-///<param name="SizeBytes">Size of the file.</param>
-public readonly record struct DiskFile(string Name, long SizeBytes);
-
-///<summary>
 ///What an incremental <c>analyze</c> has to do to bring an existing catalog in line with the audio folder: which samples
 ///can be kept as they are, which files have to be (re)analysed, and which catalog entries no longer have a file.
 ///</summary>
@@ -21,7 +14,6 @@ public sealed record CatalogUpdatePlan(
     IReadOnlyList<string> Removed,
     string? FullReanalysisReason)
 {
-    #region Public methods
     ///<summary>
     ///Compares an existing catalog with the files on disk. A file is reused when the catalog has an entry of exactly the same
     ///name whose size and content hash both match; the hash is only computed for files whose size already matches. Nothing is
@@ -69,9 +61,7 @@ public sealed record CatalogUpdatePlan(
         toAnalyze.Sort(StringComparer.OrdinalIgnoreCase);
         return new CatalogUpdatePlan(reused, toAnalyze, removed, null);
     }
-    #endregion
 
-    #region Private methods
     private static string? FullReanalysisReasonFor(SampleCatalog? existing) => existing switch
     {
         null => "there is no usable catalog",
@@ -81,5 +71,4 @@ public sealed record CatalogUpdatePlan(
             $"the catalog was built by analyzer {analyzer} and the current one is {SampleCatalog.CurrentAnalyzerVersion}",
         _ => null,
     };
-    #endregion
 }

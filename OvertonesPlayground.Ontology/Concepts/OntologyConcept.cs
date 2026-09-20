@@ -11,7 +11,9 @@ public abstract class OntologyConcept
     #endregion
 
     #region Constructors
-    ///<summary>Creates a concept; <see cref="Taxonomy{TConcept}"/> wires up parent and children.</summary>
+    ///<summary>
+    ///Creates a concept; <see cref="Taxonomy{TConcept}"/> wires up parent and children.
+    ///</summary>
     protected OntologyConcept(string key, string displayName, IReadOnlyList<string> aliases)
     {
         Key = key;
@@ -20,8 +22,10 @@ public abstract class OntologyConcept
     }
     #endregion
 
-    #region Private methods
-    ///<summary>Adds <paramref name="child"/> below this concept.</summary>
+    #region Internal methods
+    ///<summary>
+    ///Adds <paramref name="child"/> below this concept.
+    ///</summary>
     internal void Attach(OntologyConcept child)
     {
         child.Parent = this;
@@ -30,7 +34,9 @@ public abstract class OntologyConcept
     #endregion
 
     #region Public methods
-    ///<summary>This concept followed by each ancestor up to the root.</summary>
+    ///<summary>
+    ///This concept followed by each ancestor up to the root.
+    ///</summary>
     public IEnumerable<OntologyConcept> AncestorsAndSelf()
     {
         for (OntologyConcept? current = this; current is not null; current = current.Parent)
@@ -53,7 +59,9 @@ public abstract class OntologyConcept
         return current;
     }
 
-    ///<summary>This concept followed by every descendant, depth first.</summary>
+    ///<summary>
+    ///This concept followed by every descendant, depth first.
+    ///</summary>
     public IEnumerable<OntologyConcept> DescendantsAndSelf()
     {
         yield return this;
@@ -66,10 +74,14 @@ public abstract class OntologyConcept
         }
     }
 
-    ///<summary>True when this concept is <paramref name="other"/> or one of its descendants.</summary>
+    ///<summary>
+    ///True when this concept is <paramref name="other"/> or one of its descendants.
+    ///</summary>
     public bool IsA(OntologyConcept other) => AncestorsAndSelf().Any(concept => ReferenceEquals(concept, other));
 
-    ///<summary>True when this concept is, or descends from, the concept with <paramref name="key"/>.</summary>
+    ///<summary>
+    ///True when this concept is, or descends from, the concept with <paramref name="key"/>.
+    ///</summary>
     public bool IsA(string key) => AncestorsAndSelf().Any(concept => concept.Key == key);
 
     ///<inheritdoc/>
@@ -77,25 +89,39 @@ public abstract class OntologyConcept
     #endregion
 
     #region Public properties
-    ///<summary>Normalized words that name this concept; a leading <c>^</c> means "only as the first word of a file name".</summary>
+    ///<summary>
+    ///Normalized words that name this concept; a leading <c>^</c> means "only as the first word of a file name".
+    ///</summary>
     public IReadOnlyList<string> Aliases { get; }
 
-    ///<summary>Direct sub-concepts.</summary>
+    ///<summary>
+    ///Direct sub-concepts.
+    ///</summary>
     public IReadOnlyList<OntologyConcept> Children => _children;
 
-    ///<summary>Distance from the root (root = 0).</summary>
+    ///<summary>
+    ///Distance from the root (root = 0).
+    ///</summary>
     public int Depth => Parent is null ? 0 : Parent.Depth + 1;
 
-    ///<summary>Name for display.</summary>
+    ///<summary>
+    ///Name for display.
+    ///</summary>
     public string DisplayName { get; }
 
-    ///<summary>Stable identifier, unique within a taxonomy.</summary>
+    ///<summary>
+    ///Stable identifier, unique within a taxonomy.
+    ///</summary>
     public string Key { get; }
 
-    ///<summary>The parent concept, or null for the root.</summary>
+    ///<summary>
+    ///The parent concept, or null for the root.
+    ///</summary>
     public OntologyConcept? Parent { get; private set; }
 
-    ///<summary>Path from below the root to this concept, for example <c>Percussion &gt; Hi-Hat &gt; Closed Hi-Hat</c>.</summary>
+    ///<summary>
+    ///Path from below the root to this concept, for example <c>Percussion &gt; Hi-Hat &gt; Closed Hi-Hat</c>.
+    ///</summary>
     public string Path => string.Join(" > ", AncestorsAndSelf().Reverse().Skip(1).Select(concept => concept.DisplayName));
     #endregion
 }

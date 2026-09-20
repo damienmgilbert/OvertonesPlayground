@@ -5,12 +5,11 @@ namespace OvertonesPlayground.Tests.Services;
 
 public sealed class SampleCatalogServiceTests : IDisposable
 {
+    #region Fields
     private readonly TempFileSystem _fileSystem = new();
+    #endregion
 
-    public void Dispose() => _fileSystem.Dispose();
-
-    private SampleCatalogService Create() => new(_fileSystem);
-
+    #region Private methods
     private void AddCatalog(int samples = 3)
     {
         SampleCatalog catalog = SampleCatalog.Create(TestSamples.Library().Take(samples));
@@ -19,18 +18,32 @@ public sealed class SampleCatalogServiceTests : IDisposable
         _fileSystem.AddPackageFile(SampleCatalogService.CatalogAssetName, stream.ToArray());
     }
 
-    [Fact]
-    public async Task GetIndexAsync_ReadsTheCatalogAssetAndBuildsAnIndex()
-    {
-        AddCatalog(5);
-        SampleCatalogService service = Create();
+    private SampleCatalogService Create() => new(_fileSystem);
+    #endregion
 
+    #region Public methods
+    public void Dispose() => _fileSystem.Dispose();
+
+    [Fact]
+    public async Task GetIndexAsync_AfterAFailure_CanBeRetriedOnceTheAssetExists()
+    {
+        SampleCatalogService service = Create();
+        _ = await Assert.ThrowsAsync<InvalidDataException>(() => service.GetIndexAsync(TestContext.Current.CancellationToken));
+
+        AddCatalog(4);
         SampleIndex index = await service.GetIndexAsync(TestContext.Current.CancellationToken);
 
-        Assert.Equal(5, index.Count);
-        Assert.NotNull(index.Find("Kick Test 1.wav"));
-        Assert.True(service.IsLoaded);
-        Assert.True(service.LoadDuration > TimeSpan.Zero);
+        Assert.Equal(4, index.Count);
+    }
+
+    [Fact]
+    public async Task GetIndexAsync_AlreadyCancelled_Throws()
+    {
+        AddCatalog();
+        using CancellationTokenSource cancelled = new();
+        await cancelled.CancelAsync();
+
+        _ = await Assert.ThrowsAnyAsync<OperationCanceledException>(() => Create().GetIndexAsync(cancelled.Token));
     }
 
     [Fact]
@@ -92,24 +105,17 @@ public sealed class SampleCatalogServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task GetIndexAsync_AfterAFailure_CanBeRetriedOnceTheAssetExists()
+    public async Task GetIndexAsync_ReadsTheCatalogAssetAndBuildsAnIndex()
     {
+        AddCatalog(5);
         SampleCatalogService service = Create();
-        _ = await Assert.ThrowsAsync<InvalidDataException>(() => service.GetIndexAsync(TestContext.Current.CancellationToken));
 
-        AddCatalog(4);
         SampleIndex index = await service.GetIndexAsync(TestContext.Current.CancellationToken);
 
-        Assert.Equal(4, index.Count);
+        Assert.Equal(5, index.Count);
+        Assert.NotNull(index.Find("Kick Test 1.wav"));
+        Assert.True(service.IsLoaded);
+        Assert.True(service.LoadDuration > TimeSpan.Zero);
     }
-
-    [Fact]
-    public async Task GetIndexAsync_AlreadyCancelled_Throws()
-    {
-        AddCatalog();
-        using CancellationTokenSource cancelled = new();
-        await cancelled.CancelAsync();
-
-        _ = await Assert.ThrowsAnyAsync<OperationCanceledException>(() => Create().GetIndexAsync(cancelled.Token));
-    }
+    #endregion
 }

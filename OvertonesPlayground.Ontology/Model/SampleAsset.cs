@@ -12,7 +12,10 @@ namespace OvertonesPlayground.Ontology.Model;
 public sealed record SampleAsset(string FileName, long SizeBytes, string ContentHash)
 {
     #region Public properties
-    ///<summary>File name without extension; the display name.</summary>
+
+    ///<summary>
+    ///File name without extension; the display name.
+    ///</summary>
     [JsonIgnore]
     public string DisplayName => Path.GetFileNameWithoutExtension(FileName);
     #endregion

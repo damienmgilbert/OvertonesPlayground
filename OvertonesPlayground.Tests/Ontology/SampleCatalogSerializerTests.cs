@@ -4,17 +4,52 @@ namespace OvertonesPlayground.Tests.Ontology;
 
 public sealed class SampleCatalogSerializerTests
 {
+    #region Private methods
     private static SampleCatalog Catalog() => SampleCatalog.Create(
-    [
-        TestSamples.Make("Kick 909 DMX 1", "kick", kit: "909", origin: SoundOrigin.DrumMachine, fundamentalHz: 55.0, tempoBpm: 120, keyPitchClass: 1, stem: "kick 909 dmx", variation: 1, needsReview: true),
-        TestSamples.Make("Break Ghosts 90 bpm", "drum-loop", image: StereoImage.Wide, content: ContentType.Break, style: "hip-hop", durationSeconds: 5.3),
-    ]);
+                                              [TestSamples.Make("Kick 909 DMX 1", "kick", kit: "909", origin: SoundOrigin.DrumMachine, fundamentalHz: 55.0, tempoBpm: 120, keyPitchClass: 1, stem: "kick 909 dmx", variation: 1, needsReview: true), TestSamples.Make(
+                                                                                                                                                                                                                                                     "Break Ghosts 90 bpm",
+                                                                                                                                                                                                                                                     "drum-loop",
+                                                                                                                                                                                                                                                     image: StereoImage.Wide,
+                                                                                                                                                                                                                                                     content: ContentType.Break,
+                                                                                                                                                                                                                                                     style: "hip-hop",
+                                                                                                                                                                                                                                                     durationSeconds: 5.3), ]);
 
     private static string Serialize(SampleCatalog catalog)
     {
         using MemoryStream stream = new();
         SampleCatalogSerializer.Serialize(catalog, stream);
         return Encoding.UTF8.GetString(stream.ToArray());
+    }
+    #endregion
+
+    #region Public methods
+    [Fact]
+    public void Create_OrdersSamplesByFileName()
+    {
+        SampleCatalog catalog = SampleCatalog.Create([TestSamples.Make("b"), TestSamples.Make("A"), TestSamples.Make("c")]);
+
+        Assert.Equal(["A.wav", "b.wav", "c.wav"], catalog.Samples.Select(s => s.Id));
+        Assert.Equal(SampleCatalog.CurrentSchemaVersion, catalog.SchemaVersion);
+        Assert.Equal(SampleCatalog.CurrentAnalyzerVersion, catalog.AnalyzerVersion);
+    }
+
+    [Fact]
+    public void Deserialize_ANonSeekableStream_Works()
+    {
+        using MemoryStream source = new(Encoding.UTF8.GetBytes(Serialize(Catalog())));
+        using NonSeekableStream stream = new(source);
+
+        SampleCatalog catalog = SampleCatalogSerializer.Deserialize(stream);
+
+        Assert.Equal(2, catalog.Samples.Count);
+    }
+
+    [Fact]
+    public void Deserialize_WrongSchemaVersion_Throws()
+    {
+        string json = Serialize(Catalog()).Replace("\"schemaVersion\":1", "\"schemaVersion\":99", StringComparison.Ordinal);
+
+        _ = Assert.Throws<InvalidDataException>(() => SampleCatalogSerializer.Deserialize(json));
     }
 
     [Fact]
@@ -51,6 +86,41 @@ public sealed class SampleCatalogSerializerTests
     }
 
     [Fact]
+    public void Samples_AreImmutableRecords_SoWithProducesACopy()
+    {
+        Sample original = TestSamples.Make("Kick");
+
+        Sample changed = original with { Status = AnalysisStatus.Partial };
+
+        Assert.Equal(AnalysisStatus.Analyzed, original.Status);
+        Assert.Equal(AnalysisStatus.Partial, changed.Status);
+        Assert.Equal(original.Asset, changed.Asset);
+    }
+
+    [Fact]
+    public void Save_CreatesTheFolderAndWritesAReadableFile()
+    {
+        string folder = Path.Combine(Path.GetTempPath(), $"catalog-{Guid.NewGuid():N}");
+        string path = Path.Combine(folder, "nested", "catalog.json");
+        try
+        {
+            SampleCatalogSerializer.Save(Catalog(), path);
+
+            using FileStream stream = File.OpenRead(path);
+            Assert.Equal(2, SampleCatalogSerializer.Deserialize(stream).Samples.Count);
+        }
+        finally
+        {
+            if (Directory.Exists(folder))
+            {
+                Directory.Delete(folder, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public void Serialize_IsDeterministic() { Assert.Equal(Serialize(Catalog()), Serialize(Catalog())); }
+    [Fact]
     public void Serialize_WritesEnumsAsNamesAndFlagsAsCommaSeparatedNames()
     {
         string json = Serialize(Catalog());
@@ -75,77 +145,24 @@ public sealed class SampleCatalogSerializerTests
         Assert.DoesNotContain("effectiveTempoBpm", string.Concat(lines));
         Assert.DoesNotContain("loudness\":", string.Concat(lines));
     }
-
-    [Fact]
-    public void Serialize_IsDeterministic()
-    {
-        Assert.Equal(Serialize(Catalog()), Serialize(Catalog()));
-    }
-
-    [Fact]
-    public void Create_OrdersSamplesByFileName()
-    {
-        SampleCatalog catalog = SampleCatalog.Create([TestSamples.Make("b"), TestSamples.Make("A"), TestSamples.Make("c")]);
-
-        Assert.Equal(["A.wav", "b.wav", "c.wav"], catalog.Samples.Select(s => s.Id));
-        Assert.Equal(SampleCatalog.CurrentSchemaVersion, catalog.SchemaVersion);
-        Assert.Equal(SampleCatalog.CurrentAnalyzerVersion, catalog.AnalyzerVersion);
-    }
-
-    [Fact]
-    public void Deserialize_WrongSchemaVersion_Throws()
-    {
-        string json = Serialize(Catalog()).Replace("\"schemaVersion\":1", "\"schemaVersion\":99", StringComparison.Ordinal);
-
-        _ = Assert.Throws<InvalidDataException>(() => SampleCatalogSerializer.Deserialize(json));
-    }
-
-    [Fact]
-    public void Deserialize_ANonSeekableStream_Works()
-    {
-        using MemoryStream source = new(Encoding.UTF8.GetBytes(Serialize(Catalog())));
-        using NonSeekableStream stream = new(source);
-
-        SampleCatalog catalog = SampleCatalogSerializer.Deserialize(stream);
-
-        Assert.Equal(2, catalog.Samples.Count);
-    }
-
-    [Fact]
-    public void Save_CreatesTheFolderAndWritesAReadableFile()
-    {
-        string folder = Path.Combine(Path.GetTempPath(), "catalog-" + Guid.NewGuid().ToString("N"));
-        string path = Path.Combine(folder, "nested", "catalog.json");
-        try
-        {
-            SampleCatalogSerializer.Save(Catalog(), path);
-
-            using FileStream stream = File.OpenRead(path);
-            Assert.Equal(2, SampleCatalogSerializer.Deserialize(stream).Samples.Count);
-        }
-        finally
-        {
-            if (Directory.Exists(folder))
-            {
-                Directory.Delete(folder, recursive: true);
-            }
-        }
-    }
-
-    [Fact]
-    public void Samples_AreImmutableRecords_SoWithProducesACopy()
-    {
-        Sample original = TestSamples.Make("Kick");
-
-        Sample changed = original with { Status = AnalysisStatus.Partial };
-
-        Assert.Equal(AnalysisStatus.Analyzed, original.Status);
-        Assert.Equal(AnalysisStatus.Partial, changed.Status);
-        Assert.Equal(original.Asset, changed.Asset);
-    }
+    #endregion
 
     private sealed class NonSeekableStream(Stream inner) : Stream
     {
+        #region Public methods
+        public override void Flush()
+        {
+        }
+        public override int Read(byte[] buffer, int offset, int count) => inner.Read(buffer, offset, count);
+
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+
+        public override void SetLength(long value) => throw new NotSupportedException();
+
+        public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+        #endregion
+
+        #region Public properties
         public override bool CanRead => true;
 
         public override bool CanSeek => false;
@@ -154,22 +171,7 @@ public sealed class SampleCatalogSerializerTests
 
         public override long Length => throw new NotSupportedException();
 
-        public override long Position
-        {
-            get => throw new NotSupportedException();
-            set => throw new NotSupportedException();
-        }
-
-        public override void Flush()
-        {
-        }
-
-        public override int Read(byte[] buffer, int offset, int count) => inner.Read(buffer, offset, count);
-
-        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
-
-        public override void SetLength(long value) => throw new NotSupportedException();
-
-        public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+        public override long Position { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
+        #endregion
     }
 }

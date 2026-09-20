@@ -5,21 +5,14 @@ namespace OvertonesPlayground.Tests.Services;
 
 public sealed class AudioRecorderServiceTests : IDisposable
 {
+    #region Fields
     private readonly IAudioManager _audioManager = Substitute.For<IAudioManager>();
+    private readonly List<AudioRecorderService> _created = [];
     private readonly TempFileSystem _files = new();
     private readonly IAudioRecorder _recorder = Substitute.For<IAudioRecorder, IDisposable>();
-    private readonly List<AudioRecorderService> _created = [];
+    #endregion
 
-    public void Dispose()
-    {
-        foreach (AudioRecorderService service in _created)
-        {
-            service.Dispose();
-        }
-
-        _files.Dispose();
-    }
-
+    #region Private methods
     private AudioRecorderService Create()
     {
         _audioManager.CreateRecorder().Returns(_recorder);
@@ -33,44 +26,85 @@ public sealed class AudioRecorderServiceTests : IDisposable
         NSubstitute.Core.ICall call = _recorder.ReceivedCalls().Single(c => c.GetMethodInfo().Name == nameof(IAudioRecorder.StartAsync));
         return (string)call.GetArguments()[0]!;
     }
+    #endregion
 
-    #region Starting
+    #region Public methods
     [Fact]
-    public async Task Start_RecordsIntoANewWavInTheClipsFolder()
+    public async Task Cancel_NothingEverStarted_IsHarmless()
+    {
+        await Create().CancelAsync();
+
+        await _recorder.DidNotReceive().StopAsync();
+    }
+
+    [Fact]
+    public async Task Cancel_RecorderNotRunning_StillDeletesWhatWasLeftBehindWithoutStoppingIt()
     {
         AudioRecorderService service = Create();
-
         await service.StartAsync();
-
         string path = StartedPath();
-        Assert.Equal(_files.InAppData("Clips"), Path.GetDirectoryName(path));
-        Assert.StartsWith("recording_", Path.GetFileName(path));
-        Assert.EndsWith(".wav", path);
-        Assert.True(Directory.Exists(_files.InAppData("Clips")));
+        File.WriteAllText(path, "left over");
+        _recorder.IsRecording.Returns(false);
+
+        await service.CancelAsync();
+
+        await _recorder.DidNotReceive().StopAsync();
+        Assert.False(File.Exists(path));
     }
 
     [Fact]
-    public async Task Start_AsksForMonoSixteenBitWavAtCdRate()
+    public async Task Cancel_StopsReportingElapsedTime()
     {
         AudioRecorderService service = Create();
-
         await service.StartAsync();
+        _recorder.IsRecording.Returns(true);
+        await service.CancelAsync();
+        int reports = 0;
+        service.ElapsedChanged += (_, _) => Interlocked.Increment(ref reports);
 
-        await _recorder.Received(1).StartAsync(Arg.Any<string>(), Arg.Is<AudioRecorderOptions>(options =>
-            options.Encoding == Encoding.Wav && options.SampleRate == 44_100 && options.Channels == ChannelType.Mono && options.BitDepth == BitDepth.Pcm16bit));
+        await Task.Delay(250, TestContext.Current.CancellationToken);
+
+        Assert.Equal(0, reports);
     }
 
     [Fact]
-    public async Task Start_StartsTheClock()
+    public async Task Cancel_WhileRecording_StopsTheRecorderAndDeletesTheFile()
+    {
+        AudioRecorderService service = Create();
+        await service.StartAsync();
+        string path = StartedPath();
+        File.WriteAllText(path, "partial take");
+        _recorder.IsRecording.Returns(true);
+
+        await service.CancelAsync();
+
+        await _recorder.Received(1).StopAsync();
+        Assert.False(File.Exists(path));
+        Assert.Equal(TimeSpan.Zero, service.Elapsed);
+    }
+
+    public void Dispose()
+    {
+        foreach (AudioRecorderService service in _created)
+        {
+            service.Dispose();
+        }
+
+        _files.Dispose();
+    }
+
+    [Fact]
+    public void Dispose_ReleasesThePlatformRecorder()
     {
         AudioRecorderService service = Create();
 
-        await service.StartAsync();
-        await Task.Delay(120, TestContext.Current.CancellationToken);
+        service.Dispose();
 
-        Assert.True(service.Elapsed >= TimeSpan.FromMilliseconds(100), $"elapsed only {service.Elapsed}");
+        ((IDisposable)_recorder).Received(1).Dispose();
     }
 
+    [Fact]
+    public void Elapsed_BeforeAnythingIsRecorded_IsZero() { Assert.Equal(TimeSpan.Zero, Create().Elapsed); }
     [Fact]
     public async Task Elapsed_IsReportedRepeatedlyWhileRecording()
     {
@@ -103,13 +137,52 @@ public sealed class AudioRecorderServiceTests : IDisposable
     }
 
     [Fact]
-    public void Elapsed_BeforeAnythingIsRecorded_IsZero()
+    public async Task Start_AsksForMonoSixteenBitWavAtCdRate()
     {
-        Assert.Equal(TimeSpan.Zero, Create().Elapsed);
-    }
-    #endregion
+        AudioRecorderService service = Create();
 
-    #region Stopping
+        await service.StartAsync();
+
+        await _recorder.Received(1).StartAsync(Arg.Any<string>(), Arg.Is<AudioRecorderOptions>(options => options.Encoding == Encoding.Wav && options.SampleRate == 44_100 && options.Channels == ChannelType.Mono && options.BitDepth == BitDepth.Pcm16bit));
+    }
+
+    [Fact]
+    public async Task Start_RecordsIntoANewWavInTheClipsFolder()
+    {
+        AudioRecorderService service = Create();
+
+        await service.StartAsync();
+
+        string path = StartedPath();
+        Assert.Equal(_files.InAppData("Clips"), Path.GetDirectoryName(path));
+        Assert.StartsWith("recording_", Path.GetFileName(path));
+        Assert.EndsWith(".wav", path);
+        Assert.True(Directory.Exists(_files.InAppData("Clips")));
+    }
+
+    [Fact]
+    public async Task Start_StartsTheClock()
+    {
+        AudioRecorderService service = Create();
+
+        await service.StartAsync();
+        await Task.Delay(120, TestContext.Current.CancellationToken);
+
+        Assert.True(service.Elapsed >= TimeSpan.FromMilliseconds(100), $"elapsed only {service.Elapsed}");
+    }
+
+    [Fact]
+    public async Task Stop_RecorderGivesNoFilePath_FallsBackToTheFileItWasToldToWrite()
+    {
+        AudioRecorderService service = Create();
+        await service.StartAsync();
+        _recorder.StopAsync().Returns(Substitute.For<IAudioSource>());
+
+        AudioClip clip = await service.StopAsync("My take");
+
+        Assert.Equal(StartedPath(), clip.FilePath);
+    }
+
     [Fact]
     public async Task Stop_ReturnsAClipForWhereTheRecorderSaidItWrote()
     {
@@ -127,15 +200,18 @@ public sealed class AudioRecorderServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task Stop_RecorderGivesNoFilePath_FallsBackToTheFileItWasToldToWrite()
+    public async Task Stop_StopsReportingElapsedTime()
     {
         AudioRecorderService service = Create();
         await service.StartAsync();
         _recorder.StopAsync().Returns(Substitute.For<IAudioSource>());
+        await service.StopAsync("x");
+        int reports = 0;
+        service.ElapsedChanged += (_, _) => Interlocked.Increment(ref reports);
 
-        AudioClip clip = await service.StopAsync("My take");
+        await Task.Delay(250, TestContext.Current.CancellationToken);
 
-        Assert.Equal(StartedPath(), clip.FilePath);
+        Assert.Equal(0, reports);
     }
 
     [Fact]
@@ -151,86 +227,5 @@ public sealed class AudioRecorderServiceTests : IDisposable
 
         Assert.Equal(atStop, service.Elapsed);
     }
-
-    [Fact]
-    public async Task Stop_StopsReportingElapsedTime()
-    {
-        AudioRecorderService service = Create();
-        await service.StartAsync();
-        _recorder.StopAsync().Returns(Substitute.For<IAudioSource>());
-        await service.StopAsync("x");
-        int reports = 0;
-        service.ElapsedChanged += (_, _) => Interlocked.Increment(ref reports);
-
-        await Task.Delay(250, TestContext.Current.CancellationToken);
-
-        Assert.Equal(0, reports);
-    }
     #endregion
-
-    #region Cancelling
-    [Fact]
-    public async Task Cancel_WhileRecording_StopsTheRecorderAndDeletesTheFile()
-    {
-        AudioRecorderService service = Create();
-        await service.StartAsync();
-        string path = StartedPath();
-        File.WriteAllText(path, "partial take");
-        _recorder.IsRecording.Returns(true);
-
-        await service.CancelAsync();
-
-        await _recorder.Received(1).StopAsync();
-        Assert.False(File.Exists(path));
-        Assert.Equal(TimeSpan.Zero, service.Elapsed);
-    }
-
-    [Fact]
-    public async Task Cancel_RecorderNotRunning_StillDeletesWhatWasLeftBehindWithoutStoppingIt()
-    {
-        AudioRecorderService service = Create();
-        await service.StartAsync();
-        string path = StartedPath();
-        File.WriteAllText(path, "left over");
-        _recorder.IsRecording.Returns(false);
-
-        await service.CancelAsync();
-
-        await _recorder.DidNotReceive().StopAsync();
-        Assert.False(File.Exists(path));
-    }
-
-    [Fact]
-    public async Task Cancel_NothingEverStarted_IsHarmless()
-    {
-        await Create().CancelAsync();
-
-        await _recorder.DidNotReceive().StopAsync();
-    }
-
-    [Fact]
-    public async Task Cancel_StopsReportingElapsedTime()
-    {
-        AudioRecorderService service = Create();
-        await service.StartAsync();
-        _recorder.IsRecording.Returns(true);
-        await service.CancelAsync();
-        int reports = 0;
-        service.ElapsedChanged += (_, _) => Interlocked.Increment(ref reports);
-
-        await Task.Delay(250, TestContext.Current.CancellationToken);
-
-        Assert.Equal(0, reports);
-    }
-    #endregion
-
-    [Fact]
-    public void Dispose_ReleasesThePlatformRecorder()
-    {
-        AudioRecorderService service = Create();
-
-        service.Dispose();
-
-        ((IDisposable)_recorder).Received(1).Dispose();
-    }
 }

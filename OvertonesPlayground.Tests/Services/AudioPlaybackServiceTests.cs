@@ -5,17 +5,21 @@ namespace OvertonesPlayground.Tests.Services;
 
 public sealed class AudioPlaybackServiceTests
 {
-    private readonly IAudioFocusService _focus = Substitute.For<IAudioFocusService>();
+    #region Fields
     private readonly IAudioManager _audioManager = Substitute.For<IAudioManager>();
-
-    /// <summary>
-    /// Every player the service has asked the (fake) audio manager for, in order, keyed by the file it was created for.
-    /// </summary>
+    private readonly IAudioFocusService _focus = Substitute.For<IAudioFocusService>();
+    ///<summary>
+    ///Every player the service has asked the (fake) audio manager for, in order, keyed by the file it was created for.
+    ///</summary>
     private readonly List<(string Path, IAudioPlayer Player)> _players = [];
+    #endregion
 
+    #region Private methods
     private AudioPlaybackService Create()
     {
-        _audioManager.CreatePlayer(Arg.Any<string>()).Returns(call =>
+        _audioManager.CreatePlayer(Arg.Any<string>())
+            .Returns(
+        call =>
         {
             IAudioPlayer player = Substitute.For<IAudioPlayer>();
             player.CanSetSpeed.Returns(true);
@@ -29,9 +33,93 @@ public sealed class AudioPlaybackServiceTests
 
     private IAudioPlayer PlayerFor(string path) => _players.Last(p => p.Path == path).Player;
 
-    private IAudioPlayer LastPlayer => _players[^1].Player;
+    private static MixerChannelStrip Strip(string? source = "/loop.wav", double volume = 0.8, double pan = 0, bool muted = false) => new() { SourceClipPath = source, Volume = volume, Pan = pan, IsMuted = muted };
 
-    #region The main transport
+    private static async Task WaitUntilAsync(Func<bool> condition)
+    {
+        DateTime giveUp = DateTime.UtcNow.AddSeconds(10);
+        while (!condition() && DateTime.UtcNow < giveUp)
+        {
+            await Task.Delay(10, TestContext.Current.CancellationToken);
+        }
+    }
+    #endregion
+
+    #region Private properties
+    private IAudioPlayer LastPlayer => _players[^1].Player;
+    #endregion
+
+    #region Public methods
+    [Fact]
+    public void AVoiceThatFinishesOnItsOwn_IsReleased_AndNotStoppedAgainLater()
+    {
+        AudioPlaybackService service = Create();
+        service.TriggerVoice(3, "/a.wav", new PadVoiceOptions());
+        IAudioPlayer voice = LastPlayer;
+
+        voice.PlaybackEnded += Raise.Event();
+        service.StopPad(3);
+
+        voice.Received(1).Dispose();
+        voice.DidNotReceive().Stop();
+    }
+
+    [Fact]
+    public async Task ClipFinishingOnItsOwn_RaisesBothEvents()
+    {
+        AudioPlaybackService service = Create();
+        await service.LoadAsync(TestData.Clip("Song"));
+        int ended = 0;
+        int changed = 0;
+        service.PlaybackEnded += (_, _) => ended++;
+        service.PlaybackStateChanged += (_, _) => changed++;
+
+        LastPlayer.PlaybackEnded += Raise.Event();
+
+        Assert.Equal(1, ended);
+        Assert.Equal(1, changed);
+    }
+
+    [Fact]
+    public async Task GainingAudioFocus_DoesNotStartAnything()
+    {
+        AudioPlaybackService service = Create();
+        await service.LoadAsync(TestData.Clip("Song"));
+
+        _focus.FocusChanged += Raise.Event<EventHandler<bool>>(_focus, true);
+
+        LastPlayer.DidNotReceive().Pause();
+        LastPlayer.DidNotReceive().Play();
+    }
+
+    [Fact]
+    public async Task IsPlayingDurationAndPosition_ComeFromThePlayer()
+    {
+        AudioPlaybackService service = Create();
+        await service.LoadAsync(TestData.Clip("Song"));
+        LastPlayer.IsPlaying.Returns(true);
+        LastPlayer.Duration.Returns(90.0);
+        LastPlayer.CurrentPosition.Returns(12.0);
+
+        Assert.True(service.IsPlaying);
+        Assert.Equal(TimeSpan.FromSeconds(90), service.Duration);
+        Assert.Equal(TimeSpan.FromSeconds(12), service.Position);
+    }
+
+    [Fact]
+    public async Task Load_AnotherClip_StopsAndReleasesTheOldPlayer()
+    {
+        AudioPlaybackService service = Create();
+        await service.LoadAsync(TestData.Clip("One", path: "/one.wav"));
+        IAudioPlayer old = LastPlayer;
+
+        await service.LoadAsync(TestData.Clip("Two", path: "/two.wav"));
+
+        old.Received(1).Stop();
+        old.Received(1).Dispose();
+        Assert.Equal("Two", service.CurrentClip!.Name);
+    }
+
     [Fact]
     public async Task Load_CreatesAPlayerForTheClipAndRemembersIt()
     {
@@ -57,44 +145,14 @@ public sealed class AudioPlaybackServiceTests
     }
 
     [Fact]
-    public async Task Load_AnotherClip_StopsAndReleasesTheOldPlayer()
-    {
-        AudioPlaybackService service = Create();
-        await service.LoadAsync(TestData.Clip("One", path: "/one.wav"));
-        IAudioPlayer old = LastPlayer;
-
-        await service.LoadAsync(TestData.Clip("Two", path: "/two.wav"));
-
-        old.Received(1).Stop();
-        old.Received(1).Dispose();
-        Assert.Equal("Two", service.CurrentClip!.Name);
-    }
-
-    [Fact]
-    public async Task Play_TakesAudioFocusThenPlays()
+    public async Task LosingAudioFocus_PausesThePlayer()
     {
         AudioPlaybackService service = Create();
         await service.LoadAsync(TestData.Clip("Song"));
 
-        service.Play();
+        _focus.FocusChanged += Raise.Event<EventHandler<bool>>(_focus, false);
 
-        Received.InOrder(() =>
-        {
-            _focus.RequestFocus();
-            LastPlayer.Play();
-        });
-    }
-
-    [Fact]
-    public void Play_ReportsThatThePlaybackStateChanged()
-    {
-        AudioPlaybackService service = Create();
-        int changes = 0;
-        service.PlaybackStateChanged += (_, _) => changes++;
-
-        service.Play();
-
-        Assert.Equal(1, changes);
+        LastPlayer.Received(1).Pause();
     }
 
     [Fact]
@@ -114,147 +172,31 @@ public sealed class AudioPlaybackServiceTests
     }
 
     [Fact]
-    public async Task Seek_MovesThePlayerToThatManySeconds()
+    public void Play_ReportsThatThePlaybackStateChanged()
+    {
+        AudioPlaybackService service = Create();
+        int changes = 0;
+        service.PlaybackStateChanged += (_, _) => changes++;
+
+        service.Play();
+
+        Assert.Equal(1, changes);
+    }
+
+    [Fact]
+    public async Task Play_TakesAudioFocusThenPlays()
     {
         AudioPlaybackService service = Create();
         await service.LoadAsync(TestData.Clip("Song"));
 
-        service.Seek(TimeSpan.FromSeconds(12.5));
+        service.Play();
 
-        LastPlayer.Received(1).Seek(12.5);
-    }
-
-    [Fact]
-    public void TransportCommands_WithNothingLoaded_AreHarmless()
-    {
-        AudioPlaybackService service = Create();
-
-        service.Pause();
-        service.Stop();
-        service.Seek(TimeSpan.FromSeconds(3));
-
-        Assert.Null(service.CurrentClip);
-        Assert.False(service.IsPlaying);
-        Assert.Equal(TimeSpan.Zero, service.Duration);
-        Assert.Equal(TimeSpan.Zero, service.Position);
-    }
-
-    [Fact]
-    public async Task IsPlayingDurationAndPosition_ComeFromThePlayer()
-    {
-        AudioPlaybackService service = Create();
-        await service.LoadAsync(TestData.Clip("Song"));
-        LastPlayer.IsPlaying.Returns(true);
-        LastPlayer.Duration.Returns(90.0);
-        LastPlayer.CurrentPosition.Returns(12.0);
-
-        Assert.True(service.IsPlaying);
-        Assert.Equal(TimeSpan.FromSeconds(90), service.Duration);
-        Assert.Equal(TimeSpan.FromSeconds(12), service.Position);
-    }
-
-    [Fact]
-    public async Task ClipFinishingOnItsOwn_RaisesBothEvents()
-    {
-        AudioPlaybackService service = Create();
-        await service.LoadAsync(TestData.Clip("Song"));
-        int ended = 0;
-        int changed = 0;
-        service.PlaybackEnded += (_, _) => ended++;
-        service.PlaybackStateChanged += (_, _) => changed++;
-
-        LastPlayer.PlaybackEnded += Raise.Event();
-
-        Assert.Equal(1, ended);
-        Assert.Equal(1, changed);
-    }
-
-    [Fact]
-    public async Task LosingAudioFocus_PausesThePlayer()
-    {
-        AudioPlaybackService service = Create();
-        await service.LoadAsync(TestData.Clip("Song"));
-
-        _focus.FocusChanged += Raise.Event<EventHandler<bool>>(_focus, false);
-
-        LastPlayer.Received(1).Pause();
-    }
-
-    [Fact]
-    public async Task GainingAudioFocus_DoesNotStartAnything()
-    {
-        AudioPlaybackService service = Create();
-        await service.LoadAsync(TestData.Clip("Song"));
-
-        _focus.FocusChanged += Raise.Event<EventHandler<bool>>(_focus, true);
-
-        LastPlayer.DidNotReceive().Pause();
-        LastPlayer.DidNotReceive().Play();
-    }
-    #endregion
-
-    #region Volume
-    [Fact]
-    public async Task Volume_SetWhileAClipIsLoaded_GoesToThePlayer()
-    {
-        AudioPlaybackService service = Create();
-        await service.LoadAsync(TestData.Clip("Song"));
-
-        service.Volume = 0.3;
-
-        Assert.Equal(0.3, LastPlayer.Volume);
-        Assert.Equal(0.3, service.Volume);
-    }
-
-    [Fact]
-    public void Volume_NothingLoaded_IsFull()
-    {
-        Assert.Equal(1.0, Create().Volume);
-    }
-
-    [Fact]
-    public async Task Volume_ChosenBeforeAClipIsLoaded_AppliesToIt()
-    {
-        AudioPlaybackService service = Create();
-        service.Volume = 0.3;
-
-        await service.LoadAsync(TestData.Clip("Song"));
-
-        Assert.Equal(0.3, LastPlayer.Volume);
-    }
-
-    [Fact]
-    public async Task Volume_ChosenForOneClip_StillAppliesWhenAnotherIsLoaded()
-    {
-        // The player page keeps showing the volume the user picked, so a new clip must not quietly go back to full volume.
-        AudioPlaybackService service = Create();
-        await service.LoadAsync(TestData.Clip("One", path: "/one.wav"));
-        service.Volume = 0.3;
-
-        await service.LoadAsync(TestData.Clip("Two", path: "/two.wav"));
-
-        Assert.Equal(0.3, PlayerFor("/two.wav").Volume);
-        Assert.Equal(0.3, service.Volume);
-    }
-    #endregion
-
-    #region Mixer channels
-    private static MixerChannelStrip Strip(string? source = "/loop.wav", double volume = 0.8, double pan = 0, bool muted = false) =>
-        new() { SourceClipPath = source, Volume = volume, Pan = pan, IsMuted = muted };
-
-    [Fact]
-    public void PlayChannel_StartsALoopingVoiceAtTheStripsSettings()
-    {
-        AudioPlaybackService service = Create();
-
-        service.PlayChannel(Strip(volume: 0.6, pan: -0.4));
-
-        IAudioPlayer player = LastPlayer;
-        Assert.True(player.Loop);
-        Assert.Equal(0.6, player.Volume);
-        Assert.Equal(-0.4, player.Balance);
-        player.Received(1).Play();
-        _focus.Received(1).RequestFocus();
+        Received.InOrder(
+        () =>
+        {
+            _focus.RequestFocus();
+            LastPlayer.Play();
+        });
     }
 
     [Fact]
@@ -281,6 +223,21 @@ public sealed class AudioPlaybackServiceTests
     }
 
     [Fact]
+    public void PlayChannel_StartsALoopingVoiceAtTheStripsSettings()
+    {
+        AudioPlaybackService service = Create();
+
+        service.PlayChannel(Strip(volume: 0.6, pan: -0.4));
+
+        IAudioPlayer player = LastPlayer;
+        Assert.True(player.Loop);
+        Assert.Equal(0.6, player.Volume);
+        Assert.Equal(-0.4, player.Balance);
+        player.Received(1).Play();
+        _focus.Received(1).RequestFocus();
+    }
+
+    [Fact]
     public void PlayChannel_ThatIsAlreadySounding_ReplacesItsVoice()
     {
         AudioPlaybackService service = Create();
@@ -296,41 +253,40 @@ public sealed class AudioPlaybackServiceTests
     }
 
     [Fact]
-    public void UpdateChannel_ChangesTheLiveVoiceWithoutRestartingIt()
+    public async Task Seek_MovesThePlayerToThatManySeconds()
     {
         AudioPlaybackService service = Create();
-        MixerChannelStrip strip = Strip(volume: 0.8);
-        service.PlayChannel(strip);
-        IAudioPlayer player = LastPlayer;
+        await service.LoadAsync(TestData.Clip("Song"));
 
-        strip.Volume = 0.2;
-        strip.Pan = 0.5;
-        service.UpdateChannel(strip);
+        service.Seek(TimeSpan.FromSeconds(12.5));
 
-        Assert.Equal(0.2, player.Volume);
-        Assert.Equal(0.5, player.Balance);
-        player.Received(1).Play();
+        LastPlayer.Received(1).Seek(12.5);
     }
 
     [Fact]
-    public void UpdateChannel_MutingSilencesTheLiveVoice()
+    public void StopAllChannels_StopsEveryVoice()
     {
         AudioPlaybackService service = Create();
-        MixerChannelStrip strip = Strip(volume: 0.8);
-        service.PlayChannel(strip);
+        service.PlayChannel(Strip("/a.wav"));
+        service.PlayChannel(Strip("/b.wav"));
 
-        strip.IsMuted = true;
-        service.UpdateChannel(strip);
+        service.StopAllChannels();
 
-        Assert.Equal(0, LastPlayer.Volume);
+        PlayerFor("/a.wav").Received(1).Stop();
+        PlayerFor("/b.wav").Received(1).Stop();
     }
 
     [Fact]
-    public void UpdateChannel_ChannelNotSounding_DoesNothing()
+    public void StopAllPads_SilencesEveryVoice()
     {
-        Create().UpdateChannel(Strip());
+        AudioPlaybackService service = Create();
+        service.TriggerVoice(1, "/a.wav", new PadVoiceOptions());
+        service.TriggerVoice(2, "/b.wav", new PadVoiceOptions());
 
-        Assert.Empty(_players);
+        service.StopAllPads();
+
+        PlayerFor("/a.wav").Received(1).Stop();
+        PlayerFor("/b.wav").Received(1).Stop();
     }
 
     [Fact]
@@ -350,53 +306,95 @@ public sealed class AudioPlaybackServiceTests
     }
 
     [Fact]
-    public void StopChannel_Unknown_IsHarmless()
+    public void StopChannel_Unknown_IsHarmless() { Create().StopChannel("nope"); }
+    [Fact]
+    public async Task StopEverything_SilencesTheTransportEveryPadAndEveryChannelAndReleasesAudioFocus()
     {
-        Create().StopChannel("nope");
+        AudioPlaybackService service = Create();
+        await service.LoadAsync(TestData.Clip("Song", path: "/song.wav"));
+        service.TriggerVoice(1, "/pad.wav", new PadVoiceOptions());
+        service.PlayChannel(Strip("/channel.wav"));
+
+        service.StopEverything();
+
+        PlayerFor("/song.wav").Received(1).Stop();
+        PlayerFor("/pad.wav").Received(1).Stop();
+        PlayerFor("/channel.wav").Received(1).Stop();
+        _focus.Received(1).AbandonFocus();
     }
 
     [Fact]
-    public void StopAllChannels_StopsEveryVoice()
-    {
-        AudioPlaybackService service = Create();
-        service.PlayChannel(Strip("/a.wav"));
-        service.PlayChannel(Strip("/b.wav"));
-
-        service.StopAllChannels();
-
-        PlayerFor("/a.wav").Received(1).Stop();
-        PlayerFor("/b.wav").Received(1).Stop();
-    }
-    #endregion
-
-    #region Pad voices
+    public void StopPad_NothingSounding_IsHarmless() { Create().StopPad(42); }
     [Fact]
-    public void TriggerVoice_StartsAPlayerWithTheOptions()
+    public void StopPad_SilencesEveryVoiceOfThatPadAndNoOthers()
+    {
+        AudioPlaybackService service = Create();
+        service.TriggerVoice(3, "/a.wav", new PadVoiceOptions());
+        IAudioPlayer firstOfPad3 = LastPlayer;
+        service.TriggerVoice(3, "/a.wav", new PadVoiceOptions());
+        IAudioPlayer secondOfPad3 = LastPlayer;
+        service.TriggerVoice(4, "/b.wav", new PadVoiceOptions());
+        IAudioPlayer pad4 = LastPlayer;
+
+        service.StopPad(3);
+
+        firstOfPad3.Received(1).Stop();
+        firstOfPad3.Received(1).Dispose();
+        secondOfPad3.Received(1).Stop();
+        pad4.DidNotReceive().Stop();
+    }
+
+    [Fact]
+    public void StopPad_ThenTriggeredAgain_SoundsNormally()
+    {
+        AudioPlaybackService service = Create();
+        service.TriggerVoice(3, "/a.wav", new PadVoiceOptions());
+        service.StopPad(3);
+
+        service.TriggerVoice(3, "/a.wav", new PadVoiceOptions());
+
+        LastPlayer.Received(1).Play();
+        LastPlayer.DidNotReceive().Stop();
+    }
+
+    [Fact]
+    public void TransportCommands_WithNothingLoaded_AreHarmless()
     {
         AudioPlaybackService service = Create();
 
-        service.TriggerVoice(5, "/kick.wav", new PadVoiceOptions(Volume: 0.7, Balance: -0.25, Speed: 1, Loop: true));
+        service.Pause();
+        service.Stop();
+        service.Seek(TimeSpan.FromSeconds(3));
 
-        IAudioPlayer voice = PlayerFor("/kick.wav");
-        Assert.Equal(0.7, voice.Volume);
-        Assert.Equal(-0.25, voice.Balance);
+        Assert.Null(service.CurrentClip);
+        Assert.False(service.IsPlaying);
+        Assert.Equal(TimeSpan.Zero, service.Duration);
+        Assert.Equal(TimeSpan.Zero, service.Position);
+    }
+
+    [Fact]
+    public void TriggerPad_EmptyPad_SoundsNothing()
+    {
+        AudioPlaybackService service = Create();
+
+        service.TriggerPad(new LaunchpadPad { Index = 1 });
+
+        Assert.Empty(_players);
+    }
+
+    [Fact]
+    public void TriggerPad_PadWithASample_SoundsItAtThePadsVolumeAndLooping()
+    {
+        AudioPlaybackService service = Create();
+        LaunchpadPad pad = new() { Bank = 1, Index = 2, ClipPath = "/pad.wav", Volume = 0.4, IsLooping = true };
+
+        service.TriggerPad(pad);
+
+        IAudioPlayer voice = PlayerFor("/pad.wav");
+        Assert.Equal(0.4, voice.Volume);
         Assert.True(voice.Loop);
-        voice.Received(1).Play();
-        _focus.Received(1).RequestFocus();
-    }
-
-    [Fact]
-    public void TriggerVoice_VolumeAndBalanceOutsideTheirRanges_AreClamped()
-    {
-        AudioPlaybackService service = Create();
-
-        service.TriggerVoice(1, "/loud.wav", new PadVoiceOptions(Volume: 3, Balance: -7));
-        service.TriggerVoice(2, "/quiet.wav", new PadVoiceOptions(Volume: -1, Balance: 9));
-
-        Assert.Equal(1, PlayerFor("/loud.wav").Volume);
-        Assert.Equal(-1, PlayerFor("/loud.wav").Balance);
-        Assert.Equal(0, PlayerFor("/quiet.wav").Volume);
-        Assert.Equal(1, PlayerFor("/quiet.wav").Balance);
+        service.StopPad(pad.VoiceKey);
+        voice.Received(1).Stop();
     }
 
     [Fact]
@@ -427,7 +425,9 @@ public sealed class AudioPlaybackServiceTests
     public void TriggerVoice_PlayerCantChangeSpeed_LeavesTheSpeedAlone()
     {
         AudioPlaybackService service = Create();
-        _audioManager.CreatePlayer(Arg.Any<string>()).Returns(call =>
+        _audioManager.CreatePlayer(Arg.Any<string>())
+            .Returns(
+        call =>
         {
             IAudioPlayer player = Substitute.For<IAudioPlayer>();
             player.CanSetSpeed.Returns(false);
@@ -438,6 +438,21 @@ public sealed class AudioPlaybackServiceTests
         service.TriggerVoice(1, "/fixed.wav", new PadVoiceOptions(Speed: 1.5));
 
         PlayerFor("/fixed.wav").DidNotReceive().Speed = Arg.Any<double>();
+    }
+
+    [Fact]
+    public void TriggerVoice_StartsAPlayerWithTheOptions()
+    {
+        AudioPlaybackService service = Create();
+
+        service.TriggerVoice(5, "/kick.wav", new PadVoiceOptions(Volume: 0.7, Balance: -0.25, Speed: 1, Loop: true));
+
+        IAudioPlayer voice = PlayerFor("/kick.wav");
+        Assert.Equal(0.7, voice.Volume);
+        Assert.Equal(-0.25, voice.Balance);
+        Assert.True(voice.Loop);
+        voice.Received(1).Play();
+        _focus.Received(1).RequestFocus();
     }
 
     [Fact]
@@ -453,68 +468,68 @@ public sealed class AudioPlaybackServiceTests
     }
 
     [Fact]
-    public void StopPad_SilencesEveryVoiceOfThatPadAndNoOthers()
+    public void TriggerVoice_VolumeAndBalanceOutsideTheirRanges_AreClamped()
     {
         AudioPlaybackService service = Create();
-        service.TriggerVoice(3, "/a.wav", new PadVoiceOptions());
-        IAudioPlayer firstOfPad3 = LastPlayer;
-        service.TriggerVoice(3, "/a.wav", new PadVoiceOptions());
-        IAudioPlayer secondOfPad3 = LastPlayer;
-        service.TriggerVoice(4, "/b.wav", new PadVoiceOptions());
-        IAudioPlayer pad4 = LastPlayer;
 
-        service.StopPad(3);
+        service.TriggerVoice(1, "/loud.wav", new PadVoiceOptions(Volume: 3, Balance: -7));
+        service.TriggerVoice(2, "/quiet.wav", new PadVoiceOptions(Volume: -1, Balance: 9));
 
-        firstOfPad3.Received(1).Stop();
-        firstOfPad3.Received(1).Dispose();
-        secondOfPad3.Received(1).Stop();
-        pad4.DidNotReceive().Stop();
+        Assert.Equal(1, PlayerFor("/loud.wav").Volume);
+        Assert.Equal(-1, PlayerFor("/loud.wav").Balance);
+        Assert.Equal(0, PlayerFor("/quiet.wav").Volume);
+        Assert.Equal(1, PlayerFor("/quiet.wav").Balance);
     }
 
     [Fact]
-    public void StopPad_NothingSounding_IsHarmless()
+    public void UpdateChannel_ChangesTheLiveVoiceWithoutRestartingIt()
     {
-        Create().StopPad(42);
+        AudioPlaybackService service = Create();
+        MixerChannelStrip strip = Strip(volume: 0.8);
+        service.PlayChannel(strip);
+        IAudioPlayer player = LastPlayer;
+
+        strip.Volume = 0.2;
+        strip.Pan = 0.5;
+        service.UpdateChannel(strip);
+
+        Assert.Equal(0.2, player.Volume);
+        Assert.Equal(0.5, player.Balance);
+        player.Received(1).Play();
     }
 
     [Fact]
-    public void StopPad_ThenTriggeredAgain_SoundsNormally()
+    public void UpdateChannel_ChannelNotSounding_DoesNothing()
     {
-        AudioPlaybackService service = Create();
-        service.TriggerVoice(3, "/a.wav", new PadVoiceOptions());
-        service.StopPad(3);
+        Create().UpdateChannel(Strip());
 
-        service.TriggerVoice(3, "/a.wav", new PadVoiceOptions());
-
-        LastPlayer.Received(1).Play();
-        LastPlayer.DidNotReceive().Stop();
+        Assert.Empty(_players);
     }
 
     [Fact]
-    public void StopAllPads_SilencesEveryVoice()
+    public void UpdateChannel_MutingSilencesTheLiveVoice()
     {
         AudioPlaybackService service = Create();
-        service.TriggerVoice(1, "/a.wav", new PadVoiceOptions());
-        service.TriggerVoice(2, "/b.wav", new PadVoiceOptions());
+        MixerChannelStrip strip = Strip(volume: 0.8);
+        service.PlayChannel(strip);
 
-        service.StopAllPads();
+        strip.IsMuted = true;
+        service.UpdateChannel(strip);
 
-        PlayerFor("/a.wav").Received(1).Stop();
-        PlayerFor("/b.wav").Received(1).Stop();
+        Assert.Equal(0, LastPlayer.Volume);
     }
 
     [Fact]
-    public void AVoiceThatFinishesOnItsOwn_IsReleased_AndNotStoppedAgainLater()
+    public async Task VoiceWithAMaximumLength_AlreadyStopped_IsNotStoppedTwice()
     {
         AudioPlaybackService service = Create();
-        service.TriggerVoice(3, "/a.wav", new PadVoiceOptions());
+        service.TriggerVoice(3, "/long.wav", new PadVoiceOptions(MaxLength: TimeSpan.FromMilliseconds(60)));
         IAudioPlayer voice = LastPlayer;
 
-        voice.PlaybackEnded += Raise.Event();
         service.StopPad(3);
+        await Task.Delay(200, TestContext.Current.CancellationToken);
 
-        voice.Received(1).Dispose();
-        voice.DidNotReceive().Stop();
+        voice.Received(1).Stop();
     }
 
     [Fact]
@@ -532,68 +547,42 @@ public sealed class AudioPlaybackServiceTests
     }
 
     [Fact]
-    public async Task VoiceWithAMaximumLength_AlreadyStopped_IsNotStoppedTwice()
+    public async Task Volume_ChosenBeforeAClipIsLoaded_AppliesToIt()
     {
         AudioPlaybackService service = Create();
-        service.TriggerVoice(3, "/long.wav", new PadVoiceOptions(MaxLength: TimeSpan.FromMilliseconds(60)));
-        IAudioPlayer voice = LastPlayer;
+        service.Volume = 0.3;
 
-        service.StopPad(3);
-        await Task.Delay(200, TestContext.Current.CancellationToken);
+        await service.LoadAsync(TestData.Clip("Song"));
 
-        voice.Received(1).Stop();
+        Assert.Equal(0.3, LastPlayer.Volume);
     }
 
     [Fact]
-    public void TriggerPad_PadWithASample_SoundsItAtThePadsVolumeAndLooping()
+    public async Task Volume_ChosenForOneClip_StillAppliesWhenAnotherIsLoaded()
     {
+        // The player page keeps showing the volume the user picked, so a new clip must not quietly go back to full volume.
         AudioPlaybackService service = Create();
-        LaunchpadPad pad = new() { Bank = 1, Index = 2, ClipPath = "/pad.wav", Volume = 0.4, IsLooping = true };
+        await service.LoadAsync(TestData.Clip("One", path: "/one.wav"));
+        service.Volume = 0.3;
 
-        service.TriggerPad(pad);
+        await service.LoadAsync(TestData.Clip("Two", path: "/two.wav"));
 
-        IAudioPlayer voice = PlayerFor("/pad.wav");
-        Assert.Equal(0.4, voice.Volume);
-        Assert.True(voice.Loop);
-        service.StopPad(pad.VoiceKey);
-        voice.Received(1).Stop();
+        Assert.Equal(0.3, PlayerFor("/two.wav").Volume);
+        Assert.Equal(0.3, service.Volume);
     }
 
     [Fact]
-    public void TriggerPad_EmptyPad_SoundsNothing()
+    public void Volume_NothingLoaded_IsFull() { Assert.Equal(1.0, Create().Volume); }
+    [Fact]
+    public async Task Volume_SetWhileAClipIsLoaded_GoesToThePlayer()
     {
         AudioPlaybackService service = Create();
+        await service.LoadAsync(TestData.Clip("Song"));
 
-        service.TriggerPad(new LaunchpadPad { Index = 1 });
+        service.Volume = 0.3;
 
-        Assert.Empty(_players);
+        Assert.Equal(0.3, LastPlayer.Volume);
+        Assert.Equal(0.3, service.Volume);
     }
     #endregion
-
-    #region Everything at once
-    [Fact]
-    public async Task StopEverything_SilencesTheTransportEveryPadAndEveryChannelAndReleasesAudioFocus()
-    {
-        AudioPlaybackService service = Create();
-        await service.LoadAsync(TestData.Clip("Song", path: "/song.wav"));
-        service.TriggerVoice(1, "/pad.wav", new PadVoiceOptions());
-        service.PlayChannel(Strip("/channel.wav"));
-
-        service.StopEverything();
-
-        PlayerFor("/song.wav").Received(1).Stop();
-        PlayerFor("/pad.wav").Received(1).Stop();
-        PlayerFor("/channel.wav").Received(1).Stop();
-        _focus.Received(1).AbandonFocus();
-    }
-    #endregion
-
-    private static async Task WaitUntilAsync(Func<bool> condition)
-    {
-        DateTime giveUp = DateTime.UtcNow.AddSeconds(10);
-        while (!condition() && DateTime.UtcNow < giveUp)
-        {
-            await Task.Delay(10, TestContext.Current.CancellationToken);
-        }
-    }
 }

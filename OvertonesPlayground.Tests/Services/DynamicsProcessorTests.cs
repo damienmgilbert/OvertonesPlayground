@@ -4,20 +4,38 @@ namespace OvertonesPlayground.Tests.Services;
 
 public sealed class DynamicsProcessorTests
 {
+    #region Constants
     private const int SampleRate = 44100;
+    #endregion
 
-    private static short[] Constant(short value, int frames, int channels = 1) =>
-        Enumerable.Repeat(value, frames * channels).ToArray();
+    #region Private methods
+    private static short[] Constant(short value, int frames, int channels = 1) => Enumerable.Repeat(value, frames * channels).ToArray();
+    #endregion
+
+    #region Public methods
+    [Fact]
+    public void Compress_EmptyBuffer_DoesNothing() { DynamicsProcessor.Compress([], channels: 1, SampleRate, thresholdDb: -20, ratio: 4, attackMs: 5, releaseMs: 50); }
+    [Fact]
+    public void Compress_HigherRatio_ReducesTheSignalMore()
+    {
+        short[] gentle = Constant(short.MaxValue / 2, SampleRate / 4);
+        short[] hard = (short[])gentle.Clone();
+
+        DynamicsProcessor.Compress(gentle, channels: 1, SampleRate, thresholdDb: -20, ratio: 2, attackMs: 1, releaseMs: 1);
+        DynamicsProcessor.Compress(hard, channels: 1, SampleRate, thresholdDb: -20, ratio: 10, attackMs: 1, releaseMs: 1);
+
+        Assert.True(hard[^1] < gentle[^1], $"ratio 10 left {hard[^1]}, ratio 2 left {gentle[^1]}");
+        Assert.True(gentle[^1] < short.MaxValue / 2);
+    }
 
     [Fact]
-    public void Compress_SignalBelowThreshold_IsLeftUntouched()
+    public void Compress_NeverExceedsThe16BitRange()
     {
-        short[] samples = TestSignals.Sine(440, SampleRate, 0.25, amplitude: 0.05); // about -26 dBFS peak
-        short[] original = (short[])samples.Clone();
+        short[] samples = Constant(short.MinValue, 1000);
 
-        DynamicsProcessor.Compress(samples, channels: 1, SampleRate, thresholdDb: -12, ratio: 4, attackMs: 5, releaseMs: 50);
+        DynamicsProcessor.Compress(samples, channels: 1, SampleRate, thresholdDb: -6, ratio: 2, attackMs: 1, releaseMs: 1);
 
-        Assert.Equal(original, samples);
+        Assert.All(samples, sample => Assert.InRange(sample, short.MinValue, short.MaxValue));
     }
 
     [Fact]
@@ -33,29 +51,14 @@ public sealed class DynamicsProcessorTests
     }
 
     [Fact]
-    public void Compress_SteadySignalAboveThreshold_SettlesToTheStaticGainCurve()
+    public void Compress_SignalBelowThreshold_IsLeftUntouched()
     {
-        // A steady 0.9 FS signal against a -20 dB threshold at 4:1: envelope -0.915 dB, so the output settles at
-        // -20 + (19.085 / 4) = -15.23 dB relative to full scale, i.e. about 0.1737 of the input's 0.9.
-        short[] samples = Constant((short)(0.9 * short.MaxValue), SampleRate / 2);
+        short[] samples = TestSignals.Sine(440, SampleRate, 0.25, amplitude: 0.05); // about -26 dBFS peak
+        short[] original = (short[])samples.Clone();
 
-        DynamicsProcessor.Compress(samples, channels: 1, SampleRate, thresholdDb: -20, ratio: 4, attackMs: 1, releaseMs: 1);
+        DynamicsProcessor.Compress(samples, channels: 1, SampleRate, thresholdDb: -12, ratio: 4, attackMs: 5, releaseMs: 50);
 
-        double settled = samples[^1] / (double)short.MaxValue;
-        Assert.InRange(settled, 0.16, 0.19);
-    }
-
-    [Fact]
-    public void Compress_HigherRatio_ReducesTheSignalMore()
-    {
-        short[] gentle = Constant(short.MaxValue / 2, SampleRate / 4);
-        short[] hard = (short[])gentle.Clone();
-
-        DynamicsProcessor.Compress(gentle, channels: 1, SampleRate, thresholdDb: -20, ratio: 2, attackMs: 1, releaseMs: 1);
-        DynamicsProcessor.Compress(hard, channels: 1, SampleRate, thresholdDb: -20, ratio: 10, attackMs: 1, releaseMs: 1);
-
-        Assert.True(hard[^1] < gentle[^1], $"ratio 10 left {hard[^1]}, ratio 2 left {gentle[^1]}");
-        Assert.True(gentle[^1] < short.MaxValue / 2);
+        Assert.Equal(original, samples);
     }
 
     [Fact]
@@ -93,8 +96,20 @@ public sealed class DynamicsProcessorTests
         DynamicsProcessor.Compress(slowRelease, channels: 1, SampleRate, thresholdDb: -20, ratio: 4, attackMs: 1, releaseMs: 500);
         DynamicsProcessor.Compress(fastRelease, channels: 1, SampleRate, thresholdDb: -20, ratio: 4, attackMs: 1, releaseMs: 1);
 
-        Assert.True(slowRelease[tenMillisecondsAfterDrop] < fastRelease[tenMillisecondsAfterDrop],
-            $"slow release left {slowRelease[tenMillisecondsAfterDrop]}, fast release left {fastRelease[tenMillisecondsAfterDrop]}");
+        Assert.True(slowRelease[tenMillisecondsAfterDrop] < fastRelease[tenMillisecondsAfterDrop], $"slow release left {slowRelease[tenMillisecondsAfterDrop]}, fast release left {fastRelease[tenMillisecondsAfterDrop]}");
+    }
+
+    [Fact]
+    public void Compress_SteadySignalAboveThreshold_SettlesToTheStaticGainCurve()
+    {
+        // A steady 0.9 FS signal against a -20 dB threshold at 4:1: envelope -0.915 dB, so the output settles at
+        // -20 + (19.085 / 4) = -15.23 dB relative to full scale, i.e. about 0.1737 of the input's 0.9.
+        short[] samples = Constant((short)(0.9 * short.MaxValue), SampleRate / 2);
+
+        DynamicsProcessor.Compress(samples, channels: 1, SampleRate, thresholdDb: -20, ratio: 4, attackMs: 1, releaseMs: 1);
+
+        double settled = samples[^1] / (double)short.MaxValue;
+        Assert.InRange(settled, 0.16, 0.19);
     }
 
     [Fact]
@@ -117,19 +132,13 @@ public sealed class DynamicsProcessorTests
     }
 
     [Fact]
-    public void Compress_NeverExceedsThe16BitRange()
+    public void Compress_ZeroAttackAndRelease_AreFlooredInsteadOfProducingNaN()
     {
-        short[] samples = Constant(short.MinValue, 1000);
+        short[] samples = Constant(short.MaxValue / 2, 2000);
 
-        DynamicsProcessor.Compress(samples, channels: 1, SampleRate, thresholdDb: -6, ratio: 2, attackMs: 1, releaseMs: 1);
+        DynamicsProcessor.Compress(samples, channels: 1, SampleRate, thresholdDb: -20, ratio: 4, attackMs: 0, releaseMs: -5);
 
-        Assert.All(samples, sample => Assert.InRange(sample, short.MinValue, short.MaxValue));
-    }
-
-    [Fact]
-    public void Compress_EmptyBuffer_DoesNothing()
-    {
-        DynamicsProcessor.Compress([], channels: 1, SampleRate, thresholdDb: -20, ratio: 4, attackMs: 5, releaseMs: 50);
+        Assert.All(samples, sample => Assert.InRange(sample, (short)1, short.MaxValue / 2));
     }
 
     [Fact]
@@ -142,14 +151,5 @@ public sealed class DynamicsProcessorTests
 
         Assert.Equal(original, samples);
     }
-
-    [Fact]
-    public void Compress_ZeroAttackAndRelease_AreFlooredInsteadOfProducingNaN()
-    {
-        short[] samples = Constant(short.MaxValue / 2, 2000);
-
-        DynamicsProcessor.Compress(samples, channels: 1, SampleRate, thresholdDb: -20, ratio: 4, attackMs: 0, releaseMs: -5);
-
-        Assert.All(samples, sample => Assert.InRange(sample, (short)1, short.MaxValue / 2));
-    }
+    #endregion
 }

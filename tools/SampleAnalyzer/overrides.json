@@ -3,15 +3,52 @@
   // axes it names and records the reason. These are the files whose names carry no instrument word; the facets in the
   // catalog (long noisy bright textures, a 92.7 Hz pitched tone that is exactly F#2, ...) back up what the names say.
   // Two files are left unresolved on purpose (Gadget LDre, Metallic Charred) so the review flow stays visible.
-  "overrides": [
-    { "file": "Vinyl Dirt 1.wav", "instrument": "noise", "note": "vinyl dirt: a bright, noisy texture (flatness 0.78, no pitch)" },
-    { "file": "Vinyl Dirt 2.wav", "instrument": "noise", "note": "vinyl dirt: a bright, noisy texture (flatness 0.77, no pitch)" },
-    { "file": "Nuts and Bolts.wav", "instrument": "foley", "note": "32 s of bright, noisy, unpitched hardware sounds" },
-    { "file": "Copy Shop.wav", "instrument": "foley", "note": "8 s of bright, noisy, unpitched office sounds" },
-    { "file": "Blended Metals.wav", "instrument": "foley", "note": "11 s swell of bright, noisy, unpitched metal sounds" },
-    { "file": "Kyathe Monks.wav", "instrument": "vocal", "note": "monks: a warm, harmonic voice-like tone around 327 Hz" },
-    { "file": "Beefy Chop F#.wav", "instrument": "bass-synth", "note": "warm harmonic tone at 92.7 Hz, which is F#2 as the name says" },
-    { "file": "Velo Rezzo Plucks.wav", "instrument": "synth-note", "note": "pitched plucks around 164.8 Hz (E3)" },
-    { "file": "Video Game.wav", "instrument": "glitch", "note": "0.4 s game sound effect" }
+  "overrides":
+  [
+    {
+      "file": "Vinyl Dirt 1.wav",
+      "instrument": "noise",
+      "note": "vinyl dirt: a bright, noisy texture (flatness 0.78, no pitch)"
+    },
+    {
+      "file": "Vinyl Dirt 2.wav",
+      "instrument": "noise",
+      "note": "vinyl dirt: a bright, noisy texture (flatness 0.77, no pitch)"
+    },
+    {
+      "file": "Nuts and Bolts.wav",
+      "instrument": "foley",
+      "note": "32 s of bright, noisy, unpitched hardware sounds"
+    },
+    {
+      "file": "Copy Shop.wav",
+      "instrument": "foley",
+      "note": "8 s of bright, noisy, unpitched office sounds"
+    },
+    {
+      "file": "Blended Metals.wav",
+      "instrument": "foley",
+      "note": "11 s swell of bright, noisy, unpitched metal sounds"
+    },
+    {
+      "file": "Kyathe Monks.wav",
+      "instrument": "vocal",
+      "note": "monks: a warm, harmonic voice-like tone around 327 Hz"
+    },
+    {
+      "file": "Beefy Chop F#.wav",
+      "instrument": "bass-synth",
+      "note": "warm harmonic tone at 92.7 Hz, which is F#2 as the name says"
+    },
+    {
+      "file": "Velo Rezzo Plucks.wav",
+      "instrument": "synth-note",
+      "note": "pitched plucks around 164.8 Hz (E3)"
+    },
+    {
+      "file": "Video Game.wav",
+      "instrument": "glitch",
+      "note": "0.4 s game sound effect"
+    }
   ]
 }

@@ -7,27 +7,17 @@ namespace OvertonesPlayground.Tests.TestSupport;
 public static class AudioSynth
 {
     #region Constants
-    ///<summary>Default sample rate of the synthetic signals.</summary>
+
+    ///<summary>
+    ///Default sample rate of the synthetic signals.
+    ///</summary>
     public const int Rate = 44100;
     #endregion
 
     #region Public methods
-    ///<summary>Wraps mono or multi-channel signals in an <see cref="AnalysisContext"/> as if read from a 24-bit PCM file.</summary>
-    public static AnalysisContext Context(int sampleRate, NamedAttributes? named = null, params float[][] channels)
-    {
-        AudioBuffer audio = new(sampleRate, channels);
-        WavFormat format = new(channels.Length, sampleRate, 24, false, false, false);
-        WavData wav = new(audio, RiffMetadata.Empty, format);
-        return new AnalysisContext(wav, 1000, named ?? NamedAttributes.Empty("test"));
-    }
-
-    ///<summary>Mono context at 44.1 kHz.</summary>
-    public static AnalysisContext Mono(float[] signal, NamedAttributes? named = null) => Context(Rate, named, signal);
-
-    ///<summary>Concatenates signals end to end.</summary>
-    public static float[] Concat(params float[][] parts) => [.. parts.SelectMany(part => part)];
-
-    ///<summary>A short decaying burst of noise every beat, like a drum loop reduced to its pulse.</summary>
+    ///<summary>
+    ///A short decaying burst of noise every beat, like a drum loop reduced to its pulse.
+    ///</summary>
     public static float[] ClickTrain(double bpm, double seconds, int sampleRate = Rate, double amplitude = 0.8)
     {
         float[] signal = new float[(int)(seconds * sampleRate)];
@@ -46,23 +36,30 @@ public static class AudioSynth
         return signal;
     }
 
-    ///<summary>Multiplies <paramref name="signal"/> by a gain that depends on time in seconds.</summary>
-    public static float[] Shape(float[] signal, Func<double, double> gainAtSeconds, int sampleRate = Rate)
-    {
-        float[] output = new float[signal.Length];
-        for (int i = 0; i < signal.Length; i++)
-        {
-            output[i] = (float)(signal[i] * gainAtSeconds((double)i / sampleRate));
-        }
+    ///<summary>
+    ///Concatenates signals end to end.
+    ///</summary>
+    public static float[] Concat(params float[][] parts) => [.. parts.SelectMany(part => part)];
 
-        return output;
+    ///<summary>
+    ///Wraps mono or multi-channel signals in an <see cref="AnalysisContext"/> as if read from a 24-bit PCM file.
+    ///</summary>
+    public static AnalysisContext Context(int sampleRate, NamedAttributes? named = null, params float[][] channels)
+    {
+        AudioBuffer audio = new(sampleRate, channels);
+        WavFormat format = new(channels.Length, sampleRate, 24, false, false, false);
+        WavData wav = new(audio, RiffMetadata.Empty, format);
+        return new AnalysisContext(wav, 1000, named ?? NamedAttributes.Empty("test"));
     }
 
-    ///<summary>Exponential decay of <paramref name="decayDbPerSecond"/> dB per second.</summary>
-    public static float[] Decay(float[] signal, double decayDbPerSecond, int sampleRate = Rate) =>
-        Shape(signal, t => Math.Pow(10.0, -decayDbPerSecond * t / 20.0), sampleRate);
+    ///<summary>
+    ///Exponential decay of <paramref name="decayDbPerSecond"/> dB per second.
+    ///</summary>
+    public static float[] Decay(float[] signal, double decayDbPerSecond, int sampleRate = Rate) => Shape(signal, t => Math.Pow(10.0, -decayDbPerSecond * t / 20.0), sampleRate);
 
-    ///<summary>A stack of <paramref name="harmonics"/> harmonics with amplitude 1/k.</summary>
+    ///<summary>
+    ///A stack of <paramref name="harmonics"/> harmonics with amplitude 1/k.
+    ///</summary>
     public static float[] Harmonic(double fundamentalHz, int harmonics, double seconds, int sampleRate = Rate, double amplitude = 0.5)
     {
         float[] signal = new float[(int)(seconds * sampleRate)];
@@ -83,7 +80,19 @@ public static class AudioSynth
         return signal;
     }
 
-    ///<summary>Uniform white noise from a fixed seed.</summary>
+    ///<summary>
+    ///Negated copy of <paramref name="signal"/> (polarity inversion).
+    ///</summary>
+    public static float[] Invert(float[] signal) => [.. signal.Select(sample => -sample)];
+
+    ///<summary>
+    ///Mono context at 44.1 kHz.
+    ///</summary>
+    public static AnalysisContext Mono(float[] signal, NamedAttributes? named = null) => Context(Rate, named, signal);
+
+    ///<summary>
+    ///Uniform white noise from a fixed seed.
+    ///</summary>
     public static float[] Noise(double seconds, int sampleRate = Rate, double amplitude = 0.5, int seed = 1)
     {
         Random random = new(seed);
@@ -96,10 +105,28 @@ public static class AudioSynth
         return signal;
     }
 
-    ///<summary>Digital silence.</summary>
+    ///<summary>
+    ///Multiplies <paramref name="signal"/> by a gain that depends on time in seconds.
+    ///</summary>
+    public static float[] Shape(float[] signal, Func<double, double> gainAtSeconds, int sampleRate = Rate)
+    {
+        float[] output = new float[signal.Length];
+        for (int i = 0; i < signal.Length; i++)
+        {
+            output[i] = (float)(signal[i] * gainAtSeconds((double)i / sampleRate));
+        }
+
+        return output;
+    }
+
+    ///<summary>
+    ///Digital silence.
+    ///</summary>
     public static float[] Silence(double seconds, int sampleRate = Rate) => new float[(int)(seconds * sampleRate)];
 
-    ///<summary>A sine wave.</summary>
+    ///<summary>
+    ///A sine wave.
+    ///</summary>
     public static float[] Sine(double frequencyHz, double seconds, int sampleRate = Rate, double amplitude = 0.5, double phase = 0)
     {
         float[] signal = new float[(int)(seconds * sampleRate)];
@@ -110,8 +137,5 @@ public static class AudioSynth
 
         return signal;
     }
-
-    ///<summary>Negated copy of <paramref name="signal"/> (polarity inversion).</summary>
-    public static float[] Invert(float[] signal) => [.. signal.Select(sample => -sample)];
     #endregion
 }

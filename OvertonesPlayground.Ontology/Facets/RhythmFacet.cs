@@ -6,8 +6,8 @@ namespace OvertonesPlayground.Ontology.Facets;
 ///Rhythmic content. Only computed for files long enough to hold more than a single hit.
 ///</summary>
 ///<param name="DetectedBpm">
-///Tempo estimated from the onset envelope, or null when nothing periodic was found. When the estimate is confident it is
-///corrected to a tempo the length of the clip allows (<see cref="RhythmAnalyzer.SnapToLoopGrid"/>).
+///Tempo estimated from the onset envelope, or null when nothing periodic was found. When the estimate is confident it
+///is corrected to a tempo the length of the clip allows (<see cref="RhythmAnalyzer.SnapToLoopGrid"/>).
 ///</param>
 ///<param name="TempoConfidence">0 - 1 strength of the periodicity behind <paramref name="DetectedBpm"/>.</param>
 ///<param name="OnsetsPerSecond">Rate of detected note / hit onsets.</param>
@@ -20,27 +20,18 @@ namespace OvertonesPlayground.Ontology.Facets;
 ///<param name="Beats">Length in beats at the best-known tempo, or null.</param>
 ///<param name="Bars">Length in 4/4 bars at the best-known tempo, or null.</param>
 ///<param name="IsLoopLike">The clip is periodic and spans a whole number of beats, so it repeats cleanly.</param>
-public sealed record RhythmFacet(
-    double? DetectedBpm,
-    double TempoConfidence,
-    double OnsetsPerSecond,
-    int OnsetCount,
-    bool? TempoAgreesWithName,
-    double? Beats,
-    double? Bars,
-    bool IsLoopLike)
+public sealed record RhythmFacet(double? DetectedBpm, double TempoConfidence, double OnsetsPerSecond, int OnsetCount, bool? TempoAgreesWithName, double? Beats, double? Bars, bool IsLoopLike)
 {
     #region Constants
-    ///<summary>Smallest <see cref="TempoConfidence"/> at which <see cref="DetectedBpm"/> is treated as a real tempo.</summary>
+
+    ///<summary>
+    ///Smallest <see cref="TempoConfidence"/> at which <see cref="DetectedBpm"/> is treated as a real tempo.
+    ///</summary>
     public const double MinTrustedConfidence = 0.30;
     #endregion
 
     #region Public properties
     ///<summary>
-    ///<see cref="DetectedBpm"/> when its periodicity is strong enough to believe (<see cref="MinTrustedConfidence"/>), otherwise
-    ///null. Below that the estimate is mostly wrong: for the bundled samples that also carry a tempo in their name, detections
-    ///under 0.30 confidence matched the name for only 3 of 14.
-    ///</summary>
     [JsonIgnore]
     public double? TrustedBpm => DetectedBpm is { } bpm && TempoConfidence >= MinTrustedConfidence ? bpm : null;
     #endregion

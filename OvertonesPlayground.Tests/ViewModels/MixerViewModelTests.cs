@@ -2,9 +2,12 @@ namespace OvertonesPlayground.Tests.ViewModels;
 
 public sealed class MixerViewModelTests
 {
+    #region Fields
     private readonly IAudioLibraryService _library = Substitute.For<IAudioLibraryService>();
     private readonly IAudioPlaybackService _playback = Substitute.For<IAudioPlaybackService>();
+    #endregion
 
+    #region Private methods
     private MixerViewModel Create() => new(_playback, _library, NullLoggerFactory.Instance, NullLogger<MixerViewModel>.Instance);
 
     private MixerChannelViewModel CreateChannel(MixerChannelStrip? strip = null)
@@ -13,8 +16,140 @@ public sealed class MixerViewModelTests
         _playback.ClearReceivedCalls();
         return channel;
     }
+    #endregion
 
-    #region The mixer
+    #region Public methods
+    [Fact]
+    public void ChangingSomethingOtherThanSolo_DoesNotTouchDimming()
+    {
+        MixerViewModel viewModel = Create();
+        viewModel.Channels[0].ToggleSoloCommand.Execute(null);
+
+        viewModel.Channels[1].ToggleMuteCommand.Execute(null);
+
+        Assert.True(viewModel.Channels[1].IsDimmed);
+        Assert.False(viewModel.Channels[0].IsDimmed);
+    }
+
+    [Fact]
+    public void Channel_AssignSource_RaisesHasSource()
+    {
+        MixerChannelViewModel channel = CreateChannel();
+        List<string?> raised = [];
+        channel.PropertyChanged += (_, e) => raised.Add(e.PropertyName);
+
+        channel.AssignSource("/a.wav", "A");
+
+        Assert.Contains(nameof(MixerChannelViewModel.HasSource), raised);
+        Assert.True(channel.HasSource);
+    }
+
+    [Fact]
+    public void Channel_AssignSource_WhilePlaying_StopsTheOldSampleFirst()
+    {
+        MixerChannelViewModel channel = CreateChannel();
+        channel.AssignSource("/a.wav", "A");
+        channel.TogglePlaybackCommand.Execute(null);
+
+        channel.AssignSource("/b.wav", "B");
+
+        Assert.False(channel.IsPlaying);
+        _playback.Received(1).StopChannel(channel.Channel.Id);
+        Assert.Equal("B", channel.SourceLabel);
+        Assert.Equal("/b.wav", channel.Channel.SourceClipPath);
+    }
+
+    [Fact]
+    public void Channel_MirrorsItsStrip()
+    {
+        MixerChannelStrip strip = new() { Name = "Bass", Volume = 0.6, Pan = -0.4, IsMuted = true, IsSoloed = true, ColorHex = "#123456" };
+
+        MixerChannelViewModel channel = CreateChannel(strip);
+
+        Assert.Equal("Bass", channel.Name);
+        Assert.Equal(0.6, channel.Volume);
+        Assert.Equal(-0.4, channel.Pan);
+        Assert.True(channel.IsMuted);
+        Assert.True(channel.IsSoloed);
+        Assert.Equal("#123456", channel.ColorHex);
+        Assert.Same(strip, channel.Channel);
+    }
+
+    [Fact]
+    public void Channel_Rename_UpdatesTheStrip()
+    {
+        MixerChannelViewModel channel = CreateChannel();
+
+        channel.Name = "Lead";
+
+        Assert.Equal("Lead", channel.Channel.Name);
+    }
+
+    [Fact]
+    public void Channel_ToggleMute_FlipsItUpdatesTheStripAndTheLiveVoice()
+    {
+        MixerChannelViewModel channel = CreateChannel();
+
+        channel.ToggleMuteCommand.Execute(null);
+
+        Assert.True(channel.IsMuted);
+        Assert.True(channel.Channel.IsMuted);
+        _playback.Received(1).UpdateChannel(channel.Channel);
+
+        channel.ToggleMuteCommand.Execute(null);
+
+        Assert.False(channel.Channel.IsMuted);
+    }
+
+    [Fact]
+    public void Channel_TogglePlayback_StartsThenStopsTheVoice()
+    {
+        MixerChannelViewModel channel = CreateChannel();
+        channel.AssignSource("/a.wav", "A");
+
+        channel.TogglePlaybackCommand.Execute(null);
+        Assert.True(channel.IsPlaying);
+        _playback.Received(1).PlayChannel(channel.Channel);
+
+        channel.TogglePlaybackCommand.Execute(null);
+        Assert.False(channel.IsPlaying);
+        _playback.Received(1).StopChannel(channel.Channel.Id);
+    }
+
+    [Fact]
+    public void Channel_TogglePlayback_WithoutASample_DoesNothing()
+    {
+        MixerChannelViewModel channel = CreateChannel();
+
+        channel.TogglePlaybackCommand.Execute(null);
+
+        Assert.False(channel.IsPlaying);
+        _playback.DidNotReceiveWithAnyArgs().PlayChannel(default!);
+    }
+
+    [Fact]
+    public void Channel_ToggleSolo_UpdatesTheStrip()
+    {
+        MixerChannelViewModel channel = CreateChannel();
+
+        channel.ToggleSoloCommand.Execute(null);
+
+        Assert.True(channel.Channel.IsSoloed);
+    }
+
+    [Fact]
+    public void Channel_VolumeAndPan_UpdateTheStripAndTheLiveVoice()
+    {
+        MixerChannelViewModel channel = CreateChannel();
+
+        channel.Volume = 0.25;
+        channel.Pan = 0.75;
+
+        Assert.Equal(0.25, channel.Channel.Volume);
+        Assert.Equal(0.75, channel.Channel.Pan);
+        _playback.Received(2).UpdateChannel(channel.Channel);
+    }
+
     [Fact]
     public void Constructor_BuildsFourNumberedEmptyChannelsInDifferentColors()
     {
@@ -29,81 +164,11 @@ public sealed class MixerViewModelTests
     }
 
     [Fact]
-    public void Soloing_OneChannel_DimsTheOthers()
+    public async Task LoadSample_NoChannel_DoesNotOpenThePicker()
     {
-        MixerViewModel viewModel = Create();
+        await Create().LoadSampleCommand.ExecuteAsync(null);
 
-        viewModel.Channels[1].ToggleSoloCommand.Execute(null);
-
-        Assert.Equal([true, false, true, true], viewModel.Channels.Select(c => c.IsDimmed));
-    }
-
-    [Fact]
-    public void Soloing_TwoChannels_DimsOnlyTheRest()
-    {
-        MixerViewModel viewModel = Create();
-
-        viewModel.Channels[0].ToggleSoloCommand.Execute(null);
-        viewModel.Channels[3].ToggleSoloCommand.Execute(null);
-
-        Assert.Equal([false, true, true, false], viewModel.Channels.Select(c => c.IsDimmed));
-    }
-
-    [Fact]
-    public void Soloing_ThenUnsoloingTheLastOne_UndimsEverything()
-    {
-        MixerViewModel viewModel = Create();
-        viewModel.Channels[2].ToggleSoloCommand.Execute(null);
-
-        viewModel.Channels[2].ToggleSoloCommand.Execute(null);
-
-        Assert.All(viewModel.Channels, channel => Assert.False(channel.IsDimmed));
-    }
-
-    [Fact]
-    public void ChangingSomethingOtherThanSolo_DoesNotTouchDimming()
-    {
-        MixerViewModel viewModel = Create();
-        viewModel.Channels[0].ToggleSoloCommand.Execute(null);
-
-        viewModel.Channels[1].ToggleMuteCommand.Execute(null);
-
-        Assert.True(viewModel.Channels[1].IsDimmed);
-        Assert.False(viewModel.Channels[0].IsDimmed);
-    }
-
-    [Fact]
-    public void StopAll_StopsEveryChannelsVoice()
-    {
-        MixerViewModel viewModel = Create();
-        _playback.ClearReceivedCalls();
-
-        viewModel.StopAllCommand.Execute(null);
-
-        foreach (MixerChannelViewModel channel in viewModel.Channels)
-        {
-            _playback.Received(1).StopChannel(channel.Channel.Id);
-        }
-    }
-
-    [Fact]
-    public void StopChannel_StopsJustThatChannel()
-    {
-        MixerViewModel viewModel = Create();
-        viewModel.Channels[1].AssignSource("/a.wav", "A");
-        viewModel.Channels[1].TogglePlaybackCommand.Execute(null);
-        _playback.ClearReceivedCalls();
-
-        viewModel.StopChannelCommand.Execute(viewModel.Channels[1]);
-
-        _playback.Received(1).StopChannel(viewModel.Channels[1].Channel.Id);
-        Assert.False(viewModel.Channels[1].IsPlaying);
-    }
-
-    [Fact]
-    public void StopChannel_NoChannel_DoesNothing()
-    {
-        Create().StopChannelCommand.Execute(null);
+        await _library.DidNotReceiveWithAnyArgs().ImportFromPickerAsync();
     }
 
     [Fact]
@@ -133,132 +198,65 @@ public sealed class MixerViewModelTests
     }
 
     [Fact]
-    public async Task LoadSample_NoChannel_DoesNotOpenThePicker()
+    public void Soloing_OneChannel_DimsTheOthers()
     {
-        await Create().LoadSampleCommand.ExecuteAsync(null);
+        MixerViewModel viewModel = Create();
 
-        await _library.DidNotReceiveWithAnyArgs().ImportFromPickerAsync();
-    }
-    #endregion
+        viewModel.Channels[1].ToggleSoloCommand.Execute(null);
 
-    #region A channel
-    [Fact]
-    public void Channel_MirrorsItsStrip()
-    {
-        MixerChannelStrip strip = new() { Name = "Bass", Volume = 0.6, Pan = -0.4, IsMuted = true, IsSoloed = true, ColorHex = "#123456" };
-
-        MixerChannelViewModel channel = CreateChannel(strip);
-
-        Assert.Equal("Bass", channel.Name);
-        Assert.Equal(0.6, channel.Volume);
-        Assert.Equal(-0.4, channel.Pan);
-        Assert.True(channel.IsMuted);
-        Assert.True(channel.IsSoloed);
-        Assert.Equal("#123456", channel.ColorHex);
-        Assert.Same(strip, channel.Channel);
+        Assert.Equal([true, false, true, true], viewModel.Channels.Select(c => c.IsDimmed));
     }
 
     [Fact]
-    public void Channel_ToggleMute_FlipsItUpdatesTheStripAndTheLiveVoice()
+    public void Soloing_ThenUnsoloingTheLastOne_UndimsEverything()
     {
-        MixerChannelViewModel channel = CreateChannel();
+        MixerViewModel viewModel = Create();
+        viewModel.Channels[2].ToggleSoloCommand.Execute(null);
 
-        channel.ToggleMuteCommand.Execute(null);
+        viewModel.Channels[2].ToggleSoloCommand.Execute(null);
 
-        Assert.True(channel.IsMuted);
-        Assert.True(channel.Channel.IsMuted);
-        _playback.Received(1).UpdateChannel(channel.Channel);
-
-        channel.ToggleMuteCommand.Execute(null);
-
-        Assert.False(channel.Channel.IsMuted);
+        Assert.All(viewModel.Channels, channel => Assert.False(channel.IsDimmed));
     }
 
     [Fact]
-    public void Channel_VolumeAndPan_UpdateTheStripAndTheLiveVoice()
+    public void Soloing_TwoChannels_DimsOnlyTheRest()
     {
-        MixerChannelViewModel channel = CreateChannel();
+        MixerViewModel viewModel = Create();
 
-        channel.Volume = 0.25;
-        channel.Pan = 0.75;
+        viewModel.Channels[0].ToggleSoloCommand.Execute(null);
+        viewModel.Channels[3].ToggleSoloCommand.Execute(null);
 
-        Assert.Equal(0.25, channel.Channel.Volume);
-        Assert.Equal(0.75, channel.Channel.Pan);
-        _playback.Received(2).UpdateChannel(channel.Channel);
+        Assert.Equal([false, true, true, false], viewModel.Channels.Select(c => c.IsDimmed));
     }
 
     [Fact]
-    public void Channel_ToggleSolo_UpdatesTheStrip()
+    public void StopAll_StopsEveryChannelsVoice()
     {
-        MixerChannelViewModel channel = CreateChannel();
+        MixerViewModel viewModel = Create();
+        _playback.ClearReceivedCalls();
 
-        channel.ToggleSoloCommand.Execute(null);
+        viewModel.StopAllCommand.Execute(null);
 
-        Assert.True(channel.Channel.IsSoloed);
+        foreach (MixerChannelViewModel channel in viewModel.Channels)
+        {
+            _playback.Received(1).StopChannel(channel.Channel.Id);
+        }
     }
 
     [Fact]
-    public void Channel_Rename_UpdatesTheStrip()
-    {
-        MixerChannelViewModel channel = CreateChannel();
-
-        channel.Name = "Lead";
-
-        Assert.Equal("Lead", channel.Channel.Name);
-    }
-
+    public void StopChannel_NoChannel_DoesNothing() { Create().StopChannelCommand.Execute(null); }
     [Fact]
-    public void Channel_TogglePlayback_WithoutASample_DoesNothing()
+    public void StopChannel_StopsJustThatChannel()
     {
-        MixerChannelViewModel channel = CreateChannel();
+        MixerViewModel viewModel = Create();
+        viewModel.Channels[1].AssignSource("/a.wav", "A");
+        viewModel.Channels[1].TogglePlaybackCommand.Execute(null);
+        _playback.ClearReceivedCalls();
 
-        channel.TogglePlaybackCommand.Execute(null);
+        viewModel.StopChannelCommand.Execute(viewModel.Channels[1]);
 
-        Assert.False(channel.IsPlaying);
-        _playback.DidNotReceiveWithAnyArgs().PlayChannel(default!);
-    }
-
-    [Fact]
-    public void Channel_TogglePlayback_StartsThenStopsTheVoice()
-    {
-        MixerChannelViewModel channel = CreateChannel();
-        channel.AssignSource("/a.wav", "A");
-
-        channel.TogglePlaybackCommand.Execute(null);
-        Assert.True(channel.IsPlaying);
-        _playback.Received(1).PlayChannel(channel.Channel);
-
-        channel.TogglePlaybackCommand.Execute(null);
-        Assert.False(channel.IsPlaying);
-        _playback.Received(1).StopChannel(channel.Channel.Id);
-    }
-
-    [Fact]
-    public void Channel_AssignSource_WhilePlaying_StopsTheOldSampleFirst()
-    {
-        MixerChannelViewModel channel = CreateChannel();
-        channel.AssignSource("/a.wav", "A");
-        channel.TogglePlaybackCommand.Execute(null);
-
-        channel.AssignSource("/b.wav", "B");
-
-        Assert.False(channel.IsPlaying);
-        _playback.Received(1).StopChannel(channel.Channel.Id);
-        Assert.Equal("B", channel.SourceLabel);
-        Assert.Equal("/b.wav", channel.Channel.SourceClipPath);
-    }
-
-    [Fact]
-    public void Channel_AssignSource_RaisesHasSource()
-    {
-        MixerChannelViewModel channel = CreateChannel();
-        List<string?> raised = [];
-        channel.PropertyChanged += (_, e) => raised.Add(e.PropertyName);
-
-        channel.AssignSource("/a.wav", "A");
-
-        Assert.Contains(nameof(MixerChannelViewModel.HasSource), raised);
-        Assert.True(channel.HasSource);
+        _playback.Received(1).StopChannel(viewModel.Channels[1].Channel.Id);
+        Assert.False(viewModel.Channels[1].IsPlaying);
     }
     #endregion
 }

@@ -1,37 +1,6 @@
 namespace OvertonesPlayground.Ontology.Classification;
 
 ///<summary>
-///A sample whose audio-based family prediction differs from its (confident) file-name family.
-///</summary>
-///<param name="Sample">The sample.</param>
-///<param name="ActualFamily">Family key implied by the name.</param>
-///<param name="PredictedFamily">Family key the nearest neighbours vote for.</param>
-///<param name="Confidence">Strength of the vote.</param>
-public sealed record SignalDisagreement(Sample Sample, string ActualFamily, string PredictedFamily, double Confidence);
-
-///<summary>
-///Leave-one-out check of how well the audio alone predicts what the file names say.
-///</summary>
-///<param name="Evaluated">Samples with a confident name label that could be predicted.</param>
-///<param name="Agreed">Samples where the prediction matched.</param>
-///<param name="Disagreements">The mismatches, most confident first.</param>
-///<param name="CoreEvaluated">How many of the evaluated samples belong to a distinctive family (kick, snare, hi-hat ...).</param>
-///<param name="CoreAgreed">How many of those were predicted correctly.</param>
-public sealed record SignalEvaluation(int Evaluated, int Agreed, IReadOnlyList<SignalDisagreement> Disagreements, int CoreEvaluated, int CoreAgreed)
-{
-    #region Public properties
-    ///<summary>Share of evaluated samples predicted correctly.</summary>
-    public double Accuracy => Evaluated == 0 ? 0 : (double)Agreed / Evaluated;
-
-    ///<summary>
-    ///Share predicted correctly among distinctive families only. Generic buckets (FX, electronic percussion, foley) are naming
-    ///conventions rather than acoustic classes, so this is the fairer measure of how well the audio matches the names.
-    ///</summary>
-    public double CoreAccuracy => CoreEvaluated == 0 ? 0 : (double)CoreAgreed / CoreEvaluated;
-    #endregion
-}
-
-///<summary>
 ///Classifies a whole corpus in two passes. Pass one uses only the evidence that needs no training (file names and
 ///embedded metadata). The confidently labelled files then teach the signal classifier, and pass two fuses every
 ///classifier's votes, so the audio can cross-check the names and label the files whose names say nothing.
@@ -40,33 +9,24 @@ public sealed record SignalEvaluation(int Evaluated, int Agreed, IReadOnlyList<S
 ///</summary>
 public sealed class CorpusClassifier
 {
-    #region Constants
     private const double TrainingConfidence = 0.8;
-    #endregion
 
-    #region Fields
     private readonly ClassificationOverrides _overrides;
     private readonly EvidenceFusion _fusion = new();
     private readonly FilenameLexiconClassifier _filename = new();
     private readonly MetadataClassifier _metadata = new();
-    #endregion
 
-    #region Constructors
     ///<summary>Creates a classifier that applies <paramref name="overrides"/> last.</summary>
     public CorpusClassifier(ClassificationOverrides? overrides = null)
     {
         _overrides = overrides ?? ClassificationOverrides.Empty;
     }
-    #endregion
 
-    #region Private methods
     private static Sample With(Sample sample, SampleClassification classification) => sample with { Classification = classification };
 
     private static NamedAttributes AttributesFor(Sample sample, ParsedName parsed) =>
         parsed.Attributes with { TempoBpm = parsed.Attributes.TempoBpm ?? sample.Technical?.EmbeddedTempoBpm };
-    #endregion
 
-    #region Public methods
     ///<summary>
     ///Predicts every confidently named sample from the audio of all the others (leave-one-out) and reports how often the
     ///prediction agrees with the name, at the level of the depth-2 instrument family.
@@ -167,5 +127,4 @@ public sealed class CorpusClassifier
 
         return final;
     }
-    #endregion
 }

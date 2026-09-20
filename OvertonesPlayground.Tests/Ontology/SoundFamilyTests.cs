@@ -2,35 +2,11 @@ namespace OvertonesPlayground.Tests.Ontology;
 
 public sealed class SoundFamilyTests
 {
+    #region Private methods
     private static SampleIndex Index() => new(TestSamples.Library());
+    #endregion
 
-    [Fact]
-    public void GetSoundFamilies_EverySampleBelongsToExactlyOneFamily()
-    {
-        SampleIndex index = Index();
-
-        IReadOnlyList<SoundFamily> families = index.GetSoundFamilies();
-
-        Assert.Equal(index.Count, families.Sum(family => family.Members.Count));
-        Assert.Equal(index.Count, families.SelectMany(family => family.Members).Select(sample => sample.Id).Distinct().Count());
-        foreach (Sample sample in index.All)
-        {
-            Assert.Contains(sample, index.GetSoundFamily(sample)!.Members);
-        }
-    }
-
-    [Fact]
-    public void GetSoundFamilies_SoundsThatSoundAlikeLandTogetherAndDifferentOnesApart()
-    {
-        SampleIndex index = Index();
-        SoundFamily FamilyOf(string name) => index.GetSoundFamily(index.All.Single(sample => sample.Name == name))!;
-
-        Assert.All(Enumerable.Range(2, 5), i => Assert.Same(FamilyOf("Kick Test 1"), FamilyOf($"Kick Test {i}")));
-        Assert.All(Enumerable.Range(2, 5), i => Assert.Same(FamilyOf("Hihat Closed Test 1"), FamilyOf($"Hihat Closed Test {i}")));
-        Assert.NotSame(FamilyOf("Kick Test 1"), FamilyOf("Hihat Closed Test 1"));
-        Assert.NotSame(FamilyOf("Kick Test 1"), FamilyOf("Snare Test 1"));
-    }
-
+    #region Public methods
     [Fact]
     public void GetSoundFamilies_AFamilyIsNamedAfterItsDominantInstrumentAndItsMostTypicalSound()
     {
@@ -45,15 +21,40 @@ public sealed class SoundFamilyTests
     }
 
     [Fact]
-    public void GetSoundFamilies_ThePurityIsTheShareOfMembersInTheDominantInstrumentFamily()
+    public void GetSoundFamilies_AMixedFamilyIsNamedMixedRatherThanAfterAMinority()
     {
-        SampleIndex index = Index();
+        // Two sounds with the same fingerprint but different instruments: neither reaches half of the family.
+        Sample a = TestSamples.Make("A", "kick");
+        Sample b = TestSamples.Make("B", "snare");
+        Sample c = TestSamples.Make("C", "tom");
+        SampleIndex index = new([a, b, c]);
 
-        foreach (SoundFamily family in index.GetSoundFamilies())
+        SoundFamily everything = Assert.Single(index.GetSoundFamilies());
+
+        Assert.StartsWith("Mixed like ", everything.Name, StringComparison.Ordinal);
+        Assert.Equal(1.0 / 3.0, everything.Purity, 1e-9);
+    }
+
+    [Fact]
+    public void GetSoundFamilies_ArriveLargestFirst_WithMembersByName()
+    {
+        IReadOnlyList<SoundFamily> families = Index().GetSoundFamilies();
+
+        Assert.Equal(families.OrderByDescending(family => family.Members.Count).Select(family => family.Members.Count), families.Select(family => family.Members.Count));
+        foreach (SoundFamily family in families)
         {
-            int dominant = family.Members.Count(sample => Taxonomies.Instruments.Get(sample.Classification.Instrument.Value).Family.Key == family.DominantInstrument?.Key);
-            Assert.Equal((double)dominant / family.Members.Count, family.Purity, 1e-9);
+            Assert.Equal(family.Members.Select(sample => sample.Name).Order(StringComparer.OrdinalIgnoreCase), family.Members.Select(sample => sample.Name));
         }
+    }
+
+    [Fact]
+    public void GetSoundFamilies_ASoundWithNoAnalysis_BelongsToNoFamily()
+    {
+        Sample unanalysed = TestSamples.Make("Unreadable") with { Spectral = null };
+        SampleIndex index = new([.. TestSamples.Library(), unanalysed]);
+
+        Assert.Null(index.GetSoundFamily(unanalysed));
+        Assert.Equal(index.Count - 1, index.GetSoundFamilies().Sum(family => family.Members.Count));
     }
 
     [Fact]
@@ -71,35 +72,18 @@ public sealed class SoundFamilyTests
     }
 
     [Fact]
-    public void GetSoundFamilies_ArriveLargestFirst_WithMembersByName()
+    public void GetSoundFamilies_EverySampleBelongsToExactlyOneFamily()
     {
-        IReadOnlyList<SoundFamily> families = Index().GetSoundFamilies();
+        SampleIndex index = Index();
 
-        Assert.Equal(families.OrderByDescending(family => family.Members.Count).Select(family => family.Members.Count), families.Select(family => family.Members.Count));
-        foreach (SoundFamily family in families)
+        IReadOnlyList<SoundFamily> families = index.GetSoundFamilies();
+
+        Assert.Equal(index.Count, families.Sum(family => family.Members.Count));
+        Assert.Equal(index.Count, families.SelectMany(family => family.Members).Select(sample => sample.Id).Distinct().Count());
+        foreach (Sample sample in index.All)
         {
-            Assert.Equal(family.Members.Select(sample => sample.Name).Order(StringComparer.OrdinalIgnoreCase), family.Members.Select(sample => sample.Name));
+            Assert.Contains(sample, index.GetSoundFamily(sample)!.Members);
         }
-    }
-
-    [Fact]
-    public void GetSoundFamilies_TheSameCatalogAlwaysGivesTheSameFamilies()
-    {
-        string[] Describe(SampleIndex index) =>
-            [.. index.GetSoundFamilies().Select(family => $"{family.Name}: {string.Join(", ", family.Members.Select(sample => sample.Name))}")];
-
-        Assert.Equal(Describe(Index()), Describe(Index()));
-        Assert.Equal(Describe(Index()), Describe(new SampleIndex(TestSamples.Library().AsEnumerable().Reverse())));
-    }
-
-    [Fact]
-    public void GetSoundFamilies_ASoundWithNoAnalysis_BelongsToNoFamily()
-    {
-        Sample unanalysed = TestSamples.Make("Unreadable") with { Spectral = null };
-        SampleIndex index = new([.. TestSamples.Library(), unanalysed]);
-
-        Assert.Null(index.GetSoundFamily(unanalysed));
-        Assert.Equal(index.Count - 1, index.GetSoundFamilies().Sum(family => family.Members.Count));
     }
 
     [Fact]
@@ -125,17 +109,36 @@ public sealed class SoundFamilyTests
     }
 
     [Fact]
-    public void GetSoundFamilies_AMixedFamilyIsNamedMixedRatherThanAfterAMinority()
+    public void GetSoundFamilies_SoundsThatSoundAlikeLandTogetherAndDifferentOnesApart()
     {
-        // Two sounds with the same fingerprint but different instruments: neither reaches half of the family.
-        Sample a = TestSamples.Make("A", "kick");
-        Sample b = TestSamples.Make("B", "snare");
-        Sample c = TestSamples.Make("C", "tom");
-        SampleIndex index = new([a, b, c]);
+        SampleIndex index = Index();
+        SoundFamily FamilyOf(string name) { return index.GetSoundFamily(index.All.Single(sample => sample.Name == name))!; }
 
-        SoundFamily everything = Assert.Single(index.GetSoundFamilies());
-
-        Assert.StartsWith("Mixed like ", everything.Name, StringComparison.Ordinal);
-        Assert.Equal(1.0 / 3.0, everything.Purity, 1e-9);
+        Assert.All(Enumerable.Range(2, 5), i => Assert.Same(FamilyOf("Kick Test 1"), FamilyOf($"Kick Test {i}")));
+        Assert.All(Enumerable.Range(2, 5), i => Assert.Same(FamilyOf("Hihat Closed Test 1"), FamilyOf($"Hihat Closed Test {i}")));
+        Assert.NotSame(FamilyOf("Kick Test 1"), FamilyOf("Hihat Closed Test 1"));
+        Assert.NotSame(FamilyOf("Kick Test 1"), FamilyOf("Snare Test 1"));
     }
+
+    [Fact]
+    public void GetSoundFamilies_ThePurityIsTheShareOfMembersInTheDominantInstrumentFamily()
+    {
+        SampleIndex index = Index();
+
+        foreach (SoundFamily family in index.GetSoundFamilies())
+        {
+            int dominant = family.Members.Count(sample => Taxonomies.Instruments.Get(sample.Classification.Instrument.Value).Family.Key == family.DominantInstrument?.Key);
+            Assert.Equal((double)dominant / family.Members.Count, family.Purity, 1e-9);
+        }
+    }
+
+    [Fact]
+    public void GetSoundFamilies_TheSameCatalogAlwaysGivesTheSameFamilies()
+    {
+        string[] Describe(SampleIndex index) { return[.. index.GetSoundFamilies().Select(family => $"{family.Name}: {string.Join(", ", family.Members.Select(sample => sample.Name))}")]; }
+
+        Assert.Equal(Describe(Index()), Describe(Index()));
+        Assert.Equal(Describe(Index()), Describe(new SampleIndex(TestSamples.Library().AsEnumerable().Reverse())));
+    }
+    #endregion
 }

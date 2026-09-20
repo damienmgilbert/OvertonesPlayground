@@ -2,23 +2,50 @@ namespace OvertonesPlayground.Tests.ViewModels;
 
 public sealed class MultiTrackViewModelTests
 {
+    #region Fields
     private readonly IAudioLibraryService _library = Substitute.For<IAudioLibraryService>();
     private readonly IMixdownService _mixdown = Substitute.For<IMixdownService>();
+    #endregion
 
+    #region Private methods
     private MultiTrackViewModel Create() => new(_mixdown, _library, NullLoggerFactory.Instance, NullLogger<MultiTrackViewModel>.Instance);
 
     private static TrackViewModel CreateTrack(Track? track = null) => new(track ?? new Track { Name = "Track 1" }, NullLogger<TrackViewModel>.Instance);
+    #endregion
 
-    #region The page
-    [Fact]
-    public void Constructor_BuildsFourNumberedTracksAndAProjectName()
+    #region Public methods
+    [Theory]
+    [InlineData(typeof(InvalidOperationException))]
+    [InlineData(typeof(IOException))]
+    [InlineData(typeof(UnauthorizedAccessException))]
+    [InlineData(typeof(InvalidDataException))]
+    [InlineData(typeof(NotSupportedException))]
+    public async Task Bounce_MixFails_ExplainsWhatToTry(Type exceptionType)
     {
         MultiTrackViewModel viewModel = Create();
+        _mixdown.RenderAsync(default!, default!).ReturnsForAnyArgs(Task.FromException<string>((Exception)Activator.CreateInstance(exceptionType)!));
 
-        Assert.Equal("Multi-Track", viewModel.Title);
-        Assert.Equal("Mix", viewModel.ProjectName);
-        Assert.Equal(["Track 1", "Track 2", "Track 3", "Track 4"], viewModel.Tracks.Select(t => t.Name));
-        Assert.Equal([1, 2, 3, 4], viewModel.Tracks.Select(t => t.Number));
+        await viewModel.BounceCommand.ExecuteAsync(null);
+
+        Assert.Equal("Couldn't bounce the project - add at least one clip to an unmuted track.", viewModel.StatusMessage);
+        Assert.False(viewModel.IsBusy);
+        await _library.DidNotReceiveWithAnyArgs().AddClipAsync(default!, default!, default);
+    }
+
+    [Theory]
+    [InlineData("", false)]
+    [InlineData("   ", false)]
+    [InlineData("My mix", true)]
+    public void Bounce_NeedsAProjectName(string name, bool allowed)
+    {
+        MultiTrackViewModel viewModel = Create();
+        int canExecuteChanged = 0;
+        viewModel.BounceCommand.CanExecuteChanged += (_, _) => canExecuteChanged++;
+
+        viewModel.ProjectName = name;
+
+        Assert.Equal(allowed, viewModel.BounceCommand.CanExecute(null));
+        Assert.True(canExecuteChanged > 0);
     }
 
     [Fact]
@@ -53,24 +80,6 @@ public sealed class MultiTrackViewModelTests
         Assert.True(rendered.Tracks[2].IsMuted);
     }
 
-    [Theory]
-    [InlineData(typeof(InvalidOperationException))]
-    [InlineData(typeof(IOException))]
-    [InlineData(typeof(UnauthorizedAccessException))]
-    [InlineData(typeof(InvalidDataException))]
-    [InlineData(typeof(NotSupportedException))]
-    public async Task Bounce_MixFails_ExplainsWhatToTry(Type exceptionType)
-    {
-        MultiTrackViewModel viewModel = Create();
-        _mixdown.RenderAsync(default!, default!).ReturnsForAnyArgs(Task.FromException<string>((Exception)Activator.CreateInstance(exceptionType)!));
-
-        await viewModel.BounceCommand.ExecuteAsync(null);
-
-        Assert.Equal("Couldn't bounce the project - add at least one clip to an unmuted track.", viewModel.StatusMessage);
-        Assert.False(viewModel.IsBusy);
-        await _library.DidNotReceiveWithAnyArgs().AddClipAsync(default!, default!, default);
-    }
-
     [Fact]
     public async Task Bounce_WhileAlreadyBouncing_IsIgnored()
     {
@@ -82,20 +91,26 @@ public sealed class MultiTrackViewModelTests
         await _mixdown.DidNotReceiveWithAnyArgs().RenderAsync(default!, default!);
     }
 
-    [Theory]
-    [InlineData("", false)]
-    [InlineData("   ", false)]
-    [InlineData("My mix", true)]
-    public void Bounce_NeedsAProjectName(string name, bool allowed)
+    [Fact]
+    public void Constructor_BuildsFourNumberedTracksAndAProjectName()
     {
         MultiTrackViewModel viewModel = Create();
-        int canExecuteChanged = 0;
-        viewModel.BounceCommand.CanExecuteChanged += (_, _) => canExecuteChanged++;
 
-        viewModel.ProjectName = name;
+        Assert.Equal("Multi-Track", viewModel.Title);
+        Assert.Equal("Mix", viewModel.ProjectName);
+        Assert.Equal(["Track 1", "Track 2", "Track 3", "Track 4"], viewModel.Tracks.Select(t => t.Name));
+        Assert.Equal([1, 2, 3, 4], viewModel.Tracks.Select(t => t.Number));
+    }
 
-        Assert.Equal(allowed, viewModel.BounceCommand.CanExecute(null));
-        Assert.True(canExecuteChanged > 0);
+    [Fact]
+    public async Task GetLibraryClips_ListsTheLibrariesClipsForThePicker()
+    {
+        AudioClip clip = TestData.Clip("Song");
+        _library.GetClipsAsync().Returns(TestData.Clips(clip));
+
+        IReadOnlyList<AudioClip> clips = await Create().GetLibraryClipsAsync();
+
+        Assert.Equal([clip], clips);
     }
 
     [Fact]
@@ -126,33 +141,28 @@ public sealed class MultiTrackViewModelTests
     }
 
     [Fact]
-    public async Task GetLibraryClips_ListsTheLibrariesClipsForThePicker()
+    public void Track_AddClip_KeepsTheClipsFileAndDuration()
     {
-        AudioClip clip = TestData.Clip("Song");
-        _library.GetClipsAsync().Returns(TestData.Clips(clip));
+        TrackViewModel track = CreateTrack();
 
-        IReadOnlyList<AudioClip> clips = await Create().GetLibraryClipsAsync();
+        track.AddClip(TestData.Clip("A", seconds: 3, path: "/clips/a.wav"));
 
-        Assert.Equal([clip], clips);
+        Assert.Equal("/clips/a.wav", track.Track.Clips[0].ClipFilePath);
+        Assert.Equal(TimeSpan.FromSeconds(3), track.Track.Clips[0].Duration);
     }
-    #endregion
 
-    #region A track
     [Fact]
-    public void Track_MirrorsItsModelIncludingClipsAlreadyOnIt()
+    public void Track_AddClip_PlacesTheFirstAtTheStartAndEachNextOneAfterThePrevious()
     {
-        Track model = new() { Name = "Drums", Volume = 0.5, Pan = 0.2, IsMuted = true, IsSoloed = true };
-        model.Clips.Add(new TrackClip { ClipName = "Loop", Duration = TimeSpan.FromSeconds(4) });
+        TrackViewModel track = CreateTrack();
 
-        TrackViewModel track = CreateTrack(model);
+        track.AddClip(TestData.Clip("A", seconds: 3));
+        track.AddClip(TestData.Clip("B", seconds: 4));
+        track.AddClip(TestData.Clip("C", seconds: 2));
 
-        Assert.Equal("Drums", track.Name);
-        Assert.Equal(0.5, track.Volume);
-        Assert.Equal(0.2, track.Pan);
-        Assert.True(track.IsMuted);
-        Assert.True(track.IsSoloed);
-        Assert.Single(track.Clips);
-        Assert.Same(model, track.Track);
+        Assert.Equal([0.0, 3.0, 7.0], track.Clips.Select(c => c.StartOffsetSeconds));
+        Assert.Equal([0.0, 3.0, 7.0], track.Track.Clips.Select(c => c.StartOffset.TotalSeconds));
+        Assert.Equal(["A", "B", "C"], track.Track.Clips.Select(c => c.ClipName));
     }
 
     [Fact]
@@ -174,31 +184,6 @@ public sealed class MultiTrackViewModelTests
     }
 
     [Fact]
-    public void Track_AddClip_PlacesTheFirstAtTheStartAndEachNextOneAfterThePrevious()
-    {
-        TrackViewModel track = CreateTrack();
-
-        track.AddClip(TestData.Clip("A", seconds: 3));
-        track.AddClip(TestData.Clip("B", seconds: 4));
-        track.AddClip(TestData.Clip("C", seconds: 2));
-
-        Assert.Equal([0.0, 3.0, 7.0], track.Clips.Select(c => c.StartOffsetSeconds));
-        Assert.Equal([0.0, 3.0, 7.0], track.Track.Clips.Select(c => c.StartOffset.TotalSeconds));
-        Assert.Equal(["A", "B", "C"], track.Track.Clips.Select(c => c.ClipName));
-    }
-
-    [Fact]
-    public void Track_AddClip_KeepsTheClipsFileAndDuration()
-    {
-        TrackViewModel track = CreateTrack();
-
-        track.AddClip(TestData.Clip("A", seconds: 3, path: "/clips/a.wav"));
-
-        Assert.Equal("/clips/a.wav", track.Track.Clips[0].ClipFilePath);
-        Assert.Equal(TimeSpan.FromSeconds(3), track.Track.Clips[0].Duration);
-    }
-
-    [Fact]
     public void Track_MergeClips_LaysThemEndToEndFromTheStart()
     {
         TrackViewModel track = CreateTrack();
@@ -210,6 +195,34 @@ public sealed class MultiTrackViewModelTests
         track.MergeClipsCommand.Execute(null);
 
         Assert.Equal([0.0, 3.0], track.Clips.Select(c => c.StartOffsetSeconds));
+    }
+
+    [Fact]
+    public void Track_MirrorsItsModelIncludingClipsAlreadyOnIt()
+    {
+        Track model = new() { Name = "Drums", Volume = 0.5, Pan = 0.2, IsMuted = true, IsSoloed = true };
+        model.Clips.Add(new TrackClip { ClipName = "Loop", Duration = TimeSpan.FromSeconds(4) });
+
+        TrackViewModel track = CreateTrack(model);
+
+        Assert.Equal("Drums", track.Name);
+        Assert.Equal(0.5, track.Volume);
+        Assert.Equal(0.2, track.Pan);
+        Assert.True(track.IsMuted);
+        Assert.True(track.IsSoloed);
+        Assert.Single(track.Clips);
+        Assert.Same(model, track.Track);
+    }
+
+    [Fact]
+    public void Track_RemoveClip_NoClip_DoesNothing()
+    {
+        TrackViewModel track = CreateTrack();
+        track.AddClip(TestData.Clip("A"));
+
+        track.RemoveClipCommand.Execute(null);
+
+        Assert.Single(track.Clips);
     }
 
     [Fact]
@@ -227,18 +240,18 @@ public sealed class MultiTrackViewModelTests
     }
 
     [Fact]
-    public void Track_RemoveClip_NoClip_DoesNothing()
+    public void TrackClip_GainAndOffset_FlowBackIntoTheModel()
     {
-        TrackViewModel track = CreateTrack();
-        track.AddClip(TestData.Clip("A"));
+        TrackClip model = new();
+        TrackClipViewModel clip = new(model);
 
-        track.RemoveClipCommand.Execute(null);
+        clip.GainDb = 6;
+        clip.StartOffsetSeconds = 12.5;
 
-        Assert.Single(track.Clips);
+        Assert.Equal(6, model.GainDb);
+        Assert.Equal(TimeSpan.FromSeconds(12.5), model.StartOffset);
     }
-    #endregion
 
-    #region A clip on a track
     [Fact]
     public void TrackClip_MirrorsItsModel()
     {
@@ -251,19 +264,6 @@ public sealed class MultiTrackViewModelTests
         Assert.Equal(-3, clip.GainDb);
         Assert.Equal(2, clip.StartOffsetSeconds);
         Assert.Same(model, clip.TrackClip);
-    }
-
-    [Fact]
-    public void TrackClip_GainAndOffset_FlowBackIntoTheModel()
-    {
-        TrackClip model = new();
-        TrackClipViewModel clip = new(model);
-
-        clip.GainDb = 6;
-        clip.StartOffsetSeconds = 12.5;
-
-        Assert.Equal(6, model.GainDb);
-        Assert.Equal(TimeSpan.FromSeconds(12.5), model.StartOffset);
     }
 
     [Fact]

@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<!-- Offline tool that analyses the bundled audio once and writes the sample catalog the app ships with. It runs on the
 	     developer machine, so the app never has to decode ~1 GB of audio on a tablet. -->
@@ -12,6 +12,7 @@
 		<AssemblyName>SampleAnalyzer</AssemblyName>
 		<InvariantGlobalization>true</InvariantGlobalization>
 		<NoWarn>$(NoWarn);CA1303;CA1305;CA1307;CA1308;CA1031;CA1062;CA1812;CA2007;IDE0058;IDE0290;IDE0028;IDE0301;IDE0072;IDE0010;IDE0045;IDE0046;IDE0060;IDE0047;IDE0048</NoWarn>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -26,6 +27,13 @@
 		<Using Include="OvertonesPlayground.Ontology.Facets" />
 		<Using Include="OvertonesPlayground.Ontology.Model" />
 		<Using Include="OvertonesPlayground.Ontology.Querying" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Update="README.md">
+	    <Pack>True</Pack>
+	    <PackagePath>\</PackagePath>
+	  </None>
 	</ItemGroup>
 
 </Project>

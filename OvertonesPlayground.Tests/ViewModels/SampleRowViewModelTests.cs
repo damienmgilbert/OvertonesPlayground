@@ -2,21 +2,7 @@ namespace OvertonesPlayground.Tests.ViewModels;
 
 public sealed class SampleRowViewModelTests
 {
-    [Fact]
-    public void Subtitle_IsTheInstrumentPathAndTheKit()
-    {
-        SampleRowViewModel row = new(TestSamples.Make("Hihat Closed X", "hihat-closed", kit: "909"));
-
-        Assert.Equal("Percussion > Hi-Hat > Closed Hi-Hat  ·  Roland 909", row.Subtitle);
-        Assert.Equal("Hihat Closed X", row.Name);
-    }
-
-    [Fact]
-    public void Subtitle_UnclassifiedSound_SaysUnclassified()
-    {
-        Assert.Equal("Unclassified", new SampleRowViewModel(TestSamples.Make("Mystery", "unclassified", 0.0)).Subtitle);
-    }
-
+    #region Public methods
     [Fact]
     public void Badges_CoverLengthStereoLoudnessPitchTempoAndContent()
     {
@@ -27,22 +13,25 @@ public sealed class SampleRowViewModelTests
         Assert.Equal(["250 ms", "Mono", "Quiet", "A1"], new SampleRowViewModel(bass).Badges);
     }
 
+    [Fact]
+    public void DualMonoAndOutOfPhase_AreShownInPlainWords()
+    {
+        Assert.Contains("Mono", new SampleRowViewModel(TestSamples.Make("A", image: StereoImage.DualMono)).Badges);
+        Assert.Contains("Out of phase", new SampleRowViewModel(TestSamples.Make("B", image: StereoImage.OutOfPhase)).Badges);
+    }
+
     [Theory]
     [InlineData(0.048, "48 ms")]
     [InlineData(0.9994, "999 ms")]
     [InlineData(1.0, "1.0 s")]
     [InlineData(12.34, "12.3 s")]
     [InlineData(127.4, "2:07")]
-    public void FormatDuration_UsesTheShortestReadableUnit(double seconds, string expected)
-    {
-        Assert.Equal(expected, SampleRowViewModel.FormatDuration(seconds));
-    }
-
+    public void FormatDuration_UsesTheShortestReadableUnit(double seconds, string expected) { Assert.Equal(expected, SampleRowViewModel.FormatDuration(seconds)); }
     [Fact]
-    public void DualMonoAndOutOfPhase_AreShownInPlainWords()
+    public void NeedsReview_MirrorsTheClassification()
     {
-        Assert.Contains("Mono", new SampleRowViewModel(TestSamples.Make("A", image: StereoImage.DualMono)).Badges);
-        Assert.Contains("Out of phase", new SampleRowViewModel(TestSamples.Make("B", image: StereoImage.OutOfPhase)).Badges);
+        Assert.True(new SampleRowViewModel(TestSamples.Make("A", needsReview: true)).NeedsReview);
+        Assert.False(new SampleRowViewModel(TestSamples.Make("B")).NeedsReview);
     }
 
     [Fact]
@@ -59,9 +48,15 @@ public sealed class SampleRowViewModelTests
     }
 
     [Fact]
-    public void NeedsReview_MirrorsTheClassification()
+    public void Subtitle_IsTheInstrumentPathAndTheKit()
     {
-        Assert.True(new SampleRowViewModel(TestSamples.Make("A", needsReview: true)).NeedsReview);
-        Assert.False(new SampleRowViewModel(TestSamples.Make("B")).NeedsReview);
+        SampleRowViewModel row = new(TestSamples.Make("Hihat Closed X", "hihat-closed", kit: "909"));
+
+        Assert.Equal("Percussion > Hi-Hat > Closed Hi-Hat  ·  Roland 909", row.Subtitle);
+        Assert.Equal("Hihat Closed X", row.Name);
     }
+
+    [Fact]
+    public void Subtitle_UnclassifiedSound_SaysUnclassified() { Assert.Equal("Unclassified", new SampleRowViewModel(TestSamples.Make("Mystery", "unclassified", 0.0)).Subtitle); }
+    #endregion
 }

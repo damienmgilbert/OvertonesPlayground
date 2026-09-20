@@ -1,24 +1,6 @@
 using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace OvertonesPlayground.Ontology.Catalog;
-
-///<summary>
-///Source-generated (trim-safe, reflection-free) JSON metadata for <see cref="SampleCatalog"/>.
-///</summary>
-[JsonSourceGenerationOptions(
-    PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
-    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-    UseStringEnumConverter = true,
-    NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals)]
-[JsonSerializable(typeof(SampleCatalog))]
-[JsonSerializable(typeof(Sample))]
-[JsonSerializable(typeof(Label<string>))]
-[JsonSerializable(typeof(Label<ContentType>))]
-[JsonSerializable(typeof(Label<SoundOrigin>))]
-public sealed partial class SampleCatalogJsonContext : JsonSerializerContext
-{
-}
 
 ///<summary>
 ///Reads and writes <see cref="SampleCatalog"/> files. The written file has one sample per line so re-analysing a few
@@ -26,7 +8,6 @@ public sealed partial class SampleCatalogJsonContext : JsonSerializerContext
 ///</summary>
 public static class SampleCatalogSerializer
 {
-    #region Public methods
     ///<summary>Reads a catalog and checks its schema version.</summary>
     public static SampleCatalog Deserialize(Stream stream)
     {
@@ -71,5 +52,4 @@ public static class SampleCatalogSerializer
         using FileStream stream = File.Create(path);
         Serialize(catalog, stream);
     }
-    #endregion
 }

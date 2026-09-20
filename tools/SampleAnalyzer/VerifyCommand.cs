@@ -7,7 +7,7 @@ namespace SampleAnalyzer;
 ///</summary>
 internal static class VerifyCommand
 {
-    #region Public methods
+    #region Internal methods
     internal static int Run(string catalogPath, string rawDirectory)
     {
         using FileStream stream = File.OpenRead(catalogPath);

@@ -3,13 +3,10 @@ using System.Diagnostics;
 namespace SampleAnalyzer;
 
 ///<summary>
-///Command-line entry point. Commands:
-///<code>
-///analyze   decode every audio file (or, with --changed-only, only new or changed ones), measure it, classify the corpus and write the catalog
-///classify  re-run only the classification on an existing catalog (no audio is read; use it to tune the lexicon)
-///report    print a data-quality report for a catalog
-///verify    check that a catalog matches the files on disk
-///</code>
+///Command-line entry point. Commands: ///<code> analyze   decode every audio file (or, with --changed-only, only new or
+///changed ones), measure it, classify the corpus and write the catalog classify  re-run only the classification on an
+///existing catalog (no audio is read; use it to tune the lexicon) report    print a data-quality report for a catalog
+///verify    check that a catalog matches the files on disk</code>
 ///</summary>
 internal static class Program
 {
@@ -49,7 +46,8 @@ internal static class Program
 
     private static void PrintUsage()
     {
-        Console.WriteLine("""
+        Console.WriteLine(
+        """
             SampleAnalyzer - builds the sample ontology catalog for OvertonesPlayground.
 
               analyze  [--raw <dir>] [--out <catalog.json>] [--overrides <overrides.json>] [--parallel <n>] [--limit <n>]
@@ -68,7 +66,7 @@ internal static class Program
     }
     #endregion
 
-    #region Public methods
+    #region Internal methods
     internal static int Main(string[] args)
     {
         if (args.Length == 0 || args[0] is "-h" or "--help" or "help")

@@ -2,29 +2,34 @@ using OvertonesPlayground.Services.Implementations;
 
 namespace OvertonesPlayground.Tests.Services;
 
-/// <summary>
-/// The two small services that remember settings in <see cref="IPreferences"/>: the theme and the "seen it" flags for one-time tips.
-/// </summary>
+///<summary>
+///The two small services that remember settings in <see cref="IPreferences"/>: the theme and the "seen it" flags for
+///one-time tips.
+///</summary>
 public sealed class SettingsServicesTests
 {
+    #region Fields
     private readonly FakePreferences _preferences = new();
+    #endregion
 
-    #region Theme
+    #region Public methods
+    [Fact]
+    public void Theme_Apply_BeforeTheAppHasStarted_IsHarmless() { new AppThemeService(_preferences).Apply(ThemePreference.Dark); }
     [Theory]
     [InlineData(ThemePreference.System, AppTheme.Unspecified)]
     [InlineData(ThemePreference.Light, AppTheme.Light)]
     [InlineData(ThemePreference.Dark, AppTheme.Dark)]
-    public void Theme_EachChoiceMapsToTheAppTheme(ThemePreference preference, AppTheme expected)
+    public void Theme_EachChoiceMapsToTheAppTheme(ThemePreference preference, AppTheme expected) { Assert.Equal(expected, AppThemeService.ToAppTheme(preference)); }
+    [Fact]
+    public void Theme_IsSavedByNameUnderTheKeyEarlierVersionsUsed()
     {
-        Assert.Equal(expected, AppThemeService.ToAppTheme(preference));
+        new AppThemeService(_preferences).Save(ThemePreference.Dark);
+
+        Assert.Equal("Dark", _preferences.Get("app_theme_preference", string.Empty));
     }
 
     [Fact]
-    public void Theme_NothingSaved_FollowsTheSystem()
-    {
-        Assert.Equal(ThemePreference.System, new AppThemeService(_preferences).LoadSaved());
-    }
-
+    public void Theme_NothingSaved_FollowsTheSystem() { Assert.Equal(ThemePreference.System, new AppThemeService(_preferences).LoadSaved()); }
     [Theory]
     [InlineData(ThemePreference.System)]
     [InlineData(ThemePreference.Light)]
@@ -37,14 +42,6 @@ public sealed class SettingsServicesTests
 
         Assert.Equal(choice, service.LoadSaved());
         Assert.Equal(choice, new AppThemeService(_preferences).LoadSaved());
-    }
-
-    [Fact]
-    public void Theme_IsSavedByNameUnderTheKeyEarlierVersionsUsed()
-    {
-        new AppThemeService(_preferences).Save(ThemePreference.Dark);
-
-        Assert.Equal("Dark", _preferences.Get("app_theme_preference", string.Empty));
     }
 
     [Theory]
@@ -60,20 +57,6 @@ public sealed class SettingsServicesTests
     }
 
     [Fact]
-    public void Theme_Apply_BeforeTheAppHasStarted_IsHarmless()
-    {
-        new AppThemeService(_preferences).Apply(ThemePreference.Dark);
-    }
-    #endregion
-
-    #region Teaching tips
-    [Fact]
-    public void Tips_NothingSeenYet()
-    {
-        Assert.False(new TeachingTipsService(_preferences).HasSeen("library"));
-    }
-
-    [Fact]
     public void Tips_MarkedAsSeen_StayAsSeenNextTime()
     {
         TeachingTipsService service = new(_preferences);
@@ -85,6 +68,20 @@ public sealed class SettingsServicesTests
         Assert.False(service.HasSeen("launchpad"));
     }
 
+    [Fact]
+    public void Tips_MarkedTwice_IsKeptOnceAndStillResets()
+    {
+        TeachingTipsService service = new(_preferences);
+
+        service.MarkSeen("library");
+        service.MarkSeen("library");
+        service.ResetAll();
+
+        Assert.False(service.HasSeen("library"));
+    }
+
+    [Fact]
+    public void Tips_NothingSeenYet() { Assert.False(new TeachingTipsService(_preferences).HasSeen("library")); }
     [Fact]
     public void Tips_ResetAll_BringsBackEveryTip()
     {
@@ -127,21 +124,6 @@ public sealed class SettingsServicesTests
     }
 
     [Fact]
-    public void Tips_MarkedTwice_IsKeptOnceAndStillResets()
-    {
-        TeachingTipsService service = new(_preferences);
-
-        service.MarkSeen("library");
-        service.MarkSeen("library");
-        service.ResetAll();
-
-        Assert.False(service.HasSeen("library"));
-    }
-
-    [Fact]
-    public void Tips_ResetAll_WithNothingSeen_IsHarmless()
-    {
-        new TeachingTipsService(_preferences).ResetAll();
-    }
+    public void Tips_ResetAll_WithNothingSeen_IsHarmless() { new TeachingTipsService(_preferences).ResetAll(); }
     #endregion
 }

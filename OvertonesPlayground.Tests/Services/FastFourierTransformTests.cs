@@ -4,8 +4,26 @@ namespace OvertonesPlayground.Tests.Services;
 
 public sealed class FastFourierTransformTests
 {
+    #region Constants
     private const int Size = 64;
     private const double Tolerance = 1e-9;
+    #endregion
+
+    #region Public methods
+    [Fact]
+    public void Forward_ConstantSignal_PutsAllEnergyInBinZero()
+    {
+        double[] real = Enumerable.Repeat(0.5, Size).ToArray();
+        double[] imaginary = new double[Size];
+
+        FastFourierTransform.Forward(real, imaginary);
+
+        Assert.Equal(0.5 * Size, real[0], Tolerance);
+        for (int bin = 1; bin < Size; bin++)
+        {
+            Assert.Equal(0, double.Hypot(real[bin], imaginary[bin]), Tolerance);
+        }
+    }
 
     [Fact]
     public void Forward_Impulse_ProducesFlatSpectrum()
@@ -20,21 +38,6 @@ public sealed class FastFourierTransformTests
         {
             Assert.Equal(1, real[bin], Tolerance);
             Assert.Equal(0, imaginary[bin], Tolerance);
-        }
-    }
-
-    [Fact]
-    public void Forward_ConstantSignal_PutsAllEnergyInBinZero()
-    {
-        double[] real = Enumerable.Repeat(0.5, Size).ToArray();
-        double[] imaginary = new double[Size];
-
-        FastFourierTransform.Forward(real, imaginary);
-
-        Assert.Equal(0.5 * Size, real[0], Tolerance);
-        for (int bin = 1; bin < Size; bin++)
-        {
-            Assert.Equal(0, double.Hypot(real[bin], imaginary[bin]), Tolerance);
         }
     }
 
@@ -66,6 +69,18 @@ public sealed class FastFourierTransformTests
     }
 
     [Fact]
+    public void Forward_SingleSample_LeavesTheSampleUnchanged()
+    {
+        double[] real = [0.75];
+        double[] imaginary = [0];
+
+        FastFourierTransform.Forward(real, imaginary);
+
+        Assert.Equal(0.75, real[0]);
+        Assert.Equal(0, imaginary[0]);
+    }
+
+    [Fact]
     public void Inverse_AfterForward_RestoresTheOriginalSignal()
     {
         Random random = new(1234);
@@ -87,16 +102,5 @@ public sealed class FastFourierTransformTests
             Assert.Equal(0, imaginary[i], Tolerance);
         }
     }
-
-    [Fact]
-    public void Forward_SingleSample_LeavesTheSampleUnchanged()
-    {
-        double[] real = [0.75];
-        double[] imaginary = [0];
-
-        FastFourierTransform.Forward(real, imaginary);
-
-        Assert.Equal(0.75, real[0]);
-        Assert.Equal(0, imaginary[0]);
-    }
+    #endregion
 }

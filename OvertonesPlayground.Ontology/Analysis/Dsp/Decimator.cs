@@ -7,14 +7,8 @@ public static class Decimator
 {
     #region Public methods
     ///<summary>
-    ///Picks the integer factor that brings <paramref name="sampleRate"/> closest to <paramref name="targetRate"/>
-    ///(44.1 kHz and 48 kHz become about 22 kHz, 96 kHz becomes 24 kHz).
-    ///</summary>
-    public static int FactorFor(int sampleRate, double targetRate) => Math.Max(1, (int)Math.Round(sampleRate / targetRate));
-
-    ///<summary>
-    ///Low-passes with two cascaded sections at 0.4 of the new sample rate, then keeps every
-    ///<paramref name="factor"/>-th sample. A factor of 1 returns a copy.
+    ///Low-passes with two cascaded sections at 0.4 of the new sample rate, then keeps every ///<paramref
+    ///name="factor"/>-th sample. A factor of 1 returns a copy.
     ///</summary>
     public static float[] Decimate(ReadOnlySpan<float> input, int factor, int sampleRate)
     {
@@ -33,5 +27,11 @@ public static class Decimator
 
         return output;
     }
+
+    ///<summary>
+    ///Picks the integer factor that brings <paramref name="sampleRate"/> closest to <paramref name="targetRate"/> (44.1
+    ///kHz and 48 kHz become about 22 kHz, 96 kHz becomes 24 kHz).
+    ///</summary>
+    public static int FactorFor(int sampleRate, double targetRate) => Math.Max(1, (int)Math.Round(sampleRate / targetRate));
     #endregion
 }

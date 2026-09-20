@@ -2,37 +2,29 @@ namespace OvertonesPlayground.Tests.Ontology;
 
 public sealed class CorpusClassifierTests
 {
-    private static Sample Unlabelled(string name, double centroidHz, double flatness, double duration, double decayMs, TonalCharacter character = TonalCharacter.Unpitched) =>
-        TestSamples.Make(name, "unclassified", 0.0, centroidHz, flatness, duration, decayMs: decayMs, character: character) with
-        {
-            Classification = SampleClassification.Placeholder(name.ToLowerInvariant()),
-        };
-
+    #region Private methods
     private static Sample Placeholder(Sample sample) => sample with { Classification = SampleClassification.Placeholder(sample.Name.ToLowerInvariant()) };
 
-    [Fact]
-    public void Classify_UsesTheNamesToLabelTheCorpus()
+    private static Sample Unlabelled(string name, double centroidHz, double flatness, double duration, double decayMs, TonalCharacter character = TonalCharacter.Unpitched) => TestSamples.Make(name, "unclassified", 0.0, centroidHz, flatness, duration, decayMs: decayMs, character: character) with
     {
-        List<Sample> corpus = [.. TestSamples.DrumKit(10).Select(Placeholder)];
+        Classification = SampleClassification.Placeholder(name.ToLowerInvariant()),
+    };
+    #endregion
+
+    #region Public methods
+    [Fact]
+    public void Classify_ANameThatContradictsThePlainAudio_IsFlaggedForReview()
+    {
+        List<Sample> corpus = [.. TestSamples.DrumKit(12).Select(Placeholder)];
+        Sample liar = Placeholder(TestSamples.Make("Kick Cyanide", "kick", 0.95, centroidHz: 8100, flatness: 0.63, durationSeconds: 0.12, decayMs: 60, character: TonalCharacter.Unpitched | TonalCharacter.Noisy));
+        corpus.Add(liar);
 
         IReadOnlyList<Sample> classified = new CorpusClassifier().Classify(corpus);
 
-        Assert.Equal(corpus.Count, classified.Count);
-        Assert.All(classified.Where(s => s.Name.StartsWith("Kick", StringComparison.Ordinal)), s => Assert.Equal("kick", s.Classification.Instrument.Value));
-        Assert.All(classified.Where(s => s.Name.StartsWith("Hihat Closed", StringComparison.Ordinal)), s => Assert.Equal("hihat-closed", s.Classification.Instrument.Value));
-        Assert.All(classified, s => Assert.False(s.Classification.NeedsReview, $"{s.Name}: {string.Join("; ", s.Classification.ReviewReasons)}"));
-    }
-
-    [Fact]
-    public void Classify_KeepsFacetsAndIdentityUntouched()
-    {
-        Sample original = Placeholder(TestSamples.DrumKit(2)[0]);
-
-        Sample classified = new CorpusClassifier().Classify([original])[0];
-
-        Assert.Equal(original.Asset, classified.Asset);
-        Assert.Equal(original.Spectral, classified.Spectral);
-        Assert.Equal(original.Dynamics, classified.Dynamics);
+        Sample result = classified.Single(s => s.Name == "Kick Cyanide");
+        Assert.Equal("kick", result.Classification.Instrument.Value);
+        Assert.True(result.Classification.NeedsReview);
+        Assert.Contains(result.Classification.ReviewReasons, reason => reason.Contains("Kick", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -49,18 +41,27 @@ public sealed class CorpusClassifierTests
     }
 
     [Fact]
-    public void Classify_ANameThatContradictsThePlainAudio_IsFlaggedForReview()
+    public void Classify_EmbeddedAcidTempo_FillsInWhenTheNameHasNone()
     {
-        List<Sample> corpus = [.. TestSamples.DrumKit(12).Select(Placeholder)];
-        Sample liar = Placeholder(TestSamples.Make("Kick Cyanide", "kick", 0.95, centroidHz: 8100, flatness: 0.63, durationSeconds: 0.12, decayMs: 60, character: TonalCharacter.Unpitched | TonalCharacter.Noisy));
-        corpus.Add(liar);
+        Sample sample = Placeholder(TestSamples.Make("Groove Thing", "unclassified", 0.0));
+        sample = sample with { Technical = sample.Technical! with { EmbeddedTempoBpm = 96.0 } };
 
-        IReadOnlyList<Sample> classified = new CorpusClassifier().Classify(corpus);
+        Sample classified = new CorpusClassifier().Classify([sample])[0];
 
-        Sample result = classified.Single(s => s.Name == "Kick Cyanide");
-        Assert.Equal("kick", result.Classification.Instrument.Value);
-        Assert.True(result.Classification.NeedsReview);
-        Assert.Contains(result.Classification.ReviewReasons, reason => reason.Contains("Kick", StringComparison.Ordinal));
+        Assert.Equal(96.0, classified.Classification.Attributes.TempoBpm);
+        Assert.Contains(classified.Classification.ContentType.Evidence, e => e.Source == EvidenceSource.Metadata);
+    }
+
+    [Fact]
+    public void Classify_KeepsFacetsAndIdentityUntouched()
+    {
+        Sample original = Placeholder(TestSamples.DrumKit(2)[0]);
+
+        Sample classified = new CorpusClassifier().Classify([original])[0];
+
+        Assert.Equal(original.Asset, classified.Asset);
+        Assert.Equal(original.Spectral, classified.Spectral);
+        Assert.Equal(original.Dynamics, classified.Dynamics);
     }
 
     [Fact]
@@ -89,18 +90,6 @@ public sealed class CorpusClassifierTests
     }
 
     [Fact]
-    public void Classify_EmbeddedAcidTempo_FillsInWhenTheNameHasNone()
-    {
-        Sample sample = Placeholder(TestSamples.Make("Groove Thing", "unclassified", 0.0));
-        sample = sample with { Technical = sample.Technical! with { EmbeddedTempoBpm = 96.0 } };
-
-        Sample classified = new CorpusClassifier().Classify([sample])[0];
-
-        Assert.Equal(96.0, classified.Classification.Attributes.TempoBpm);
-        Assert.Contains(classified.Classification.ContentType.Evidence, e => e.Source == EvidenceSource.Metadata);
-    }
-
-    [Fact]
     public void Classify_UnsupportedFileWithNoFacets_IsStillLabelledFromItsName()
     {
         Sample unsupported = new(new SampleAsset("Atmos Wavetable Like.aif", 100, "h"), AnalysisStatus.UnsupportedFormat, null, null, null, null, null, null, SampleClassification.Placeholder("atmos wavetable like"));
@@ -109,6 +98,19 @@ public sealed class CorpusClassifierTests
 
         Assert.Equal(AnalysisStatus.UnsupportedFormat, classified.Status);
         Assert.Equal("atmosphere", classified.Classification.Instrument.Value);
+    }
+
+    [Fact]
+    public void Classify_UsesTheNamesToLabelTheCorpus()
+    {
+        List<Sample> corpus = [.. TestSamples.DrumKit(10).Select(Placeholder)];
+
+        IReadOnlyList<Sample> classified = new CorpusClassifier().Classify(corpus);
+
+        Assert.Equal(corpus.Count, classified.Count);
+        Assert.All(classified.Where(s => s.Name.StartsWith("Kick", StringComparison.Ordinal)), s => Assert.Equal("kick", s.Classification.Instrument.Value));
+        Assert.All(classified.Where(s => s.Name.StartsWith("Hihat Closed", StringComparison.Ordinal)), s => Assert.Equal("hihat-closed", s.Classification.Instrument.Value));
+        Assert.All(classified, s => Assert.False(s.Classification.NeedsReview, $"{s.Name}: {string.Join("; ", s.Classification.ReviewReasons)}"));
     }
 
     [Fact]
@@ -135,4 +137,5 @@ public sealed class CorpusClassifierTests
         Assert.Empty(classifier.Predict(only));
         Assert.NotNull(space.Vector(TestSamples.DrumKit(1)[0]));
     }
+    #endregion
 }

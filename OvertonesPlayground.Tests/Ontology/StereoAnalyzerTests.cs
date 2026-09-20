@@ -2,17 +2,27 @@ namespace OvertonesPlayground.Tests.Ontology;
 
 public sealed class StereoAnalyzerTests
 {
+    #region Fields
     private readonly StereoAnalyzer _analyzer = new();
+    #endregion
 
+    #region Private methods
     private StereoFacet Analyze(float[] left, float[] right) => _analyzer.Extract(AudioSynth.Context(AudioSynth.Rate, null, left, right));
+    #endregion
 
+    #region Public methods
     [Fact]
-    public void Extract_SingleChannel_IsMono()
+    public void Extract_BassOutOfPhaseWhileTrebleIsInPhase_ShowsInTheLowBandCorrelationOnly()
     {
-        StereoFacet facet = _analyzer.Extract(AudioSynth.Mono(AudioSynth.Sine(440, 0.5)));
+        float[] bass = AudioSynth.Sine(60, 1.0, amplitude: 0.4);
+        float[] treble = AudioSynth.Sine(4000, 1.0, amplitude: 0.4);
+        float[] left = [.. bass.Zip(treble, (b, t) => b + t)];
+        float[] right = [.. bass.Zip(treble, (b, t) => -b + t)];
 
-        Assert.Equal(StereoImage.Mono, facet.Image);
-        Assert.Equal(1, facet.Channels);
+        StereoFacet facet = Analyze(left, right);
+
+        Assert.True(facet.LowBandCorrelation < -0.9, $"low band correlation {facet.LowBandCorrelation}");
+        Assert.True(facet.Correlation is > -0.3 and < 0.3, $"overall correlation {facet.Correlation}");
     }
 
     [Fact]
@@ -26,6 +36,17 @@ public sealed class StereoAnalyzerTests
         Assert.Equal(1.0, facet.Correlation);
         Assert.Equal(0.0, facet.Width);
         Assert.Equal(0.0, facet.MonoCompatibilityDb);
+    }
+
+    [Fact]
+    public void Extract_IndependentNoise_IsWideWithHalfWidth()
+    {
+        StereoFacet facet = Analyze(AudioSynth.Noise(1.0, seed: 1), AudioSynth.Noise(1.0, seed: 2));
+
+        Assert.Equal(StereoImage.Wide, facet.Image);
+        Assert.True(Math.Abs(facet.Correlation) < 0.1);
+        Assert.Equal(0.5, facet.Width, 0.05);
+        Assert.Equal(-3.0, facet.MonoCompatibilityDb, 0.5);
     }
 
     [Fact]
@@ -43,17 +64,6 @@ public sealed class StereoAnalyzerTests
     }
 
     [Fact]
-    public void Extract_IndependentNoise_IsWideWithHalfWidth()
-    {
-        StereoFacet facet = Analyze(AudioSynth.Noise(1.0, seed: 1), AudioSynth.Noise(1.0, seed: 2));
-
-        Assert.Equal(StereoImage.Wide, facet.Image);
-        Assert.True(Math.Abs(facet.Correlation) < 0.1);
-        Assert.Equal(0.5, facet.Width, 0.05);
-        Assert.Equal(-3.0, facet.MonoCompatibilityDb, 0.5);
-    }
-
-    [Fact]
     public void Extract_MostlyCorrelatedChannels_AreNarrow()
     {
         float[] left = AudioSynth.Noise(1.0, seed: 1);
@@ -66,29 +76,6 @@ public sealed class StereoAnalyzerTests
     }
 
     [Fact]
-    public void Extract_SoundOnlyInTheLeftChannel_PansHardLeft()
-    {
-        StereoFacet facet = Analyze(AudioSynth.Sine(440, 0.5), AudioSynth.Silence(0.5));
-
-        Assert.True(facet.Pan < -0.99);
-        Assert.True(facet.BalanceDb > 30.0);
-    }
-
-    [Fact]
-    public void Extract_BassOutOfPhaseWhileTrebleIsInPhase_ShowsInTheLowBandCorrelationOnly()
-    {
-        float[] bass = AudioSynth.Sine(60, 1.0, amplitude: 0.4);
-        float[] treble = AudioSynth.Sine(4000, 1.0, amplitude: 0.4);
-        float[] left = [.. bass.Zip(treble, (b, t) => b + t)];
-        float[] right = [.. bass.Zip(treble, (b, t) => -b + t)];
-
-        StereoFacet facet = Analyze(left, right);
-
-        Assert.True(facet.LowBandCorrelation < -0.9, $"low band correlation {facet.LowBandCorrelation}");
-        Assert.True(facet.Correlation is > -0.3 and < 0.3, $"overall correlation {facet.Correlation}");
-    }
-
-    [Fact]
     public void Extract_Silence_IsTreatedAsNeutral()
     {
         StereoFacet facet = Analyze(AudioSynth.Silence(0.2), AudioSynth.Silence(0.2));
@@ -96,4 +83,23 @@ public sealed class StereoAnalyzerTests
         Assert.Equal(StereoImage.Mono, facet.Image);
         Assert.Equal(0.0, facet.Width);
     }
+
+    [Fact]
+    public void Extract_SingleChannel_IsMono()
+    {
+        StereoFacet facet = _analyzer.Extract(AudioSynth.Mono(AudioSynth.Sine(440, 0.5)));
+
+        Assert.Equal(StereoImage.Mono, facet.Image);
+        Assert.Equal(1, facet.Channels);
+    }
+
+    [Fact]
+    public void Extract_SoundOnlyInTheLeftChannel_PansHardLeft()
+    {
+        StereoFacet facet = Analyze(AudioSynth.Sine(440, 0.5), AudioSynth.Silence(0.5));
+
+        Assert.True(facet.Pan < -0.99);
+        Assert.True(facet.BalanceDb > 30.0);
+    }
+    #endregion
 }

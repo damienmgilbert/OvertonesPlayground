@@ -2,8 +2,11 @@ namespace OvertonesPlayground.Tests.Ontology;
 
 public sealed class TonalityAnalyzerTests
 {
+    #region Fields
     private readonly TonalityAnalyzer _analyzer = new();
+    #endregion
 
+    #region Private methods
     private TonalityFacet Analyze(float[] signal, int sampleRate = AudioSynth.Rate)
     {
         AnalysisContext context = AudioSynth.Context(sampleRate, null, signal);
@@ -11,20 +14,27 @@ public sealed class TonalityAnalyzerTests
         context.Spectral = new SpectralAnalyzer().Extract(context);
         return _analyzer.Extract(context);
     }
+    #endregion
 
+    #region Public methods
     [Fact]
-    public void Extract_SineAt220Hz_FindsThePitchAndNamesTheNote()
+    public void Extract_HarmonicTone_ReportsTheFundamentalNotAnOvertoneAndIsHarmonic()
     {
-        TonalityFacet facet = Analyze(AudioSynth.Sine(220, 1.0));
+        TonalityFacet facet = Analyze(AudioSynth.Harmonic(110, 8, 1.0));
 
         Assert.NotNull(facet.FundamentalHz);
-        Assert.Equal(220.0, facet.FundamentalHz!.Value, 1.0);
-        Assert.True(facet.PitchConfidence > 0.95, $"confidence {facet.PitchConfidence}");
-        Assert.Equal("A3", facet.NoteName);
-        Assert.Equal(9, facet.PitchClass);
-        Assert.True(Math.Abs(facet.CentsOffset!.Value) < 10.0);
-        Assert.True(facet.Character.HasFlag(TonalCharacter.Pitched));
-        Assert.False(facet.Character.HasFlag(TonalCharacter.Unpitched));
+        Assert.Equal(110.0, facet.FundamentalHz!.Value, 2.0);
+        Assert.True(facet.Character.HasFlag(TonalCharacter.Harmonic));
+        Assert.True(facet.Inharmonicity < 0.02, $"inharmonicity {facet.Inharmonicity}");
+    }
+
+    [Fact]
+    public void Extract_Silence_IsUnpitchedWithoutThrowing()
+    {
+        TonalityFacet facet = Analyze(AudioSynth.Silence(0.5));
+
+        Assert.Null(facet.FundamentalHz);
+        Assert.Equal(TonalCharacter.Unpitched, facet.Character);
     }
 
     [Theory]
@@ -42,6 +52,21 @@ public sealed class TonalityAnalyzerTests
     }
 
     [Fact]
+    public void Extract_SineAt220Hz_FindsThePitchAndNamesTheNote()
+    {
+        TonalityFacet facet = Analyze(AudioSynth.Sine(220, 1.0));
+
+        Assert.NotNull(facet.FundamentalHz);
+        Assert.Equal(220.0, facet.FundamentalHz!.Value, 1.0);
+        Assert.True(facet.PitchConfidence > 0.95, $"confidence {facet.PitchConfidence}");
+        Assert.Equal("A3", facet.NoteName);
+        Assert.Equal(9, facet.PitchClass);
+        Assert.True(Math.Abs(facet.CentsOffset!.Value) < 10.0);
+        Assert.True(facet.Character.HasFlag(TonalCharacter.Pitched));
+        Assert.False(facet.Character.HasFlag(TonalCharacter.Unpitched));
+    }
+
+    [Fact]
     public void Extract_SineAt96Khz_FindsThePitchAfterDecimation()
     {
         TonalityFacet facet = Analyze(AudioSynth.Sine(440, 1.0, sampleRate: 96000), 96000);
@@ -51,14 +76,23 @@ public sealed class TonalityAnalyzerTests
     }
 
     [Fact]
-    public void Extract_HarmonicTone_ReportsTheFundamentalNotAnOvertoneAndIsHarmonic()
+    public void Extract_SoundTooShortToMeasure_IsUnpitched()
     {
-        TonalityFacet facet = Analyze(AudioSynth.Harmonic(110, 8, 1.0));
+        TonalityFacet facet = Analyze(AudioSynth.Sine(440, 0.02));
 
-        Assert.NotNull(facet.FundamentalHz);
-        Assert.Equal(110.0, facet.FundamentalHz!.Value, 2.0);
-        Assert.True(facet.Character.HasFlag(TonalCharacter.Harmonic));
-        Assert.True(facet.Inharmonicity < 0.02, $"inharmonicity {facet.Inharmonicity}");
+        Assert.Null(facet.FundamentalHz);
+    }
+
+    [Fact]
+    public void Extract_ToneLowAndHigh_AreDarkAndBrightRespectively()
+    {
+        TonalityFacet low = Analyze(AudioSynth.Sine(300, 1.0));
+        TonalityFacet high = Analyze(AudioSynth.Sine(5000, 1.0));
+
+        Assert.True(low.Character.HasFlag(TonalCharacter.Dark));
+        Assert.False(low.Character.HasFlag(TonalCharacter.Bright));
+        Assert.True(high.Character.HasFlag(TonalCharacter.Bright));
+        Assert.False(high.Character.HasFlag(TonalCharacter.Dark));
     }
 
     [Fact]
@@ -83,33 +117,5 @@ public sealed class TonalityAnalyzerTests
         Assert.True(facet.Character.HasFlag(TonalCharacter.Noisy));
         Assert.False(facet.Character.HasFlag(TonalCharacter.Pitched));
     }
-
-    [Fact]
-    public void Extract_ToneLowAndHigh_AreDarkAndBrightRespectively()
-    {
-        TonalityFacet low = Analyze(AudioSynth.Sine(300, 1.0));
-        TonalityFacet high = Analyze(AudioSynth.Sine(5000, 1.0));
-
-        Assert.True(low.Character.HasFlag(TonalCharacter.Dark));
-        Assert.False(low.Character.HasFlag(TonalCharacter.Bright));
-        Assert.True(high.Character.HasFlag(TonalCharacter.Bright));
-        Assert.False(high.Character.HasFlag(TonalCharacter.Dark));
-    }
-
-    [Fact]
-    public void Extract_Silence_IsUnpitchedWithoutThrowing()
-    {
-        TonalityFacet facet = Analyze(AudioSynth.Silence(0.5));
-
-        Assert.Null(facet.FundamentalHz);
-        Assert.Equal(TonalCharacter.Unpitched, facet.Character);
-    }
-
-    [Fact]
-    public void Extract_SoundTooShortToMeasure_IsUnpitched()
-    {
-        TonalityFacet facet = Analyze(AudioSynth.Sine(440, 0.02));
-
-        Assert.Null(facet.FundamentalHz);
-    }
+    #endregion
 }

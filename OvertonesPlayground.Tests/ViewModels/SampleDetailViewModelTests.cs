@@ -2,11 +2,42 @@ namespace OvertonesPlayground.Tests.ViewModels;
 
 public sealed class SampleDetailViewModelTests
 {
+    #region Fields
     private static readonly SampleIndex _index = new(TestSamples.Library());
+    #endregion
 
+    #region Private methods
     private static SampleDetailViewModel Detail(string id) => new(_index.Find(id)!, _index);
 
     private static string Fact(SampleDetailViewModel detail, string label) => detail.Facts.Single(f => f.Label == label).Value;
+    #endregion
+
+    #region Public methods
+    [Fact]
+    public void Bands_AreSevenBarsInFrequencyOrderThatSumToOne()
+    {
+        SampleDetailViewModel detail = Detail("Kick Test 1.wav");
+
+        Assert.Equal(7, detail.Bands.Count);
+        Assert.StartsWith("Sub", detail.Bands[0].Band, StringComparison.Ordinal);
+        Assert.StartsWith("Air", detail.Bands[6].Band, StringComparison.Ordinal);
+        Assert.Equal(1.0, detail.Bands.Sum(b => b.Fraction), 0.001);
+        Assert.Equal("100 %", detail.Bands.Single(b => b.Fraction > 0.5).Percent);
+    }
+
+    [Fact]
+    public void Evidence_ListsWhyTheInstrumentWasChosen() { Assert.Equal(["Filename: test"], Detail("Kick 909 DMX 1.wav").Evidence); }
+    [Fact]
+    public void Facts_ClippingAndDcOffset_AreCalledOut()
+    {
+        Sample clipped = TestSamples.Make("Hot");
+        clipped = clipped with { Dynamics = clipped.Dynamics! with { ClippedSamples = 1200, DcOffset = 0.05 } };
+
+        SampleDetailViewModel detail = new(clipped, new SampleIndex([clipped]));
+
+        Assert.Contains("1,200 clipped samples", Fact(detail, "Watch out"), StringComparison.Ordinal);
+        Assert.Contains("DC offset 5", Fact(detail, "Watch out"), StringComparison.Ordinal);
+    }
 
     [Fact]
     public void Facts_DescribeTheClassificationAndEveryAcousticCategory()
@@ -30,16 +61,6 @@ public sealed class SampleDetailViewModelTests
     }
 
     [Fact]
-    public void Facts_TempoFromTheName_IsLabelledAsSuch()
-    {
-        SampleDetailViewModel detail = Detail("Break Ghosts 90 bpm.wav");
-
-        Assert.Equal("90 BPM (from the name)", Fact(detail, "Tempo / key"));
-        Assert.Contains("Wide", Fact(detail, "Stereo"), StringComparison.Ordinal);
-        Assert.Equal("no stable pitch", Fact(detail, "Pitch"));
-    }
-
-    [Fact]
     public void Facts_OmitKitStyleAndTempoWhenThereAreNone()
     {
         SampleDetailViewModel detail = Detail("Vinyl Dirt 1.wav");
@@ -47,6 +68,16 @@ public sealed class SampleDetailViewModelTests
         Assert.DoesNotContain(detail.Facts, f => f.Label == "Kit");
         Assert.DoesNotContain(detail.Facts, f => f.Label == "Style");
         Assert.DoesNotContain(detail.Facts, f => f.Label == "Tempo / key");
+    }
+
+    [Fact]
+    public void Facts_TempoFromTheName_IsLabelledAsSuch()
+    {
+        SampleDetailViewModel detail = Detail("Break Ghosts 90 bpm.wav");
+
+        Assert.Equal("90 BPM (from the name)", Fact(detail, "Tempo / key"));
+        Assert.Contains("Wide", Fact(detail, "Stereo"), StringComparison.Ordinal);
+        Assert.Equal("no stable pitch", Fact(detail, "Pitch"));
     }
 
     [Fact]
@@ -58,15 +89,13 @@ public sealed class SampleDetailViewModelTests
     }
 
     [Fact]
-    public void Bands_AreSevenBarsInFrequencyOrderThatSumToOne()
+    public void Facts_UnclassifiedSound_SaysSo()
     {
-        SampleDetailViewModel detail = Detail("Kick Test 1.wav");
+        Sample unknown = TestSamples.Make("Mystery", "unclassified", 0.0);
 
-        Assert.Equal(7, detail.Bands.Count);
-        Assert.StartsWith("Sub", detail.Bands[0].Band, StringComparison.Ordinal);
-        Assert.StartsWith("Air", detail.Bands[6].Band, StringComparison.Ordinal);
-        Assert.Equal(1.0, detail.Bands.Sum(b => b.Fraction), 0.001);
-        Assert.Equal("100 %", detail.Bands.Single(b => b.Fraction > 0.5).Percent);
+        SampleDetailViewModel detail = new(unknown, new SampleIndex([unknown]));
+
+        Assert.Equal("Unclassified", Fact(detail, "Instrument"));
     }
 
     [Fact]
@@ -95,32 +124,5 @@ public sealed class SampleDetailViewModelTests
         Assert.Equal(["test review"], review.ReviewNotes);
         Assert.False(Detail("Kick 909 DMX 1.wav").NeedsReview);
     }
-
-    [Fact]
-    public void Facts_ClippingAndDcOffset_AreCalledOut()
-    {
-        Sample clipped = TestSamples.Make("Hot");
-        clipped = clipped with { Dynamics = clipped.Dynamics! with { ClippedSamples = 1200, DcOffset = 0.05 } };
-
-        SampleDetailViewModel detail = new(clipped, new SampleIndex([clipped]));
-
-        Assert.Contains("1,200 clipped samples", Fact(detail, "Watch out"), StringComparison.Ordinal);
-        Assert.Contains("DC offset 5", Fact(detail, "Watch out"), StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public void Evidence_ListsWhyTheInstrumentWasChosen()
-    {
-        Assert.Equal(["Filename: test"], Detail("Kick 909 DMX 1.wav").Evidence);
-    }
-
-    [Fact]
-    public void Facts_UnclassifiedSound_SaysSo()
-    {
-        Sample unknown = TestSamples.Make("Mystery", "unclassified", 0.0);
-
-        SampleDetailViewModel detail = new(unknown, new SampleIndex([unknown]));
-
-        Assert.Equal("Unclassified", Fact(detail, "Instrument"));
-    }
+    #endregion
 }

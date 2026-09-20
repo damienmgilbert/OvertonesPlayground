@@ -4,12 +4,15 @@ namespace OvertonesPlayground.Tests.Services;
 
 public sealed class SpectralNoiseReducerTests
 {
+    #region Constants
     private const int Rate = 44_100;
+    #endregion
 
-    /// <summary>
-    /// One second of steady noise with a 1 kHz tone added from 0.3 s on, so the first stretch is noise alone (what a noise
-    /// profile is taken from) and the rest is a wanted sound sitting on top of it.
-    /// </summary>
+    #region Private methods
+    ///<summary>
+    ///One second of steady noise with a 1 kHz tone added from 0.3 s on, so the first stretch is noise alone (what a
+    ///noise profile is taken from) and the rest is a wanted sound sitting on top of it.
+    ///</summary>
     private static short[] NoiseWithATone(int noiseAmplitude = 800, int toneAmplitude = 8000, int seed = 11)
     {
         Random random = new(seed);
@@ -23,38 +26,18 @@ public sealed class SpectralNoiseReducerTests
 
         return samples;
     }
+    #endregion
 
+    #region Public methods
     [Fact]
-    public void Reduce_TakesTheHissOutOfTheNoiseOnlyStretch()
+    public void Reduce_ClipShorterThanOneAnalysisWindow_IsNotSilenced()
     {
-        short[] input = NoiseWithATone();
+        // One analysis window is 2048 samples (46 ms): a shorter clip must not vanish.
+        short[] input = WavTestFiles.Constant(10_000, 1500);
 
-        short[] output = SpectralNoiseReducer.Reduce(input, channels: 1, noiseFrameCount: Rate / 4);
+        short[] output = SpectralNoiseReducer.Reduce(input, channels: 1, noiseFrameCount: 0);
 
-        // Compare well inside the noise-only stretch, away from the clip's edges.
-        double before = TestSignals.Rms(input[3000..9000]);
-        double after = TestSignals.Rms(output[3000..9000]);
-        Assert.True(after < before * 0.4, $"noise went from {before:F1}... to {after:F1}... of full scale; expected well under 40%");
-    }
-
-    [Fact]
-    public void Reduce_KeepsTheWantedSoundThatSitsOnTopOfTheNoise()
-    {
-        short[] input = NoiseWithATone();
-        double toneLevel = 8000 / Math.Sqrt(2) / short.MaxValue; // RMS of the 8000-peak tone
-
-        short[] output = SpectralNoiseReducer.Reduce(input, channels: 1, noiseFrameCount: Rate / 4);
-
-        double after = TestSignals.Rms(output[18000..40000]);
-        Assert.InRange(after, toneLevel * 0.8, toneLevel * 1.1);
-    }
-
-    [Fact]
-    public void Reduce_KeepsTheLengthOfTheClip()
-    {
-        short[] input = NoiseWithATone();
-
-        Assert.Equal(input.Length, SpectralNoiseReducer.Reduce(input, 1, Rate / 4).Length);
+        Assert.Contains(output, sample => sample != 0);
     }
 
     [Fact]
@@ -66,24 +49,6 @@ public sealed class SpectralNoiseReducerTests
         _ = SpectralNoiseReducer.Reduce(input, 1, Rate / 4);
 
         Assert.Equal(copy, input);
-    }
-
-    [Fact]
-    public void Reduce_Silence_StaysSilent()
-    {
-        short[] output = SpectralNoiseReducer.Reduce(new short[Rate / 2], channels: 1, noiseFrameCount: 5000);
-
-        Assert.All(output, sample => Assert.Equal(0, sample));
-    }
-
-    [Fact]
-    public void Reduce_NothingToProcess_ReturnsItAsItIs()
-    {
-        short[] empty = [];
-
-        Assert.Same(empty, SpectralNoiseReducer.Reduce(empty, channels: 1, noiseFrameCount: 100));
-        short[] some = [1, 2, 3];
-        Assert.Same(some, SpectralNoiseReducer.Reduce(some, channels: 0, noiseFrameCount: 100));
     }
 
     [Fact]
@@ -110,6 +75,26 @@ public sealed class SpectralNoiseReducerTests
         Assert.True(after < before * 0.4);
     }
 
+    [Fact]
+    public void Reduce_KeepsTheLengthOfTheClip()
+    {
+        short[] input = NoiseWithATone();
+
+        Assert.Equal(input.Length, SpectralNoiseReducer.Reduce(input, 1, Rate / 4).Length);
+    }
+
+    [Fact]
+    public void Reduce_KeepsTheWantedSoundThatSitsOnTopOfTheNoise()
+    {
+        short[] input = NoiseWithATone();
+        double toneLevel = 8000 / Math.Sqrt(2) / short.MaxValue; // RMS of the 8000-peak tone
+
+        short[] output = SpectralNoiseReducer.Reduce(input, channels: 1, noiseFrameCount: Rate / 4);
+
+        double after = TestSignals.Rms(output[18000..40000]);
+        Assert.InRange(after, toneLevel * 0.8, toneLevel * 1.1);
+    }
+
     [Theory]
     [InlineData(0)]
     [InlineData(-100)]
@@ -134,14 +119,34 @@ public sealed class SpectralNoiseReducerTests
     }
 
     [Fact]
-    public void Reduce_ClipShorterThanOneAnalysisWindow_IsNotSilenced()
+    public void Reduce_NothingToProcess_ReturnsItAsItIs()
     {
-        // One analysis window is 2048 samples (46 ms): a shorter clip must not vanish.
-        short[] input = WavTestFiles.Constant(10_000, 1500);
+        short[] empty = [];
 
-        short[] output = SpectralNoiseReducer.Reduce(input, channels: 1, noiseFrameCount: 0);
+        Assert.Same(empty, SpectralNoiseReducer.Reduce(empty, channels: 1, noiseFrameCount: 100));
+        short[] some = [1, 2, 3];
+        Assert.Same(some, SpectralNoiseReducer.Reduce(some, channels: 0, noiseFrameCount: 100));
+    }
 
-        Assert.Contains(output, sample => sample != 0);
+    [Fact]
+    public void Reduce_Silence_StaysSilent()
+    {
+        short[] output = SpectralNoiseReducer.Reduce(new short[Rate / 2], channels: 1, noiseFrameCount: 5000);
+
+        Assert.All(output, sample => Assert.Equal(0, sample));
+    }
+
+    [Fact]
+    public void Reduce_TakesTheHissOutOfTheNoiseOnlyStretch()
+    {
+        short[] input = NoiseWithATone();
+
+        short[] output = SpectralNoiseReducer.Reduce(input, channels: 1, noiseFrameCount: Rate / 4);
+
+        // Compare well inside the noise-only stretch, away from the clip's edges.
+        double before = TestSignals.Rms(input[3000..9000]);
+        double after = TestSignals.Rms(output[3000..9000]);
+        Assert.True(after < before * 0.4, $"noise went from {before:F1}... to {after:F1}... of full scale; expected well under 40%");
     }
 
     [Fact]
@@ -154,4 +159,5 @@ public sealed class SpectralNoiseReducerTests
 
         Assert.All(output[^600..^100], sample => Assert.InRange(sample, 9_000, 11_000));
     }
+    #endregion
 }

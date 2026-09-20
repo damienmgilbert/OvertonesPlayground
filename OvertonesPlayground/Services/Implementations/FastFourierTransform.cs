@@ -8,9 +8,10 @@ namespace OvertonesPlayground.Services.Implementations;
 internal static class FastFourierTransform
 {
     #region Private methods
+
     ///<summary>
-    ///Reorders <paramref name="real"/>/<paramref name="imaginary"/> into bit-reversed index order, the standard
-    ///first pass of an in-place iterative FFT.
+    ///Reorders <paramref name="real"/>/<paramref name="imaginary"/> into bit-reversed index order, the standard first
+    ///pass of an in-place iterative FFT.
     ///</summary>
     private static void BitReverse(Span<double> real, Span<double> imaginary)
     {

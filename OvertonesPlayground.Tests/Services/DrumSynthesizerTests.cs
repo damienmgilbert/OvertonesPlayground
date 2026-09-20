@@ -4,8 +4,7 @@ namespace OvertonesPlayground.Tests.Services;
 
 public sealed class DrumSynthesizerTests
 {
-    public static TheoryData<DrumType> AllDrums() => [.. Enum.GetValues<DrumType>()];
-
+    #region Private methods
     private static short[] Synthesize(DrumType drum, DrumSynthParameters parameters) => drum switch
     {
         DrumType.Kick => DrumSynthesizer.Kick(parameters),
@@ -34,17 +33,48 @@ public sealed class DrumSynthesizerTests
 
         return crossings;
     }
+    #endregion
 
-    [Theory]
-    [MemberData(nameof(AllDrums))]
-    public void EveryDrum_HasItsConfiguredLengthAndIsNotSilent(DrumType drum)
+    #region Public methods
+    public static TheoryData<DrumType> AllDrums() => [.. Enum.GetValues<DrumType>()];
+
+    [Fact]
+    public void Clap_BurstsSpacedBeyondTheClip_DoNotRunOffTheEnd()
     {
-        DrumSynthParameters parameters = DrumSynthParameters.CreateDefault(drum);
+        DrumSynthParameters parameters = DrumSynthParameters.CreateDefault(DrumType.Clap);
+        parameters.BurstCount = 20;
+        parameters.BurstSpacingSeconds = 5;
 
-        short[] samples = Synthesize(drum, parameters);
+        short[] samples = DrumSynthesizer.Clap(parameters);
 
         Assert.Equal((int)(parameters.DurationSeconds * parameters.SampleRate), samples.Length);
-        Assert.Contains(samples, sample => Math.Abs((int)sample) > 500);
+    }
+
+    [Fact]
+    public void Clap_MoreBurstsMeansMoreEnergyLaterOn()
+    {
+        DrumSynthParameters single = DrumSynthParameters.CreateDefault(DrumType.Clap);
+        single.BurstCount = 1;
+        DrumSynthParameters many = DrumSynthParameters.CreateDefault(DrumType.Clap);
+        many.BurstCount = 6;
+        many.BurstSpacingSeconds = 0.02;
+        int from = single.SampleRate / 25; // after the first burst's opening 40 ms
+
+        double singleTail = TestSignals.Rms(DrumSynthesizer.Clap(single)[from..(from * 2)]);
+        double manyTail = TestSignals.Rms(DrumSynthesizer.Clap(many)[from..(from * 2)]);
+
+        Assert.True(manyTail > singleTail, $"6 bursts left {manyTail:F4} in the tail, 1 burst {singleTail:F4}");
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-3)]
+    public void Clap_NoBurstsAskedFor_StillClapsOnce(int burstCount)
+    {
+        DrumSynthParameters parameters = DrumSynthParameters.CreateDefault(DrumType.Clap);
+        parameters.BurstCount = burstCount;
+
+        Assert.Contains(DrumSynthesizer.Clap(parameters), sample => Math.Abs((int)sample) > 500);
     }
 
     [Theory]
@@ -58,6 +88,18 @@ public sealed class DrumSynthesizerTests
         double end = TestSignals.Rms(samples[^fifth..]);
 
         Assert.True(end < start * 0.5, $"{drum}: the last fifth ({end:F4}) should be well under the first ({start:F4})");
+    }
+
+    [Theory]
+    [MemberData(nameof(AllDrums))]
+    public void EveryDrum_HasItsConfiguredLengthAndIsNotSilent(DrumType drum)
+    {
+        DrumSynthParameters parameters = DrumSynthParameters.CreateDefault(drum);
+
+        short[] samples = Synthesize(drum, parameters);
+
+        Assert.Equal((int)(parameters.DurationSeconds * parameters.SampleRate), samples.Length);
+        Assert.Contains(samples, sample => Math.Abs((int)sample) > 500);
     }
 
     [Theory]
@@ -94,39 +136,18 @@ public sealed class DrumSynthesizerTests
         Assert.Empty(Synthesize(drum, parameters));
     }
 
-    [Theory]
-    [InlineData(8_000)]
-    [InlineData(22_050)]
-    [InlineData(48_000)]
-    public void SampleRate_SetsHowManySamplesTheSameDurationTakes(int sampleRate)
+    [Fact]
+    public void Filter_HighPassOnALowDrum_RemovesMostOfItsEnergy()
     {
-        DrumSynthParameters parameters = DrumSynthParameters.CreateDefault(DrumType.Snare);
-        parameters.SampleRate = sampleRate;
+        DrumSynthParameters open = DrumSynthParameters.CreateDefault(DrumType.Kick);
+        DrumSynthParameters filtered = DrumSynthParameters.CreateDefault(DrumType.Kick);
+        filtered.FilterType = FilterType.HighPass;
+        filtered.FilterCutoffHz = 8000;
 
-        Assert.Equal((int)(parameters.DurationSeconds * sampleRate), DrumSynthesizer.Snare(parameters).Length);
-    }
+        double before = TestSignals.Rms(DrumSynthesizer.Kick(open));
+        double after = TestSignals.Rms(DrumSynthesizer.Kick(filtered));
 
-    [Theory]
-    [InlineData(DrumType.Kick)]
-    [InlineData(DrumType.Bass)]
-    [InlineData(DrumType.Tom)]
-    public void PitchSweptDrums_AreExactlyRepeatable(DrumType drum)
-    {
-        DrumSynthParameters parameters = DrumSynthParameters.CreateDefault(drum);
-
-        Assert.Equal(Synthesize(drum, parameters), Synthesize(drum, parameters));
-    }
-
-    [Theory]
-    [InlineData(DrumType.Snare)]
-    [InlineData(DrumType.HiHat)]
-    [InlineData(DrumType.Clap)]
-    [InlineData(DrumType.Crash)]
-    public void NoiseDrums_DifferEveryTimeTheyArePlayed(DrumType drum)
-    {
-        DrumSynthParameters parameters = DrumSynthParameters.CreateDefault(drum);
-
-        Assert.NotEqual(Synthesize(drum, parameters), Synthesize(drum, parameters));
+        Assert.True(after < before * 0.1, $"an 8 kHz high-pass left {after / before:P0} of a kick's level");
     }
 
     [Fact]
@@ -160,56 +181,39 @@ public sealed class DrumSynthesizerTests
         Assert.InRange(first, 8, 12); // 100 Hz for 50 ms is 5 cycles: about 10 zero crossings
     }
 
-    [Fact]
-    public void Filter_HighPassOnALowDrum_RemovesMostOfItsEnergy()
+    [Theory]
+    [InlineData(DrumType.Snare)]
+    [InlineData(DrumType.HiHat)]
+    [InlineData(DrumType.Clap)]
+    [InlineData(DrumType.Crash)]
+    public void NoiseDrums_DifferEveryTimeTheyArePlayed(DrumType drum)
     {
-        DrumSynthParameters open = DrumSynthParameters.CreateDefault(DrumType.Kick);
-        DrumSynthParameters filtered = DrumSynthParameters.CreateDefault(DrumType.Kick);
-        filtered.FilterType = FilterType.HighPass;
-        filtered.FilterCutoffHz = 8000;
+        DrumSynthParameters parameters = DrumSynthParameters.CreateDefault(drum);
 
-        double before = TestSignals.Rms(DrumSynthesizer.Kick(open));
-        double after = TestSignals.Rms(DrumSynthesizer.Kick(filtered));
-
-        Assert.True(after < before * 0.1, $"an 8 kHz high-pass left {after / before:P0} of a kick's level");
-    }
-
-    [Fact]
-    public void Clap_MoreBurstsMeansMoreEnergyLaterOn()
-    {
-        DrumSynthParameters single = DrumSynthParameters.CreateDefault(DrumType.Clap);
-        single.BurstCount = 1;
-        DrumSynthParameters many = DrumSynthParameters.CreateDefault(DrumType.Clap);
-        many.BurstCount = 6;
-        many.BurstSpacingSeconds = 0.02;
-        int from = single.SampleRate / 25; // after the first burst's opening 40 ms
-
-        double singleTail = TestSignals.Rms(DrumSynthesizer.Clap(single)[from..(from * 2)]);
-        double manyTail = TestSignals.Rms(DrumSynthesizer.Clap(many)[from..(from * 2)]);
-
-        Assert.True(manyTail > singleTail, $"6 bursts left {manyTail:F4} in the tail, 1 burst {singleTail:F4}");
+        Assert.NotEqual(Synthesize(drum, parameters), Synthesize(drum, parameters));
     }
 
     [Theory]
-    [InlineData(0)]
-    [InlineData(-3)]
-    public void Clap_NoBurstsAskedFor_StillClapsOnce(int burstCount)
+    [InlineData(DrumType.Kick)]
+    [InlineData(DrumType.Bass)]
+    [InlineData(DrumType.Tom)]
+    public void PitchSweptDrums_AreExactlyRepeatable(DrumType drum)
     {
-        DrumSynthParameters parameters = DrumSynthParameters.CreateDefault(DrumType.Clap);
-        parameters.BurstCount = burstCount;
+        DrumSynthParameters parameters = DrumSynthParameters.CreateDefault(drum);
 
-        Assert.Contains(DrumSynthesizer.Clap(parameters), sample => Math.Abs((int)sample) > 500);
+        Assert.Equal(Synthesize(drum, parameters), Synthesize(drum, parameters));
     }
 
-    [Fact]
-    public void Clap_BurstsSpacedBeyondTheClip_DoNotRunOffTheEnd()
+    [Theory]
+    [InlineData(8_000)]
+    [InlineData(22_050)]
+    [InlineData(48_000)]
+    public void SampleRate_SetsHowManySamplesTheSameDurationTakes(int sampleRate)
     {
-        DrumSynthParameters parameters = DrumSynthParameters.CreateDefault(DrumType.Clap);
-        parameters.BurstCount = 20;
-        parameters.BurstSpacingSeconds = 5;
+        DrumSynthParameters parameters = DrumSynthParameters.CreateDefault(DrumType.Snare);
+        parameters.SampleRate = sampleRate;
 
-        short[] samples = DrumSynthesizer.Clap(parameters);
-
-        Assert.Equal((int)(parameters.DurationSeconds * parameters.SampleRate), samples.Length);
+        Assert.Equal((int)(parameters.DurationSeconds * sampleRate), DrumSynthesizer.Snare(parameters).Length);
     }
+    #endregion
 }

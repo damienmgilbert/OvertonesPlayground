@@ -7,17 +7,19 @@ namespace OvertonesPlayground.Ontology.Analysis.Dsp;
 public sealed class Biquad
 {
     #region Fields
+    private readonly double _a1;
+    private readonly double _a2;
     private readonly double _b0;
     private readonly double _b1;
     private readonly double _b2;
-    private readonly double _a1;
-    private readonly double _a2;
     private double _z1;
     private double _z2;
     #endregion
 
     #region Constructors
-    ///<summary>Creates a section from normalized coefficients (a0 = 1).</summary>
+    ///<summary>
+    ///Creates a section from normalized coefficients (a0 = 1).
+    ///</summary>
     public Biquad(double b0, double b1, double b2, double a1, double a2)
     {
         _b0 = b0;
@@ -29,7 +31,9 @@ public sealed class Biquad
     #endregion
 
     #region Public methods
-    ///<summary>ITU-R BS.1770-4 stage 2: the 38 Hz high-pass (RLB weighting), for any sample rate.</summary>
+    ///<summary>
+    ///ITU-R BS.1770-4 stage 2: the 38 Hz high-pass (RLB weighting), for any sample rate.
+    ///</summary>
     public static Biquad KWeightingHighPass(double sampleRate)
     {
         const double f0 = 38.13547087602444;
@@ -39,7 +43,9 @@ public sealed class Biquad
         return new Biquad(1.0, -2.0, 1.0, 2.0 * ((k * k) - 1.0) / a0, (1.0 - (k / q) + (k * k)) / a0);
     }
 
-    ///<summary>ITU-R BS.1770-4 stage 1: the +4 dB high shelf around 1.68 kHz (head-related weighting), for any sample rate.</summary>
+    ///<summary>
+    ///ITU-R BS.1770-4 stage 1: the +4 dB high shelf around 1.68 kHz (head-related weighting), for any sample rate.
+    ///</summary>
     public static Biquad KWeightingShelf(double sampleRate)
     {
         const double f0 = 1681.974450955533;
@@ -49,15 +55,12 @@ public sealed class Biquad
         double vh = Math.Pow(10.0, gainDb / 20.0);
         double vb = Math.Pow(vh, 0.4996667741545416);
         double a0 = 1.0 + (k / q) + (k * k);
-        return new Biquad(
-            (vh + (vb * k / q) + (k * k)) / a0,
-            2.0 * ((k * k) - vh) / a0,
-            (vh - (vb * k / q) + (k * k)) / a0,
-            2.0 * ((k * k) - 1.0) / a0,
-            (1.0 - (k / q) + (k * k)) / a0);
+        return new Biquad((vh + (vb * k / q) + (k * k)) / a0, 2.0 * ((k * k) - vh) / a0, (vh - (vb * k / q) + (k * k)) / a0, 2.0 * ((k * k) - 1.0) / a0, (1.0 - (k / q) + (k * k)) / a0);
     }
 
-    ///<summary>Butterworth-style (Q = 1/sqrt 2) low-pass.</summary>
+    ///<summary>
+    ///Butterworth-style (Q = 1/sqrt 2) low-pass.
+    ///</summary>
     public static Biquad LowPass(double sampleRate, double cutoffHz, double q = 0.70710678118)
     {
         double w0 = 2.0 * Math.PI * Math.Min(cutoffHz, sampleRate * 0.49) / sampleRate;
@@ -67,7 +70,9 @@ public sealed class Biquad
         return new Biquad(((1.0 - cos) / 2.0) / a0, (1.0 - cos) / a0, ((1.0 - cos) / 2.0) / a0, -2.0 * cos / a0, (1.0 - alpha) / a0);
     }
 
-    ///<summary>Filters one sample.</summary>
+    ///<summary>
+    ///Filters one sample.
+    ///</summary>
     public double Process(double x)
     {
         double y = (_b0 * x) + _z1;
@@ -76,7 +81,9 @@ public sealed class Biquad
         return y;
     }
 
-    ///<summary>Filters <paramref name="input"/> into a new array, starting from a cleared state.</summary>
+    ///<summary>
+    ///Filters <paramref name="input"/> into a new array, starting from a cleared state.
+    ///</summary>
     public float[] Process(ReadOnlySpan<float> input)
     {
         Reset();
@@ -89,7 +96,9 @@ public sealed class Biquad
         return output;
     }
 
-    ///<summary>Clears the filter memory.</summary>
+    ///<summary>
+    ///Clears the filter memory.
+    ///</summary>
     public void Reset()
     {
         _z1 = 0;

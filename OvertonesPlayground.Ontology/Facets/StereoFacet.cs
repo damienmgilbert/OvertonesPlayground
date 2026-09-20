@@ -1,8 +1,8 @@
 namespace OvertonesPlayground.Ontology.Facets;
 
 ///<summary>
-///Stereo field and phase behaviour. For mono files every value is neutral and <paramref name="Image"/> is
-///<see cref="StereoImage.Mono"/>.
+///Stereo field and phase behaviour. For mono files every value is neutral and <paramref name="Image"/> is ///<see
+///cref="StereoImage.Mono"/>.
 ///</summary>
 ///<param name="Channels">Channel count of the file.</param>
 ///<param name="Image">Classification of the stereo image.</param>
@@ -13,13 +13,4 @@ namespace OvertonesPlayground.Ontology.Facets;
 ///<param name="Pan">Energy centre, -1 (hard left) to 1 (hard right).</param>
 ///<param name="MonoCompatibilityDb">Level change when summing to mono: 0 = lossless, more negative = more cancellation.</param>
 ///<param name="PolarityInverted">The channels are predominantly polarity-inverted.</param>
-public sealed record StereoFacet(
-    int Channels,
-    StereoImage Image,
-    double Correlation,
-    double LowBandCorrelation,
-    double Width,
-    double BalanceDb,
-    double Pan,
-    double MonoCompatibilityDb,
-    bool PolarityInverted);
+public sealed record StereoFacet(int Channels, StereoImage Image, double Correlation, double LowBandCorrelation, double Width, double BalanceDb, double Pan, double MonoCompatibilityDb, bool PolarityInverted);

@@ -2,65 +2,21 @@ namespace OvertonesPlayground.Tests.Ontology;
 
 public sealed class EvidenceFusionTests
 {
+    #region Fields
     private readonly EvidenceFusion _fusion = new();
+    #endregion
 
-    private static ClassificationProposal Vote(ClassificationAxis axis, string value, double confidence, EvidenceSource source = EvidenceSource.Filename) =>
-        new(axis, value, confidence, new Evidence(source, $"{source} says {value}"));
-
+    #region Private methods
     private SampleClassification Fuse(string name, IReadOnlyList<ClassificationProposal> votes, OverrideEntry? manual = null)
     {
         Sample sample = TestSamples.Make(name);
         return _fusion.Fuse(new ClassificationContext(FilenameParser.Parse(name), sample), votes, manual);
     }
 
-    [Fact]
-    public void Fuse_NameAndAudioAgree_RaisesConfidenceAboveEitherAlone()
-    {
-        SampleClassification byName = Fuse("Kick X", [Vote(ClassificationAxis.Instrument, "kick", 0.8)]);
-        SampleClassification both = Fuse("Kick X", [Vote(ClassificationAxis.Instrument, "kick", 0.8), Vote(ClassificationAxis.Instrument, "kick", 0.8, EvidenceSource.Signal)]);
+    private static ClassificationProposal Vote(ClassificationAxis axis, string value, double confidence, EvidenceSource source = EvidenceSource.Filename) => new(axis, value, confidence, new Evidence(source, $"{source} says {value}"));
+    #endregion
 
-        Assert.True(both.Instrument.Confidence > byName.Instrument.Confidence);
-        Assert.Equal(2, both.Instrument.Evidence.Count);
-        Assert.False(both.NeedsReview);
-    }
-
-    [Fact]
-    public void Fuse_SeveralVotesFromOneSource_CountOnce()
-    {
-        SampleClassification classification = Fuse("Kick X", [Vote(ClassificationAxis.Instrument, "kick", 0.8), Vote(ClassificationAxis.Instrument, "kick", 0.7)]);
-
-        Assert.Equal(0.8, classification.Instrument.Confidence, 0.001);
-    }
-
-    [Fact]
-    public void Fuse_AudioSupportsTheFamilyOfADeeperNameLabel()
-    {
-        SampleClassification classification = Fuse("Hihat Closed X", [Vote(ClassificationAxis.Instrument, "hihat-closed", 0.9), Vote(ClassificationAxis.Instrument, "hihat", 0.8, EvidenceSource.Signal)]);
-
-        Assert.Equal("hihat-closed", classification.Instrument.Value);
-        Assert.True(classification.Instrument.Confidence > 0.9);
-        Assert.False(classification.NeedsReview);
-    }
-
-    [Fact]
-    public void Fuse_ConfidentNameContradictedByConfidentAudio_IsFlaggedForReview()
-    {
-        SampleClassification classification = Fuse("Kick X", [Vote(ClassificationAxis.Instrument, "kick", 0.95), Vote(ClassificationAxis.Instrument, "hihat", 0.8, EvidenceSource.Signal)]);
-
-        Assert.Equal("kick", classification.Instrument.Value);
-        Assert.True(classification.NeedsReview);
-        Assert.Contains(classification.ReviewReasons, reason => reason.Contains("Kick") && reason.Contains("Hi-Hat"));
-    }
-
-    [Fact]
-    public void Fuse_GenericFamiliesAreNotFlaggedBecauseTheirAudioCouldBeAnything()
-    {
-        SampleClassification classification = Fuse("FX Brute Hit", [Vote(ClassificationAxis.Instrument, "sfx", 0.95), Vote(ClassificationAxis.Instrument, "snare", 0.8, EvidenceSource.Signal)]);
-
-        Assert.Equal("sfx", classification.Instrument.Value);
-        Assert.False(classification.NeedsReview);
-    }
-
+    #region Public methods
     [Fact]
     public void Fuse_AudioOnlyGuessBelowThreshold_IsKeptAsAlternateNotAsTheLabel()
     {
@@ -74,6 +30,16 @@ public sealed class EvidenceFusionTests
     }
 
     [Fact]
+    public void Fuse_AudioSupportsTheFamilyOfADeeperNameLabel()
+    {
+        SampleClassification classification = Fuse("Hihat Closed X", [Vote(ClassificationAxis.Instrument, "hihat-closed", 0.9), Vote(ClassificationAxis.Instrument, "hihat", 0.8, EvidenceSource.Signal)]);
+
+        Assert.Equal("hihat-closed", classification.Instrument.Value);
+        Assert.True(classification.Instrument.Confidence > 0.9);
+        Assert.False(classification.NeedsReview);
+    }
+
+    [Fact]
     public void Fuse_ConfidentAudioOnlyGuess_BecomesTheLabelAtReducedConfidence()
     {
         SampleClassification classification = Fuse("Mystery", [Vote(ClassificationAxis.Instrument, "snare", 0.85, EvidenceSource.Signal)]);
@@ -84,27 +50,31 @@ public sealed class EvidenceFusionTests
     }
 
     [Fact]
-    public void Fuse_InstrumentFromAnOverride_StillGetsThatInstrumentsDefaultContentType()
+    public void Fuse_ConfidentNameContradictedByConfidentAudio_IsFlaggedForReview()
     {
-        OverrideEntry manual = new() { File = "Rise.wav", Instrument = "riser" };
+        SampleClassification classification = Fuse("Kick X", [Vote(ClassificationAxis.Instrument, "kick", 0.95), Vote(ClassificationAxis.Instrument, "hihat", 0.8, EvidenceSource.Signal)]);
 
-        SampleClassification classification = Fuse("Rise", [], manual);
-
-        Assert.Equal(ContentType.Transition, classification.ContentType.Value);
-        Assert.Equal(EvidenceSource.Manual, classification.ContentType.Evidence[0].Source);
+        Assert.Equal("kick", classification.Instrument.Value);
+        Assert.True(classification.NeedsReview);
+        Assert.Contains(classification.ReviewReasons, reason => reason.Contains("Kick") && reason.Contains("Hi-Hat"));
     }
 
     [Fact]
-    public void Fuse_NoEvidenceAtAll_IsUnclassifiedAndFlagged()
+    public void Fuse_ContentTypeAndOrigin_TakeTheStrongestCombinedVote()
     {
-        SampleClassification classification = Fuse("Zzz", []);
+        SampleClassification classification = Fuse("Break X 90 bpm", [Vote(ClassificationAxis.ContentType, nameof(ContentType.Loop), 0.65), Vote(ClassificationAxis.ContentType, nameof(ContentType.Break), 0.85), Vote(ClassificationAxis.Origin, nameof(SoundOrigin.Sampled), 0.6),]);
 
-        Assert.Equal("unclassified", classification.Instrument.Value);
-        Assert.True(classification.NeedsReview);
-        Assert.Equal(ContentType.Unknown, classification.ContentType.Value);
-        Assert.Equal(SoundOrigin.Unknown, classification.Origin.Value);
-        Assert.Null(classification.Kit);
-        Assert.Null(classification.Style);
+        Assert.Equal(ContentType.Break, classification.ContentType.Value);
+        Assert.Equal(SoundOrigin.Sampled, classification.Origin.Value);
+    }
+
+    [Fact]
+    public void Fuse_GenericFamiliesAreNotFlaggedBecauseTheirAudioCouldBeAnything()
+    {
+        SampleClassification classification = Fuse("FX Brute Hit", [Vote(ClassificationAxis.Instrument, "sfx", 0.95), Vote(ClassificationAxis.Instrument, "snare", 0.8, EvidenceSource.Signal)]);
+
+        Assert.Equal("sfx", classification.Instrument.Value);
+        Assert.False(classification.NeedsReview);
     }
 
     [Fact]
@@ -124,28 +94,14 @@ public sealed class EvidenceFusionTests
     }
 
     [Fact]
-    public void Fuse_SecondInstrumentWordInTheName_BecomesAnAlternate()
+    public void Fuse_InstrumentFromAnOverride_StillGetsThatInstrumentsDefaultContentType()
     {
-        SampleClassification classification = Fuse("Snare Hat Combo", [Vote(ClassificationAxis.Instrument, "snare", 0.95), Vote(ClassificationAxis.Instrument, "hihat", 0.5)]);
+        OverrideEntry manual = new() { File = "Rise.wav", Instrument = "riser" };
 
-        Assert.Equal("snare", classification.Instrument.Value);
-        Assert.Single(classification.AlternateInstruments);
-        Assert.Equal("hihat", classification.AlternateInstruments[0].Value);
-    }
+        SampleClassification classification = Fuse("Rise", [], manual);
 
-    [Fact]
-    public void Fuse_ContentTypeAndOrigin_TakeTheStrongestCombinedVote()
-    {
-        SampleClassification classification = Fuse(
-            "Break X 90 bpm",
-            [
-                Vote(ClassificationAxis.ContentType, nameof(ContentType.Loop), 0.65),
-                Vote(ClassificationAxis.ContentType, nameof(ContentType.Break), 0.85),
-                Vote(ClassificationAxis.Origin, nameof(SoundOrigin.Sampled), 0.6),
-            ]);
-
-        Assert.Equal(ContentType.Break, classification.ContentType.Value);
-        Assert.Equal(SoundOrigin.Sampled, classification.Origin.Value);
+        Assert.Equal(ContentType.Transition, classification.ContentType.Value);
+        Assert.Equal(EvidenceSource.Manual, classification.ContentType.Evidence[0].Source);
     }
 
     [Fact]
@@ -187,9 +143,52 @@ public sealed class EvidenceFusionTests
     }
 
     [Fact]
+    public void Fuse_NameAndAudioAgree_RaisesConfidenceAboveEitherAlone()
+    {
+        SampleClassification byName = Fuse("Kick X", [Vote(ClassificationAxis.Instrument, "kick", 0.8)]);
+        SampleClassification both = Fuse("Kick X", [Vote(ClassificationAxis.Instrument, "kick", 0.8), Vote(ClassificationAxis.Instrument, "kick", 0.8, EvidenceSource.Signal)]);
+
+        Assert.True(both.Instrument.Confidence > byName.Instrument.Confidence);
+        Assert.Equal(2, both.Instrument.Evidence.Count);
+        Assert.False(both.NeedsReview);
+    }
+
+    [Fact]
+    public void Fuse_NoEvidenceAtAll_IsUnclassifiedAndFlagged()
+    {
+        SampleClassification classification = Fuse("Zzz", []);
+
+        Assert.Equal("unclassified", classification.Instrument.Value);
+        Assert.True(classification.NeedsReview);
+        Assert.Equal(ContentType.Unknown, classification.ContentType.Value);
+        Assert.Equal(SoundOrigin.Unknown, classification.Origin.Value);
+        Assert.Null(classification.Kit);
+        Assert.Null(classification.Style);
+    }
+
+    [Fact]
+    public void Fuse_SecondInstrumentWordInTheName_BecomesAnAlternate()
+    {
+        SampleClassification classification = Fuse("Snare Hat Combo", [Vote(ClassificationAxis.Instrument, "snare", 0.95), Vote(ClassificationAxis.Instrument, "hihat", 0.5)]);
+
+        Assert.Equal("snare", classification.Instrument.Value);
+        Assert.Single(classification.AlternateInstruments);
+        Assert.Equal("hihat", classification.AlternateInstruments[0].Value);
+    }
+
+    [Fact]
+    public void Fuse_SeveralVotesFromOneSource_CountOnce()
+    {
+        SampleClassification classification = Fuse("Kick X", [Vote(ClassificationAxis.Instrument, "kick", 0.8), Vote(ClassificationAxis.Instrument, "kick", 0.7)]);
+
+        Assert.Equal(0.8, classification.Instrument.Confidence, 0.001);
+    }
+
+    [Fact]
     public void Overrides_FromJson_AreFoundCaseInsensitivelyByFileName()
     {
-        ClassificationOverrides overrides = ClassificationOverrides.FromJson("""
+        ClassificationOverrides overrides = ClassificationOverrides.FromJson(
+                                            """
             // comments are allowed
             { "overrides": [ { "file": "Vinyl Dirt 1.wav", "instrument": "noise", "note": "why" } ] }
             """);
@@ -201,8 +200,6 @@ public sealed class EvidenceFusionTests
     }
 
     [Fact]
-    public void Overrides_MissingFile_LoadsAsEmpty()
-    {
-        Assert.Equal(0, ClassificationOverrides.Load(Path.Combine(Path.GetTempPath(), "no-such-overrides-" + Guid.NewGuid().ToString("N") + ".json")).Count);
-    }
+    public void Overrides_MissingFile_LoadsAsEmpty() { Assert.Equal(0, ClassificationOverrides.Load(Path.Combine(Path.GetTempPath(), $"no-such-overrides-{Guid.NewGuid():N}.json")).Count); }
+    #endregion
 }

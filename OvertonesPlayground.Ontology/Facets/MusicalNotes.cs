@@ -5,24 +5,34 @@ namespace OvertonesPlayground.Ontology.Facets;
 ///</summary>
 public static class MusicalNotes
 {
-    #region Constants
+    #region Fields
     private static readonly string[] _pitchClassNames = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
     #endregion
 
     #region Public methods
-    ///<summary>Frequency of <paramref name="midiNote"/> in hertz.</summary>
+    ///<summary>
+    ///Frequency of <paramref name="midiNote"/> in hertz.
+    ///</summary>
     public static double FrequencyOf(double midiNote) => 440.0 * Math.Pow(2.0, (midiNote - 69.0) / 12.0);
 
-    ///<summary>Fractional MIDI note number of <paramref name="hz"/>.</summary>
+    ///<summary>
+    ///Fractional MIDI note number of <paramref name="hz"/>.
+    ///</summary>
     public static double MidiOf(double hz) => 69.0 + (12.0 * Math.Log2(hz / 440.0));
 
-    ///<summary>Name of a pitch class, 0 = C ... 11 = B, using sharps.</summary>
+    ///<summary>
+    ///Name with octave, for example <c>C#4</c> (MIDI 61). Octave numbering makes MIDI 60 = C4.
+    ///</summary>
+    public static string NoteName(int midiNote) => $"{PitchClassName(midiNote)}{(Math.DivRem(midiNote, 12, out _) - 1).ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+
+    ///<summary>
+    ///Name of a pitch class, 0 = C ... 11 = B, using sharps.
+    ///</summary>
     public static string PitchClassName(int pitchClass) => _pitchClassNames[((pitchClass % 12) + 12) % 12];
 
-    ///<summary>Name with octave, for example <c>C#4</c> (MIDI 61). Octave numbering makes MIDI 60 = C4.</summary>
-    public static string NoteName(int midiNote) => PitchClassName(midiNote) + (Math.DivRem(midiNote, 12, out _) - 1).ToString(System.Globalization.CultureInfo.InvariantCulture);
-
-    ///<summary>Pitch class (0 - 11) of <paramref name="midiNote"/>.</summary>
+    ///<summary>
+    ///Pitch class (0 - 11) of <paramref name="midiNote"/>.
+    ///</summary>
     public static int PitchClassOf(int midiNote) => ((midiNote % 12) + 12) % 12;
 
     ///<summary>

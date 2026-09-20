@@ -16,38 +16,32 @@ namespace OvertonesPlayground.Ontology.Model;
 ///<param name="Rhythm">Tempo and onsets, or null when not analysed or too short.</param>
 ///<param name="Classification">Instrument, kit, style, content type and origin.</param>
 ///<param name="Notes">Analysis remarks worth a human look (truncated data, silence, an analyzer that failed); null when there are none.</param>
-public sealed record Sample(
-    SampleAsset Asset,
-    AnalysisStatus Status,
-    TechnicalFacet? Technical,
-    SpectralFacet? Spectral,
-    TonalityFacet? Tonality,
-    DynamicsFacet? Dynamics,
-    StereoFacet? Stereo,
-    RhythmFacet? Rhythm,
-    SampleClassification Classification,
-    IReadOnlyList<string>? Notes = null)
+public sealed record Sample(SampleAsset Asset, AnalysisStatus Status, TechnicalFacet? Technical, SpectralFacet? Spectral, TonalityFacet? Tonality, DynamicsFacet? Dynamics, StereoFacet? Stereo, RhythmFacet? Rhythm, SampleClassification Classification, IReadOnlyList<string>? Notes = null)
 {
     #region Public properties
-    ///<summary>Stable key: the asset file name.</summary>
-    [JsonIgnore]
-    public string Id => Asset.FileName;
-
-    ///<summary>Display name (file name without extension).</summary>
-    [JsonIgnore]
-    public string Name => Asset.DisplayName;
-
-    ///<summary>
-    ///Tempo to use: the tempo in the name when present (people wrote it deliberately), otherwise the detected tempo when its
-    ///periodicity is strong enough to believe (<see cref="RhythmFacet.TrustedBpm"/>), otherwise none.
-    ///</summary>
-    [JsonIgnore]
-    public double? EffectiveTempoBpm => Classification.Attributes.TempoBpm ?? Rhythm?.TrustedBpm;
-
     ///<summary>
     ///Pitch class (0 = C) to use: the key written in the name when present, otherwise the detected pitch.
     ///</summary>
     [JsonIgnore]
     public int? EffectivePitchClass => Classification.Attributes.KeyPitchClass ?? Tonality?.PitchClass;
+
+    ///<summary>
+    ///Tempo to use: the tempo in the name when present (people wrote it deliberately), otherwise the detected tempo
+    ///when its periodicity is strong enough to believe (<see cref="RhythmFacet.TrustedBpm"/>), otherwise none.
+    ///</summary>
+    [JsonIgnore]
+    public double? EffectiveTempoBpm => Classification.Attributes.TempoBpm ?? Rhythm?.TrustedBpm;
+
+    ///<summary>
+    ///Stable key: the asset file name.
+    ///</summary>
+    [JsonIgnore]
+    public string Id => Asset.FileName;
+
+    ///<summary>
+    ///Display name (file name without extension).
+    ///</summary>
+    [JsonIgnore]
+    public string Name => Asset.DisplayName;
     #endregion
 }

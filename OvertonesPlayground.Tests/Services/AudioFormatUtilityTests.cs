@@ -4,10 +4,11 @@ namespace OvertonesPlayground.Tests.Services;
 
 public sealed class AudioFormatUtilityTests
 {
-    private static WavFile Wav(int channels, int sampleRate, params short[] samples) =>
-        new() { Channels = (short)channels, SampleRate = sampleRate, BitsPerSample = 16, Samples = samples };
+    #region Private methods
+    private static WavFile Wav(int channels, int sampleRate, params short[] samples) => new() { Channels = (short)channels, SampleRate = sampleRate, BitsPerSample = 16, Samples = samples };
+    #endregion
 
-    #region Conform
+    #region Public methods
     [Fact]
     public void Conform_AlreadyMatchingFormat_ReturnsTheSameSamples()
     {
@@ -16,6 +17,19 @@ public sealed class AudioFormatUtilityTests
         short[] result = AudioFormatUtility.Conform(source, targetChannels: 2, targetSampleRate: 44100);
 
         Assert.Same(source.Samples, result);
+    }
+
+    [Fact]
+    public void Conform_ChannelsAndRateBothDiffer_ConvertsChannelsThenResamples()
+    {
+        // 4 stereo frames at 8 kHz -> mono -> 16 kHz gives 8 mono frames.
+        WavFile source = Wav(2, 8000, 100, 100, 200, 200, 300, 300, 400, 400);
+
+        short[] result = AudioFormatUtility.Conform(source, targetChannels: 1, targetSampleRate: 16000);
+
+        Assert.Equal(8, result.Length);
+        Assert.Equal(100, result[0]);
+        Assert.Equal(150, result[1]); // midway between the first two source frames
     }
 
     [Fact]
@@ -50,21 +64,6 @@ public sealed class AudioFormatUtilityTests
     }
 
     [Fact]
-    public void Conform_ChannelsAndRateBothDiffer_ConvertsChannelsThenResamples()
-    {
-        // 4 stereo frames at 8 kHz -> mono -> 16 kHz gives 8 mono frames.
-        WavFile source = Wav(2, 8000, 100, 100, 200, 200, 300, 300, 400, 400);
-
-        short[] result = AudioFormatUtility.Conform(source, targetChannels: 1, targetSampleRate: 16000);
-
-        Assert.Equal(8, result.Length);
-        Assert.Equal(100, result[0]);
-        Assert.Equal(150, result[1]); // midway between the first two source frames
-    }
-    #endregion
-
-    #region Resample
-    [Fact]
     public void Resample_DoublingTheRate_InterpolatesMidpointsAndHoldsTheLastSample()
     {
         short[] result = AudioFormatUtility.Resample([0, 1000], channels: 1, sourceRate: 100, targetRate: 200);
@@ -78,6 +77,22 @@ public sealed class AudioFormatUtilityTests
         short[] result = AudioFormatUtility.Resample([0, 100, 200, 300], channels: 1, sourceRate: 200, targetRate: 100);
 
         Assert.Equal([0, 200], result);
+    }
+
+    [Fact]
+    public void Resample_NoSamples_ReturnsNoSamples()
+    {
+        short[] result = AudioFormatUtility.Resample([], channels: 1, sourceRate: 8000, targetRate: 16000);
+
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public void Resample_ResultLengthScalesWithTheRateRatio()
+    {
+        short[] result = AudioFormatUtility.Resample(new short[4410], channels: 1, sourceRate: 44100, targetRate: 8000);
+
+        Assert.Equal(800, result.Length);
     }
 
     [Fact]
@@ -97,22 +112,6 @@ public sealed class AudioFormatUtilityTests
         short[] result = AudioFormatUtility.Resample([0, -200, 1000, -200], channels: 2, sourceRate: 100, targetRate: 200);
 
         Assert.Equal([0, -200, 500, -200, 1000, -200, 1000, -200], result);
-    }
-
-    [Fact]
-    public void Resample_ResultLengthScalesWithTheRateRatio()
-    {
-        short[] result = AudioFormatUtility.Resample(new short[4410], channels: 1, sourceRate: 44100, targetRate: 8000);
-
-        Assert.Equal(800, result.Length);
-    }
-
-    [Fact]
-    public void Resample_NoSamples_ReturnsNoSamples()
-    {
-        short[] result = AudioFormatUtility.Resample([], channels: 1, sourceRate: 8000, targetRate: 16000);
-
-        Assert.Empty(result);
     }
     #endregion
 }

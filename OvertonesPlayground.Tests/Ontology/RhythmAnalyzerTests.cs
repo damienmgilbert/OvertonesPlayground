@@ -2,12 +2,32 @@ namespace OvertonesPlayground.Tests.Ontology;
 
 public sealed class RhythmAnalyzerTests
 {
-    private readonly RhythmAnalyzer _analyzer = new();
+    #region Constants
+    // 5.3333 s is 8 beats at 90 BPM, so the loop-length grid holds 90 (8 beats) and 180 (16 beats) inside 60-210 BPM.
+    private const double EightBeatsAt90 = 8.0 * 60.0 / 90.0;
+    #endregion
 
+    #region Fields
+    private readonly RhythmAnalyzer _analyzer = new();
+    #endregion
+
+    #region Private methods
     private RhythmFacet? Analyze(float[] signal, double? namedBpm = null, int sampleRate = AudioSynth.Rate)
     {
         NamedAttributes named = namedBpm is null ? NamedAttributes.Empty("test") : new NamedAttributes(namedBpm, null, KeyMode.None, null, null, "test");
         return _analyzer.Extract(AudioSynth.Context(sampleRate, named, signal));
+    }
+    #endregion
+
+    #region Public methods
+    [Fact]
+    public void Extract_ClickTrain_CountsTheOnsets()
+    {
+        RhythmFacet? facet = Analyze(AudioSynth.ClickTrain(120, 8.0));
+
+        Assert.NotNull(facet);
+        Assert.InRange(facet!.OnsetCount, 14, 18);
+        Assert.InRange(facet.OnsetsPerSecond, 1.6, 2.4);
     }
 
     [Theory]
@@ -26,13 +46,33 @@ public sealed class RhythmAnalyzerTests
     }
 
     [Fact]
-    public void Extract_ClickTrain_CountsTheOnsets()
+    public void Extract_ClickTrainCutMidBeat_IsNotLoopLike()
     {
-        RhythmFacet? facet = Analyze(AudioSynth.ClickTrain(120, 8.0));
+        RhythmFacet? facet = Analyze(AudioSynth.ClickTrain(120, 7.75));
 
         Assert.NotNull(facet);
-        Assert.InRange(facet!.OnsetCount, 14, 18);
-        Assert.InRange(facet.OnsetsPerSecond, 1.6, 2.4);
+        Assert.False(facet!.IsLoopLike);
+    }
+
+    [Fact]
+    public void Extract_ClickTrainOnTheLoopGrid_ReportsTheExactGridTempo()
+    {
+        RhythmFacet? facet = Analyze(AudioSynth.ClickTrain(90, EightBeatsAt90));
+
+        Assert.NotNull(facet);
+        Assert.Equal(90.0, facet!.DetectedBpm!.Value, 0.05);
+        Assert.True(facet.IsLoopLike);
+        Assert.Equal(8.0, facet.Beats!.Value, 0.05);
+    }
+
+    [Fact]
+    public void Extract_ClickTrainSlightlyOffTheLoopLength_KeepsItsOwnEstimate()
+    {
+        // 120 BPM for 7.75 s is 15.5 beats, more than 2 % from the 16-beat grid tempo (123.9), so nothing is snapped.
+        RhythmFacet? facet = Analyze(AudioSynth.ClickTrain(120, 7.75));
+
+        Assert.NotNull(facet);
+        Assert.Equal(120.0, facet!.DetectedBpm!.Value, 3.0);
     }
 
     [Fact]
@@ -46,12 +86,25 @@ public sealed class RhythmAnalyzerTests
     }
 
     [Fact]
-    public void Extract_ClickTrainCutMidBeat_IsNotLoopLike()
+    public void Extract_NoTempoInTheName_LeavesAgreementUnknown()
     {
-        RhythmFacet? facet = Analyze(AudioSynth.ClickTrain(120, 7.75));
+        RhythmFacet? facet = Analyze(AudioSynth.ClickTrain(120, 8.0));
+
+        Assert.Null(facet!.TempoAgreesWithName);
+    }
+
+    [Fact]
+    public void Extract_Silence_HasNoRhythm() { Assert.Null(Analyze(AudioSynth.Silence(4.0))); }
+    [Fact]
+    public void Extract_SoundShorterThanOneAndAHalfSeconds_HasNoRhythm() { Assert.Null(Analyze(AudioSynth.ClickTrain(120, 1.2))); }
+    [Fact]
+    public void Extract_SteadyTone_HasNoConfidentTempo()
+    {
+        RhythmFacet? facet = Analyze(AudioSynth.Sine(440, 6.0));
 
         Assert.NotNull(facet);
-        Assert.False(facet!.IsLoopLike);
+        Assert.True(facet!.OnsetCount <= 2, $"onsets {facet.OnsetCount}, bpm {facet.DetectedBpm}, conf {facet.TempoConfidence}");
+        Assert.False(facet.IsLoopLike);
     }
 
     [Theory]
@@ -71,38 +124,15 @@ public sealed class RhythmAnalyzerTests
     }
 
     [Fact]
-    public void Extract_NoTempoInTheName_LeavesAgreementUnknown()
+    public void Extract_TempoSnappedToTheLoopLength_DoesNotMakeAnOffCutClipALoop()
     {
-        RhythmFacet? facet = Analyze(AudioSynth.ClickTrain(120, 8.0));
+        // 120 BPM for 7.9 s is 15.8 beats: 1.3 % from the 16-beat grid tempo (121.5), so the tempo is snapped to it, and at 121.5
+        // the clip would hold exactly 16 beats. But the clip was not cut on the beat, and the snap must not vouch for itself.
+        RhythmFacet? facet = Analyze(AudioSynth.ClickTrain(120, 7.9));
 
-        Assert.Null(facet!.TempoAgreesWithName);
-    }
-
-    // 5.3333 s is 8 beats at 90 BPM, so the loop-length grid holds 90 (8 beats) and 180 (16 beats) inside 60-210 BPM.
-    private const double EightBeatsAt90 = 8.0 * 60.0 / 90.0;
-
-    [Theory]
-    [InlineData(89.2, EightBeatsAt90, 90.0)]
-    [InlineData(90.7, EightBeatsAt90, 90.0)]
-    public void SnapToLoopGrid_AnEstimateNearTheGridTempo_BecomesExact(double detected, double seconds, double expected)
-    {
-        Assert.Equal(expected, RhythmAnalyzer.SnapToLoopGrid(detected, seconds), 0.001);
-    }
-
-    [Fact]
-    public void SnapToLoopGrid_TheDoubleOfTheLoopTempo_IsFoldedBackToTheOneNearestTheUsualRange()
-    {
-        Assert.Equal(90.0, RhythmAnalyzer.SnapToLoopGrid(180.4, EightBeatsAt90), 0.001);
-        Assert.Equal(90.0, RhythmAnalyzer.SnapToLoopGrid(45.1, EightBeatsAt90), 0.001);
-    }
-
-    [Fact]
-    public void SnapToLoopGrid_ATripletFeelPulse_IsReplacedByTheLoopTempo()
-    {
-        // 120 is 4:3 of 90. The loop holds 10.67 beats at 120, which is no loop at all, so 120 cannot be its tempo.
-        Assert.Equal(90.0, RhythmAnalyzer.SnapToLoopGrid(120.0, EightBeatsAt90), 0.001);
-        // 60 is 2:3 of 90 (5.33 beats).
-        Assert.Equal(90.0, RhythmAnalyzer.SnapToLoopGrid(60.0, EightBeatsAt90), 0.001);
+        Assert.NotNull(facet);
+        Assert.Equal(60.0 * 16 / 7.9, facet!.DetectedBpm!.Value, 0.05);
+        Assert.False(facet.IsLoopLike);
     }
 
     [Fact]
@@ -119,11 +149,36 @@ public sealed class RhythmAnalyzerTests
         Assert.Equal(90.0, RhythmAnalyzer.SnapToLoopGrid(90.0, 8.0), 0.001);
     }
 
+    [Theory]
+    [InlineData(89.2, EightBeatsAt90, 90.0)]
+    [InlineData(90.7, EightBeatsAt90, 90.0)]
+    public void SnapToLoopGrid_AnEstimateNearTheGridTempo_BecomesExact(double detected, double seconds, double expected) { Assert.Equal(expected, RhythmAnalyzer.SnapToLoopGrid(detected, seconds), 0.001); }
+    [Fact]
+    public void SnapToLoopGrid_ATripletFeelPulse_IsReplacedByTheLoopTempo()
+    {
+        // 120 is 4:3 of 90. The loop holds 10.67 beats at 120, which is no loop at all, so 120 cannot be its tempo.
+        Assert.Equal(90.0, RhythmAnalyzer.SnapToLoopGrid(120.0, EightBeatsAt90), 0.001);
+        // 60 is 2:3 of 90 (5.33 beats).
+        Assert.Equal(90.0, RhythmAnalyzer.SnapToLoopGrid(60.0, EightBeatsAt90), 0.001);
+    }
+
+    [Theory]
+    [InlineData(0.0, 6.0)]
+    [InlineData(100.0, 0.0)]
+    [InlineData(-5.0, 6.0)]
+    public void SnapToLoopGrid_NonsenseInput_IsReturnedAsIs(double detected, double seconds) { Assert.Equal(detected, RhythmAnalyzer.SnapToLoopGrid(detected, seconds)); }
     [Fact]
     public void SnapToLoopGrid_NothingFitsTheLoopLength_KeepsTheEstimate()
     {
         // 5 s at 100 BPM is 8.33 beats; the nearest grid tempo, 96, is 4 % away.
         Assert.Equal(100.0, RhythmAnalyzer.SnapToLoopGrid(100.0, 5.0), 0.001);
+    }
+
+    [Fact]
+    public void SnapToLoopGrid_TheDoubleOfTheLoopTempo_IsFoldedBackToTheOneNearestTheUsualRange()
+    {
+        Assert.Equal(90.0, RhythmAnalyzer.SnapToLoopGrid(180.4, EightBeatsAt90), 0.001);
+        Assert.Equal(90.0, RhythmAnalyzer.SnapToLoopGrid(45.1, EightBeatsAt90), 0.001);
     }
 
     [Fact]
@@ -133,68 +188,5 @@ public sealed class RhythmAnalyzerTests
         Assert.Equal(80.0, RhythmAnalyzer.SnapToLoopGrid(160.0, 6.0), 0.001);
         Assert.Equal(80.0, RhythmAnalyzer.SnapToLoopGrid(79.9, 6.0), 0.001);
     }
-
-    [Theory]
-    [InlineData(0.0, 6.0)]
-    [InlineData(100.0, 0.0)]
-    [InlineData(-5.0, 6.0)]
-    public void SnapToLoopGrid_NonsenseInput_IsReturnedAsIs(double detected, double seconds)
-    {
-        Assert.Equal(detected, RhythmAnalyzer.SnapToLoopGrid(detected, seconds));
-    }
-
-    [Fact]
-    public void Extract_ClickTrainSlightlyOffTheLoopLength_KeepsItsOwnEstimate()
-    {
-        // 120 BPM for 7.75 s is 15.5 beats, more than 2 % from the 16-beat grid tempo (123.9), so nothing is snapped.
-        RhythmFacet? facet = Analyze(AudioSynth.ClickTrain(120, 7.75));
-
-        Assert.NotNull(facet);
-        Assert.Equal(120.0, facet!.DetectedBpm!.Value, 3.0);
-    }
-
-    [Fact]
-    public void Extract_TempoSnappedToTheLoopLength_DoesNotMakeAnOffCutClipALoop()
-    {
-        // 120 BPM for 7.9 s is 15.8 beats: 1.3 % from the 16-beat grid tempo (121.5), so the tempo is snapped to it, and at 121.5
-        // the clip would hold exactly 16 beats. But the clip was not cut on the beat, and the snap must not vouch for itself.
-        RhythmFacet? facet = Analyze(AudioSynth.ClickTrain(120, 7.9));
-
-        Assert.NotNull(facet);
-        Assert.Equal(60.0 * 16 / 7.9, facet!.DetectedBpm!.Value, 0.05);
-        Assert.False(facet.IsLoopLike);
-    }
-
-    [Fact]
-    public void Extract_ClickTrainOnTheLoopGrid_ReportsTheExactGridTempo()
-    {
-        RhythmFacet? facet = Analyze(AudioSynth.ClickTrain(90, EightBeatsAt90));
-
-        Assert.NotNull(facet);
-        Assert.Equal(90.0, facet!.DetectedBpm!.Value, 0.05);
-        Assert.True(facet.IsLoopLike);
-        Assert.Equal(8.0, facet.Beats!.Value, 0.05);
-    }
-
-    [Fact]
-    public void Extract_SoundShorterThanOneAndAHalfSeconds_HasNoRhythm()
-    {
-        Assert.Null(Analyze(AudioSynth.ClickTrain(120, 1.2)));
-    }
-
-    [Fact]
-    public void Extract_Silence_HasNoRhythm()
-    {
-        Assert.Null(Analyze(AudioSynth.Silence(4.0)));
-    }
-
-    [Fact]
-    public void Extract_SteadyTone_HasNoConfidentTempo()
-    {
-        RhythmFacet? facet = Analyze(AudioSynth.Sine(440, 6.0));
-
-        Assert.NotNull(facet);
-        Assert.True(facet!.OnsetCount <= 2, $"onsets {facet.OnsetCount}, bpm {facet.DetectedBpm}, conf {facet.TempoConfidence}");
-        Assert.False(facet.IsLoopLike);
-    }
+    #endregion
 }

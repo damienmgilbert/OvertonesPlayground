@@ -11,16 +11,17 @@ namespace OvertonesPlayground.Ontology.Model;
 ///<param name="Stem">
 ///The name without tempo, key and variation number; samples with the same stem are variations of one sound.
 ///</param>
-public sealed record NamedAttributes(
-    double? TempoBpm,
-    int? KeyPitchClass,
-    KeyMode KeyMode,
-    int? Octave,
-    int? VariationNumber,
-    string Stem)
+public sealed record NamedAttributes(double? TempoBpm, int? KeyPitchClass, KeyMode KeyMode, int? Octave, int? VariationNumber, string Stem)
 {
     #region Public methods
-    ///<summary>Key as text (<c>F# min</c>, <c>C</c>, <c>D#</c>), or null when the name has none.</summary>
+    ///<summary>
+    ///No attributes at all; only the name stem.
+    ///</summary>
+    public static NamedAttributes Empty(string stem) => new(null, null, KeyMode.None, null, null, stem);
+
+    ///<summary>
+    ///Key as text (<c>F# min</c>, <c>C</c>, <c>D#</c>), or null when the name has none.
+    ///</summary>
     public string? KeyName()
     {
         if (KeyPitchClass is null)
@@ -31,13 +32,10 @@ public sealed record NamedAttributes(
         string tonic = MusicalNotes.PitchClassName(KeyPitchClass.Value);
         return KeyMode switch
         {
-            KeyMode.Minor => tonic + " min",
-            KeyMode.Major => tonic + " maj",
+            KeyMode.Minor => $"{tonic} min",
+            KeyMode.Major => $"{tonic} maj",
             _ => tonic,
         };
     }
-
-    ///<summary>No attributes at all; only the name stem.</summary>
-    public static NamedAttributes Empty(string stem) => new(null, null, KeyMode.None, null, null, stem);
     #endregion
 }

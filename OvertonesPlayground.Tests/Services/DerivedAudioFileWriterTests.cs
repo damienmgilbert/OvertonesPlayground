@@ -4,24 +4,16 @@ namespace OvertonesPlayground.Tests.Services;
 
 public sealed class DerivedAudioFileWriterTests : IDisposable
 {
+    #region Fields
     private readonly TempFileSystem _files = new();
+    #endregion
 
-    public void Dispose() => _files.Dispose();
-
+    #region Private methods
     private static WavFile Wav(params short[] samples) => new() { Channels = 1, SampleRate = 8000, BitsPerSample = 16, Samples = samples };
+    #endregion
 
-    [Fact]
-    public async Task SaveAsync_WritesAReadableWavIntoTheFolderCreatingItIfNeeded()
-    {
-        string directory = _files.InAppData("does", "not", "exist");
-
-        string path = await DerivedAudioFileWriter.SaveAsync(Wav(1, 2, 3), directory, "clip");
-
-        Assert.Equal(directory, Path.GetDirectoryName(path));
-        Assert.EndsWith(".wav", path);
-        Assert.StartsWith("clip_", Path.GetFileName(path));
-        Assert.Equal([1, 2, 3], (await WavFile.ReadAsync(path)).Samples);
-    }
+    #region Public methods
+    public void Dispose() => _files.Dispose();
 
     [Theory]
     [InlineData("a/b")]
@@ -35,15 +27,6 @@ public sealed class DerivedAudioFileWriterTests : IDisposable
 
         Assert.Equal(directory, Path.GetDirectoryName(path));
         Assert.True(File.Exists(path));
-    }
-
-    [Fact]
-    public async Task SaveBytesAsync_WritesTheBytesWithTheGivenExtension()
-    {
-        string path = await DerivedAudioFileWriter.SaveBytesAsync([1, 2, 3, 4], _files.InAppData("out"), "encoded", "m4a");
-
-        Assert.EndsWith(".m4a", path);
-        Assert.Equal([1, 2, 3, 4], await File.ReadAllBytesAsync(path, TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -67,6 +50,19 @@ public sealed class DerivedAudioFileWriterTests : IDisposable
     }
 
     [Fact]
+    public async Task SaveAsync_WritesAReadableWavIntoTheFolderCreatingItIfNeeded()
+    {
+        string directory = _files.InAppData("does", "not", "exist");
+
+        string path = await DerivedAudioFileWriter.SaveAsync(Wav(1, 2, 3), directory, "clip");
+
+        Assert.Equal(directory, Path.GetDirectoryName(path));
+        Assert.EndsWith(".wav", path);
+        Assert.StartsWith("clip_", Path.GetFileName(path));
+        Assert.Equal([1, 2, 3], (await WavFile.ReadAsync(path)).Samples);
+    }
+
+    [Fact]
     public async Task SaveBytesAsync_SameNameSavedRepeatedly_NeverOverwritesAnEarlierFile()
     {
         string directory = _files.InAppData("out");
@@ -78,4 +74,14 @@ public sealed class DerivedAudioFileWriterTests : IDisposable
         Assert.Equal([1], await File.ReadAllBytesAsync(first, TestContext.Current.CancellationToken));
         Assert.Equal([2], await File.ReadAllBytesAsync(second, TestContext.Current.CancellationToken));
     }
+
+    [Fact]
+    public async Task SaveBytesAsync_WritesTheBytesWithTheGivenExtension()
+    {
+        string path = await DerivedAudioFileWriter.SaveBytesAsync([1, 2, 3, 4], _files.InAppData("out"), "encoded", "m4a");
+
+        Assert.EndsWith(".m4a", path);
+        Assert.Equal([1, 2, 3, 4], await File.ReadAllBytesAsync(path, TestContext.Current.CancellationToken));
+    }
+    #endregion
 }

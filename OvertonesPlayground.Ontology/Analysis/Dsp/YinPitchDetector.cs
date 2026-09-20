@@ -3,24 +3,13 @@ using OvertonesPlayground.Services.Implementations;
 namespace OvertonesPlayground.Ontology.Analysis.Dsp;
 
 ///<summary>
-///Result of a pitch estimate.
-///</summary>
-///<param name="FrequencyHz">Estimated fundamental.</param>
-///<param name="Confidence">0 - 1; one minus the cumulative-mean-normalized difference at the chosen lag.</param>
-///<param name="HarmonicToNoiseDb">10 log10(r / (1 - r)) where r is the normalized autocorrelation at the chosen lag.</param>
-public readonly record struct PitchEstimate(double FrequencyHz, double Confidence, double HarmonicToNoiseDb);
-
-///<summary>
 ///The YIN fundamental-frequency estimator (de Cheveigne and Kawahara, 2002), with the difference function computed by
 ///FFT-based autocorrelation so a 4096-sample window costs a few FFTs instead of millions of multiplications.
 ///</summary>
 public static class YinPitchDetector
 {
-    #region Constants
     private const double AbsoluteThreshold = 0.15;
-    #endregion
 
-    #region Private methods
     private static int NextPowerOfTwo(int value)
     {
         int power = 1;
@@ -31,9 +20,7 @@ public static class YinPitchDetector
 
         return power;
     }
-    #endregion
 
-    #region Public methods
     ///<summary>
     ///Estimates the fundamental of <paramref name="window"/>. Returns null when the window is too short or silent.
     ///</summary>
@@ -168,5 +155,4 @@ public static class YinPitchDetector
 
         return new PitchEstimate(sampleRate / refined, confidence, harmonicToNoise);
     }
-    #endregion
 }

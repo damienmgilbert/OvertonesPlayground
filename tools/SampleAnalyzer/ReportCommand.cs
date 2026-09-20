@@ -9,18 +9,19 @@ namespace SampleAnalyzer;
 internal static class ReportCommand
 {
     #region Private methods
+    private static void Heading(string title) => Console.WriteLine($"\n== {title} ==");
+
+    private static InstrumentConcept? Instrument(Sample sample) => Taxonomies.Instruments.TryGet(sample.Classification.Instrument.Value, out InstrumentConcept? concept) ? concept : null;
+
     private static double Median(IEnumerable<double> values)
     {
         double[] sorted = [.. values.Order()];
         return sorted.Length == 0 ? double.NaN : sorted[sorted.Length / 2];
     }
 
-    private static string Percent(int part, int whole) => whole == 0 ? "n/a" : (100.0 * part / whole).ToString("0.0", CultureInfo.InvariantCulture) + " %";
+    private static string Percent(int part, int whole) => whole == 0 ? "n/a" : $"{(100.0 * part / whole).ToString("0.0", CultureInfo.InvariantCulture)} %";
 
-    private static void Heading(string title) => Console.WriteLine($"\n== {title} ==");
-
-    private static void PrintCounts<TKey>(IEnumerable<TKey> keys, string label)
-        where TKey : notnull
+    private static void PrintCounts<TKey>(IEnumerable<TKey> keys, string label) where TKey : notnull
     {
         Console.WriteLine($"{label}:");
         foreach (IGrouping<TKey, TKey> group in keys.GroupBy(key => key).OrderByDescending(group => group.Count()))
@@ -28,21 +29,19 @@ internal static class ReportCommand
             Console.WriteLine($"  {group.Key,-22} {group.Count(),5}");
         }
     }
-
-    private static InstrumentConcept? Instrument(Sample sample) =>
-        Taxonomies.Instruments.TryGet(sample.Classification.Instrument.Value, out InstrumentConcept? concept) ? concept : null;
     #endregion
 
-    #region Public methods
+    #region Internal methods
     internal static void PrintSummary(SampleCatalog catalog)
     {
         IReadOnlyList<Sample> samples = catalog.Samples;
         int unclassified = samples.Count(sample => sample.Classification.Instrument.Value == "unclassified");
         int review = samples.Count(sample => sample.Classification.NeedsReview);
-        Console.WriteLine($"Summary: {samples.Count} samples; {samples.Count(s => s.Status == AnalysisStatus.Analyzed)} analysed, "
-            + $"{samples.Count(s => s.Status == AnalysisStatus.Partial)} partial, {samples.Count(s => s.Status == AnalysisStatus.UnsupportedFormat)} unsupported, "
-            + $"{samples.Count(s => s.Status == AnalysisStatus.Failed)} failed; {unclassified} unclassified ({Percent(unclassified, samples.Count)}), "
-            + $"{review} flagged for review ({Percent(review, samples.Count)}).");
+        Console.WriteLine(
+        $"Summary: {samples.Count} samples; {samples.Count(s => s.Status == AnalysisStatus.Analyzed)} analysed, " +
+        $"{samples.Count(s => s.Status == AnalysisStatus.Partial)} partial, {samples.Count(s => s.Status == AnalysisStatus.UnsupportedFormat)} unsupported, " +
+        $"{samples.Count(s => s.Status == AnalysisStatus.Failed)} failed; {unclassified} unclassified ({Percent(unclassified, samples.Count)}), " +
+        $"{review} flagged for review ({Percent(review, samples.Count)}).");
     }
 
     internal static int Run(string catalogPath, Dictionary<string, string> options)
@@ -97,14 +96,14 @@ internal static class ReportCommand
 
         Heading("Do the acoustic facets behave? (median per family)");
         Console.WriteLine($"{"family",-24} {"n",5} {"centroid",9} {"flatness",9} {"dur s",7} {"LUFS",7} {"attack ms",10} {"decay ms",9} {"pitched",8} {"mono",6}");
-        foreach (IGrouping<string, Sample> group in samples.Where(s => s.Spectral is not null && s.Dynamics is not null)
-            .GroupBy(sample => Instrument(sample)?.Family.Key ?? "?").Where(g => g.Count() >= 8).OrderByDescending(g => g.Count()).Take(22))
+        foreach (IGrouping<string, Sample> group in samples.Where(s => s.Spectral is not null && s.Dynamics is not null).GroupBy(sample => Instrument(sample)?.Family.Key ?? "?").Where(g => g.Count() >= 8).OrderByDescending(g => g.Count()).Take(22))
         {
             int pitched = group.Count(s => s.Tonality?.Character.HasFlag(TonalCharacter.Pitched) == true);
             int mono = group.Count(s => s.Stereo?.Image is StereoImage.Mono or StereoImage.DualMono);
-            Console.WriteLine($"{group.Key,-24} {group.Count(),5} {Median(group.Select(s => s.Spectral!.CentroidHz)),9:0} {Median(group.Select(s => s.Spectral!.Flatness)),9:0.00} "
-                + $"{Median(group.Select(s => s.Technical!.DurationSeconds)),7:0.00} {Median(group.Select(s => s.Dynamics!.IntegratedLufs)),7:0.0} "
-                + $"{Median(group.Select(s => s.Dynamics!.AttackMs)),10:0.0} {Median(group.Select(s => s.Dynamics!.DecayMs)),9:0} {Percent(pitched, group.Count()),8} {Percent(mono, group.Count()),6}");
+            Console.WriteLine(
+            $"{group.Key,-24} {group.Count(),5} {Median(group.Select(s => s.Spectral!.CentroidHz)),9:0} {Median(group.Select(s => s.Spectral!.Flatness)),9:0.00} " +
+            $"{Median(group.Select(s => s.Technical!.DurationSeconds)),7:0.00} {Median(group.Select(s => s.Dynamics!.IntegratedLufs)),7:0.0} " +
+            $"{Median(group.Select(s => s.Dynamics!.AttackMs)),10:0.0} {Median(group.Select(s => s.Dynamics!.DecayMs)),9:0} {Percent(pitched, group.Count()),8} {Percent(mono, group.Count()),6}");
         }
 
         Heading("Facet distributions");
@@ -154,8 +153,9 @@ internal static class ReportCommand
         int clustered = families.Sum(family => family.Members.Count);
         double weightedPurity = clustered == 0 ? 0 : families.Sum(family => family.Purity * family.Members.Count) / clustered;
         int pure = families.Count(family => family.Purity >= 0.8);
-        Console.WriteLine($"{families.Count} families over {clustered} sounds (sizes {families.Min(f => f.Members.Count)} to {families.Max(f => f.Members.Count)}); "
-            + $"on average {100.0 * weightedPurity:0.0} % of a sound's family shares its instrument family; {pure} families are at least 80 % one instrument family.");
+        Console.WriteLine(
+        $"{families.Count} families over {clustered} sounds (sizes {families.Min(f => f.Members.Count)} to {families.Max(f => f.Members.Count)}); " +
+        $"on average {100.0 * weightedPurity:0.0} % of a sound's family shares its instrument family; {pure} families are at least 80 % one instrument family.");
         foreach (SoundFamily family in families.OrderBy(family => family.Purity).Take(6))
         {
             Console.WriteLine($"  least uniform: {family.Name,-46} {family.Members.Count,4} sounds, {100.0 * family.Purity:0} % {family.DominantInstrument?.DisplayName}");

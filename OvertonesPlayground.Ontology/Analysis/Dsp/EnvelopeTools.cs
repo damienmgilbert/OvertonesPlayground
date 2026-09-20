@@ -1,48 +1,44 @@
 namespace OvertonesPlayground.Ontology.Analysis.Dsp;
 
 ///<summary>
-///Region of a signal that is audibly present, in sample frames.
-///</summary>
-///<param name="StartFrame">First active frame.</param>
-///<param name="EndFrame">One past the last active frame.</param>
-public readonly record struct ActiveRegion(int StartFrame, int EndFrame)
-{
-    #region Public properties
-    ///<summary>Length in frames.</summary>
-    public int Length => Math.Max(0, EndFrame - StartFrame);
-    #endregion
-}
-
-///<summary>
 ///Amplitude envelopes and the audible region of a signal.
 ///</summary>
 public static class EnvelopeTools
 {
-    #region Public methods
     ///<summary>
-    ///RMS envelope: for each hop, the RMS of a window centred on it, computed from prefix sums of squares in O(n).
+    ///The stretch of the signal whose RMS envelope stays within <paramref name="thresholdDb"/> of its own peak. Empty
+    ///for silence.
     ///</summary>
-    public static double[] RmsEnvelope(ReadOnlySpan<float> mono, int windowSamples, int hopSamples)
+    public static ActiveRegion FindActiveRegion(double[] rmsEnvelope, int hopSamples, int windowSamples, int frames, double thresholdDb = -50.0)
     {
-        int n = mono.Length;
-        double[] prefix = new double[n + 1];
-        for (int i = 0; i < n; i++)
+        double peak = 0;
+        foreach (double value in rmsEnvelope)
         {
-            prefix[i + 1] = prefix[i] + ((double)mono[i] * mono[i]);
+            peak = Math.Max(peak, value);
         }
 
-        int hops = n == 0 ? 0 : ((n - 1) / hopSamples) + 1;
-        double[] envelope = new double[hops];
-        for (int k = 0; k < hops; k++)
+        bool isSilent = peak <= 1e-9;
+        if (isSilent)
         {
-            int center = k * hopSamples;
-            int from = Math.Max(0, center - (windowSamples / 2));
-            int to = Math.Min(n, center + (windowSamples / 2));
-            int count = to - from;
-            envelope[k] = count <= 0 ? 0.0 : Math.Sqrt(Math.Max(0.0, prefix[to] - prefix[from]) / count);
+            return new ActiveRegion(0, 0);
         }
 
-        return envelope;
+        double threshold = peak * Decibels.ToAmplitude(thresholdDb);
+        int first = 0;
+        while (first < rmsEnvelope.Length && rmsEnvelope[first] < threshold)
+        {
+            first++;
+        }
+
+        int last = rmsEnvelope.Length - 1;
+        while (last > first && rmsEnvelope[last] < threshold)
+        {
+            last--;
+        }
+
+        int start = Math.Max(0, (first * hopSamples) - (windowSamples / 2));
+        int end = Math.Min(frames, (last * hopSamples) + (windowSamples / 2));
+        return new ActiveRegion(start, Math.Max(start + 1, end));
     }
 
     ///<summary>
@@ -94,39 +90,28 @@ public static class EnvelopeTools
     }
 
     ///<summary>
-    ///The stretch of the signal whose RMS envelope stays within <paramref name="thresholdDb"/> of its own peak.
-    ///Empty for silence.
+    ///RMS envelope: for each hop, the RMS of a window centred on it, computed from prefix sums of squares in O(n).
     ///</summary>
-    public static ActiveRegion FindActiveRegion(double[] rmsEnvelope, int hopSamples, int windowSamples, int frames, double thresholdDb = -50.0)
+    public static double[] RmsEnvelope(ReadOnlySpan<float> mono, int windowSamples, int hopSamples)
     {
-        double peak = 0;
-        foreach (double value in rmsEnvelope)
+        int n = mono.Length;
+        double[] prefix = new double[n + 1];
+        for (int i = 0; i < n; i++)
         {
-            peak = Math.Max(peak, value);
+            prefix[i + 1] = prefix[i] + ((double)mono[i] * mono[i]);
         }
 
-        bool isSilent = peak <= 1e-9;
-        if (isSilent)
+        int hops = n == 0 ? 0 : ((n - 1) / hopSamples) + 1;
+        double[] envelope = new double[hops];
+        for (int k = 0; k < hops; k++)
         {
-            return new ActiveRegion(0, 0);
+            int center = k * hopSamples;
+            int from = Math.Max(0, center - (windowSamples / 2));
+            int to = Math.Min(n, center + (windowSamples / 2));
+            int count = to - from;
+            envelope[k] = count <= 0 ? 0.0 : Math.Sqrt(Math.Max(0.0, prefix[to] - prefix[from]) / count);
         }
 
-        double threshold = peak * Decibels.ToAmplitude(thresholdDb);
-        int first = 0;
-        while (first < rmsEnvelope.Length && rmsEnvelope[first] < threshold)
-        {
-            first++;
-        }
-
-        int last = rmsEnvelope.Length - 1;
-        while (last > first && rmsEnvelope[last] < threshold)
-        {
-            last--;
-        }
-
-        int start = Math.Max(0, (first * hopSamples) - (windowSamples / 2));
-        int end = Math.Min(frames, (last * hopSamples) + (windowSamples / 2));
-        return new ActiveRegion(start, Math.Max(start + 1, end));
+        return envelope;
     }
-    #endregion
 }

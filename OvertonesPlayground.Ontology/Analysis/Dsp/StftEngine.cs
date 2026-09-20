@@ -9,13 +9,15 @@ namespace OvertonesPlayground.Ontology.Analysis.Dsp;
 public sealed class StftEngine
 {
     #region Fields
-    private readonly double[] _real;
     private readonly double[] _imaginary;
+    private readonly double[] _real;
     private readonly double[] _window;
     #endregion
 
     #region Constructors
-    ///<summary>Creates an engine for frames of <paramref name="fftSize"/> samples (a power of two).</summary>
+    ///<summary>
+    ///Creates an engine for frames of <paramref name="fftSize"/> samples (a power of two).
+    ///</summary>
     public StftEngine(int fftSize)
     {
         bool isPowerOfTwo = fftSize >= 2 && (fftSize & (fftSize - 1)) == 0;
@@ -42,8 +44,8 @@ public sealed class StftEngine
     public double BinFrequency(int bin, int sampleRate) => (double)bin * sampleRate / FftSize;
 
     ///<summary>
-    ///Computes the Hann-windowed power spectrum (|X|^2, bins 0 .. N/2) of the frame starting at
-    ///<paramref name="start"/>. Samples beyond the end of <paramref name="signal"/> count as zero.
+    ///Computes the Hann-windowed power spectrum (|X|^2, bins 0 .. N/2) of the frame starting at ///<paramref
+    ///name="start"/>. Samples beyond the end of <paramref name="signal"/> count as zero.
     ///</summary>
     public void Power(ReadOnlySpan<float> signal, int start, Span<double> destination)
     {
@@ -64,10 +66,14 @@ public sealed class StftEngine
     #endregion
 
     #region Public properties
-    ///<summary>Number of spectrum bins, N/2 + 1.</summary>
+    ///<summary>
+    ///Number of spectrum bins, N/2 + 1.
+    ///</summary>
     public int BinCount => (FftSize / 2) + 1;
 
-    ///<summary>Frame length in samples.</summary>
+    ///<summary>
+    ///Frame length in samples.
+    ///</summary>
     public int FftSize { get; }
     #endregion
 }

@@ -4,12 +4,11 @@ namespace OvertonesPlayground.Tests.Services;
 
 public sealed class SampleAssetStoreTests : IDisposable
 {
+    #region Fields
     private readonly TempFileSystem _fileSystem = new();
+    #endregion
 
-    public void Dispose() => _fileSystem.Dispose();
-
-    private SampleAssetStore Create() => new(_fileSystem);
-
+    #region Private methods
     private byte[] AddAsset(string name, int size = 64)
     {
         byte[] bytes = RiffBuilder.Wav16(1, 44100, [.. Enumerable.Range(0, size).Select(i => (short)((i * 7) + name.Length))]);
@@ -17,124 +16,12 @@ public sealed class SampleAssetStoreTests : IDisposable
         return bytes;
     }
 
-    private static void AssertNear(int expected, short actual) =>
-        Assert.True(Math.Abs(expected - actual) <= 1, $"expected {expected} (+/- 1) but was {actual}");
+    private static void AssertNear(int expected, short actual) => Assert.True(Math.Abs(expected - actual) <= 1, $"expected {expected} (+/- 1) but was {actual}");
 
-    [Fact]
-    public async Task GetLocalPathAsync_CopiesTheAssetOutOfThePackageIntoTheCache()
-    {
-        byte[] bytes = AddAsset("Kick 909 DMX 1.wav");
+    private SampleAssetStore Create() => new(_fileSystem);
+    #endregion
 
-        string path = await Create().GetLocalPathAsync("Kick 909 DMX 1.wav", TestContext.Current.CancellationToken);
-
-        Assert.StartsWith(_fileSystem.CacheDirectory, path, StringComparison.Ordinal);
-        Assert.Equal(bytes, await File.ReadAllBytesAsync(path, TestContext.Current.CancellationToken));
-        Assert.Equal("Kick 909 DMX 1.wav", Path.GetFileName(path));
-    }
-
-    [Fact]
-    public async Task GetLocalPathAsync_AskedTwice_ReturnsTheSameFileWithoutCopyingAgain()
-    {
-        _ = AddAsset("Snare Test.wav");
-        SampleAssetStore store = Create();
-
-        string first = await store.GetLocalPathAsync("Snare Test.wav", TestContext.Current.CancellationToken);
-        string second = await store.GetLocalPathAsync("Snare Test.wav", TestContext.Current.CancellationToken);
-
-        Assert.Equal(first, second);
-        Assert.Equal(1, _fileSystem.PackageOpenCount);
-    }
-
-    [Theory]
-    [InlineData("Beefy Chop F#.wav")]
-    [InlineData("Break Ahmir's Voodoo 119 bpm.wav")]
-    [InlineData("Hihat Closed Kaninchen.wav")]
-    [InlineData("808 Oracle 10.wav")]
-    public async Task GetLocalPathAsync_NamesWithPunctuation_Work(string name)
-    {
-        byte[] bytes = AddAsset(name);
-
-        string path = await Create().GetLocalPathAsync(name, TestContext.Current.CancellationToken);
-
-        Assert.Equal(bytes, await File.ReadAllBytesAsync(path, TestContext.Current.CancellationToken));
-    }
-
-    [Fact]
-    public async Task GetLocalPathAsync_UnknownAsset_ThrowsAndLeavesNoPartialFileBehind()
-    {
-        _ = await Assert.ThrowsAsync<FileNotFoundException>(() => Create().GetLocalPathAsync("Nope.wav", TestContext.Current.CancellationToken));
-
-        string folder = Path.Combine(_fileSystem.CacheDirectory, "sample-bank");
-        Assert.Empty(Directory.GetFiles(folder));
-    }
-
-    [Theory]
-    [InlineData("")]
-    [InlineData("   ")]
-    public async Task GetLocalPathAsync_BlankName_Throws(string name)
-    {
-        _ = await Assert.ThrowsAnyAsync<ArgumentException>(() => Create().GetLocalPathAsync(name, TestContext.Current.CancellationToken));
-    }
-
-    [Fact]
-    public async Task GetLocalPathAsync_MoreThanTheCacheLimit_EvictsTheLeastRecentlyUsedCopy()
-    {
-        SampleAssetStore store = Create();
-        string folder = Path.Combine(_fileSystem.CacheDirectory, "sample-bank");
-        _ = Directory.CreateDirectory(folder);
-        DateTime start = DateTime.UtcNow.AddHours(-1);
-        for (int i = 0; i < SampleAssetStore.MaxCachedFiles; i++)
-        {
-            string old = Path.Combine(folder, $"Old {i}.wav");
-            await File.WriteAllBytesAsync(old, [1, 2, 3], TestContext.Current.CancellationToken);
-            File.SetLastWriteTimeUtc(old, start.AddSeconds(i));
-        }
-
-        _ = AddAsset("New.wav");
-        string fresh = await store.GetLocalPathAsync("New.wav", TestContext.Current.CancellationToken);
-
-        Assert.False(File.Exists(Path.Combine(folder, "Old 0.wav")), "the oldest copy should have been evicted");
-        Assert.True(File.Exists(Path.Combine(folder, $"Old {SampleAssetStore.MaxCachedFiles - 1}.wav")));
-        Assert.True(File.Exists(fresh));
-        Assert.Equal(SampleAssetStore.MaxCachedFiles, Directory.GetFiles(folder).Length);
-    }
-
-    [Fact]
-    public async Task GetLocalPathAsync_UsingACachedCopy_MakesItTheMostRecentlyUsed()
-    {
-        _ = AddAsset("Keep.wav");
-        SampleAssetStore store = Create();
-        string keep = await store.GetLocalPathAsync("Keep.wav", TestContext.Current.CancellationToken);
-        File.SetLastWriteTimeUtc(keep, DateTime.UtcNow.AddDays(-1));
-
-        _ = await store.GetLocalPathAsync("Keep.wav", TestContext.Current.CancellationToken);
-
-        Assert.True(File.GetLastWriteTimeUtc(keep) > DateTime.UtcNow.AddMinutes(-1));
-    }
-
-    [Fact]
-    public async Task CopyToAsync_WritesAPermanentCopyToTheDestination()
-    {
-        byte[] bytes = AddAsset("Clap Crunch.wav");
-        string destination = _fileSystem.InAppData("Clips");
-
-        string path = await Create().CopyToAsync("Clap Crunch.wav", destination, TestContext.Current.CancellationToken);
-
-        Assert.Equal(Path.Combine(destination, "Clap Crunch.wav"), path);
-        Assert.Equal(bytes, await File.ReadAllBytesAsync(path, TestContext.Current.CancellationToken));
-    }
-
-    [Fact]
-    public async Task CopyToAsync_Plain16BitFile_IsCopiedByteForByte()
-    {
-        byte[] file = RiffBuilder.Wav16(1, 44100, 0, 1000, -1000, short.MaxValue, short.MinValue);
-        _fileSystem.AddPackageFile("Sixteen.wav", file);
-
-        string path = await Create().CopyToAsync("Sixteen.wav", _fileSystem.InAppData("Clips"), TestContext.Current.CancellationToken);
-
-        Assert.Equal(file, await File.ReadAllBytesAsync(path, TestContext.Current.CancellationToken));
-    }
-
+    #region Public methods
     [Fact]
     public async Task CopyToAsync_24BitFile_BecomesA16BitFileTheEditorsCanRead()
     {
@@ -185,17 +72,6 @@ public sealed class SampleAssetStoreTests : IDisposable
     }
 
     [Fact]
-    public async Task GetLocalPathAsync_PlaybackCopyKeepsTheOriginalBitDepth()
-    {
-        byte[] file = RiffBuilder.Wav24(1, 44100, 1000, -1000);
-        _fileSystem.AddPackageFile("Deep.wav", file);
-
-        string path = await Create().GetLocalPathAsync("Deep.wav", TestContext.Current.CancellationToken);
-
-        Assert.Equal(file, await File.ReadAllBytesAsync(path, TestContext.Current.CancellationToken));
-    }
-
-    [Fact]
     public async Task CopyToAsync_NameAlreadyThere_UsesANumberedNameAndKeepsTheOriginal()
     {
         _ = AddAsset("Clap Crunch.wav");
@@ -213,6 +89,17 @@ public sealed class SampleAssetStoreTests : IDisposable
     }
 
     [Fact]
+    public async Task CopyToAsync_Plain16BitFile_IsCopiedByteForByte()
+    {
+        byte[] file = RiffBuilder.Wav16(1, 44100, 0, 1000, -1000, short.MaxValue, short.MinValue);
+        _fileSystem.AddPackageFile("Sixteen.wav", file);
+
+        string path = await Create().CopyToAsync("Sixteen.wav", _fileSystem.InAppData("Clips"), TestContext.Current.CancellationToken);
+
+        Assert.Equal(file, await File.ReadAllBytesAsync(path, TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
     public async Task CopyToAsync_TheCopyIsNotAffectedWhenTheCacheEvictsTheOriginal()
     {
         byte[] bytes = AddAsset("Keeper.wav");
@@ -223,4 +110,118 @@ public sealed class SampleAssetStoreTests : IDisposable
 
         Assert.Equal(bytes, await File.ReadAllBytesAsync(permanent, TestContext.Current.CancellationToken));
     }
+
+    [Fact]
+    public async Task CopyToAsync_WritesAPermanentCopyToTheDestination()
+    {
+        byte[] bytes = AddAsset("Clap Crunch.wav");
+        string destination = _fileSystem.InAppData("Clips");
+
+        string path = await Create().CopyToAsync("Clap Crunch.wav", destination, TestContext.Current.CancellationToken);
+
+        Assert.Equal(Path.Combine(destination, "Clap Crunch.wav"), path);
+        Assert.Equal(bytes, await File.ReadAllBytesAsync(path, TestContext.Current.CancellationToken));
+    }
+
+    public void Dispose() => _fileSystem.Dispose();
+
+    [Fact]
+    public async Task GetLocalPathAsync_AskedTwice_ReturnsTheSameFileWithoutCopyingAgain()
+    {
+        _ = AddAsset("Snare Test.wav");
+        SampleAssetStore store = Create();
+
+        string first = await store.GetLocalPathAsync("Snare Test.wav", TestContext.Current.CancellationToken);
+        string second = await store.GetLocalPathAsync("Snare Test.wav", TestContext.Current.CancellationToken);
+
+        Assert.Equal(first, second);
+        Assert.Equal(1, _fileSystem.PackageOpenCount);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task GetLocalPathAsync_BlankName_Throws(string name) { _ = await Assert.ThrowsAnyAsync<ArgumentException>(() => Create().GetLocalPathAsync(name, TestContext.Current.CancellationToken)); }
+    [Fact]
+    public async Task GetLocalPathAsync_CopiesTheAssetOutOfThePackageIntoTheCache()
+    {
+        byte[] bytes = AddAsset("Kick 909 DMX 1.wav");
+
+        string path = await Create().GetLocalPathAsync("Kick 909 DMX 1.wav", TestContext.Current.CancellationToken);
+
+        Assert.StartsWith(_fileSystem.CacheDirectory, path, StringComparison.Ordinal);
+        Assert.Equal(bytes, await File.ReadAllBytesAsync(path, TestContext.Current.CancellationToken));
+        Assert.Equal("Kick 909 DMX 1.wav", Path.GetFileName(path));
+    }
+
+    [Fact]
+    public async Task GetLocalPathAsync_MoreThanTheCacheLimit_EvictsTheLeastRecentlyUsedCopy()
+    {
+        SampleAssetStore store = Create();
+        string folder = Path.Combine(_fileSystem.CacheDirectory, "sample-bank");
+        _ = Directory.CreateDirectory(folder);
+        DateTime start = DateTime.UtcNow.AddHours(-1);
+        for (int i = 0; i < SampleAssetStore.MaxCachedFiles; i++)
+        {
+            string old = Path.Combine(folder, $"Old {i}.wav");
+            await File.WriteAllBytesAsync(old, [1, 2, 3], TestContext.Current.CancellationToken);
+            File.SetLastWriteTimeUtc(old, start.AddSeconds(i));
+        }
+
+        _ = AddAsset("New.wav");
+        string fresh = await store.GetLocalPathAsync("New.wav", TestContext.Current.CancellationToken);
+
+        Assert.False(File.Exists(Path.Combine(folder, "Old 0.wav")), "the oldest copy should have been evicted");
+        Assert.True(File.Exists(Path.Combine(folder, $"Old {SampleAssetStore.MaxCachedFiles - 1}.wav")));
+        Assert.True(File.Exists(fresh));
+        Assert.Equal(SampleAssetStore.MaxCachedFiles, Directory.GetFiles(folder).Length);
+    }
+
+    [Theory]
+    [InlineData("Beefy Chop F#.wav")]
+    [InlineData("Break Ahmir's Voodoo 119 bpm.wav")]
+    [InlineData("Hihat Closed Kaninchen.wav")]
+    [InlineData("808 Oracle 10.wav")]
+    public async Task GetLocalPathAsync_NamesWithPunctuation_Work(string name)
+    {
+        byte[] bytes = AddAsset(name);
+
+        string path = await Create().GetLocalPathAsync(name, TestContext.Current.CancellationToken);
+
+        Assert.Equal(bytes, await File.ReadAllBytesAsync(path, TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task GetLocalPathAsync_PlaybackCopyKeepsTheOriginalBitDepth()
+    {
+        byte[] file = RiffBuilder.Wav24(1, 44100, 1000, -1000);
+        _fileSystem.AddPackageFile("Deep.wav", file);
+
+        string path = await Create().GetLocalPathAsync("Deep.wav", TestContext.Current.CancellationToken);
+
+        Assert.Equal(file, await File.ReadAllBytesAsync(path, TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task GetLocalPathAsync_UnknownAsset_ThrowsAndLeavesNoPartialFileBehind()
+    {
+        _ = await Assert.ThrowsAsync<FileNotFoundException>(() => Create().GetLocalPathAsync("Nope.wav", TestContext.Current.CancellationToken));
+
+        string folder = Path.Combine(_fileSystem.CacheDirectory, "sample-bank");
+        Assert.Empty(Directory.GetFiles(folder));
+    }
+
+    [Fact]
+    public async Task GetLocalPathAsync_UsingACachedCopy_MakesItTheMostRecentlyUsed()
+    {
+        _ = AddAsset("Keep.wav");
+        SampleAssetStore store = Create();
+        string keep = await store.GetLocalPathAsync("Keep.wav", TestContext.Current.CancellationToken);
+        File.SetLastWriteTimeUtc(keep, DateTime.UtcNow.AddDays(-1));
+
+        _ = await store.GetLocalPathAsync("Keep.wav", TestContext.Current.CancellationToken);
+
+        Assert.True(File.GetLastWriteTimeUtc(keep) > DateTime.UtcNow.AddMinutes(-1));
+    }
+    #endregion
 }

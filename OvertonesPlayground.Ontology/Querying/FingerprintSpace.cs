@@ -9,28 +9,27 @@ namespace OvertonesPlayground.Ontology.Querying;
 public sealed class FingerprintSpace
 {
     #region Constants
-    ///<summary>Number of features per vector.</summary>
-    public const int Dimensions = 34;
 
-    ///<summary>Names of the features, in vector order.</summary>
-    public static readonly IReadOnlyList<string> FeatureNames =
-    [
-        "log centroid", "log rolloff", "log bandwidth", "flatness", "flux", "tilt",
-        "sub", "bass", "low-mid", "mid", "high-mid", "presence", "air",
-        "crest", "log attack", "log decay", "log duration", "pitch confidence", "harmonicity", "log onset rate", "log active length",
-        "log onset centroid",
-        "mfcc 1", "mfcc 2", "mfcc 3", "mfcc 4", "mfcc 5", "mfcc 6", "mfcc 7", "mfcc 8", "mfcc 9", "mfcc 10", "mfcc 11", "mfcc 12",
-    ];
+    ///<summary>
+    ///Number of features per vector.
+    ///</summary>
+    public const int Dimensions = 34;
     #endregion
 
     #region Fields
+    ///<summary>
+    ///Names of the features, in vector order.
+    ///</summary>
+    public static readonly IReadOnlyList<string> FeatureNames =["log centroid", "log rolloff", "log bandwidth", "flatness", "flux", "tilt", "sub", "bass", "low-mid", "mid", "high-mid", "presence", "air", "crest", "log attack", "log decay", "log duration", "pitch confidence", "harmonicity", "log onset rate", "log active length", "log onset centroid", "mfcc 1", "mfcc 2", "mfcc 3", "mfcc 4", "mfcc 5", "mfcc 6", "mfcc 7", "mfcc 8", "mfcc 9", "mfcc 10", "mfcc 11", "mfcc 12", ];
     private readonly double[] _mean = new double[Dimensions];
     private readonly double[] _scale = new double[Dimensions];
     private readonly Dictionary<string, double[]> _vectors = new(StringComparer.Ordinal);
     #endregion
 
     #region Constructors
-    ///<summary>Learns the mean and spread of each feature from <paramref name="samples"/> and vectorizes them.</summary>
+    ///<summary>
+    ///Learns the mean and spread of each feature from <paramref name="samples"/> and vectorizes them.
+    ///</summary>
     public FingerprintSpace(IEnumerable<Sample> samples)
     {
         List<(string Id, double[] Raw)> raws = [];
@@ -71,6 +70,8 @@ public sealed class FingerprintSpace
     #endregion
 
     #region Private methods
+    private static double Log10(double value) => Math.Log10(Math.Max(value, 0) + 1.0);
+
     private double[] Standardize(double[] raw)
     {
         double[] vector = new double[Dimensions];
@@ -81,10 +82,12 @@ public sealed class FingerprintSpace
 
         return vector;
     }
+    #endregion
 
-    private static double Log10(double value) => Math.Log10(Math.Max(value, 0) + 1.0);
-
-    ///<summary>Unstandardized features of <paramref name="sample"/>, or null when it has no spectral or dynamics facet.</summary>
+    #region Internal methods
+    ///<summary>
+    ///Unstandardized features of <paramref name="sample"/>, or null when it has no spectral or dynamics facet.
+    ///</summary>
     internal static double[]? Raw(Sample sample)
     {
         SpectralFacet? spectral = sample.Spectral;
@@ -97,31 +100,28 @@ public sealed class FingerprintSpace
 
         double[] bands = spectral.Bands.ToArray();
         double[] mfcc = spectral.Mfcc.Length == 12 ? spectral.Mfcc : new double[12];
-        return
-        [
-            Log10(spectral.CentroidHz),
-            Log10(spectral.RolloffHz),
-            Log10(spectral.BandwidthHz),
-            spectral.Flatness,
-            Math.Min(spectral.Flux, 2.0),
-            Math.Clamp(spectral.TiltDbPerOctave, -24, 6),
-            Math.Sqrt(bands[0]), Math.Sqrt(bands[1]), Math.Sqrt(bands[2]), Math.Sqrt(bands[3]), Math.Sqrt(bands[4]), Math.Sqrt(bands[5]), Math.Sqrt(bands[6]),
-            Math.Clamp(dynamics.CrestDb, 0, 40),
-            Log10(dynamics.AttackMs),
-            Log10(dynamics.DecayMs),
-            Math.Log10(technical.DurationSeconds + 0.01),
-            sample.Tonality?.PitchConfidence ?? 0,
-            Math.Clamp(sample.Tonality?.HarmonicToNoiseDb ?? -10, -10, 40),
-            Math.Log(1 + (sample.Rhythm?.OnsetsPerSecond ?? 0)),
-            Math.Log10(dynamics.ActiveSeconds + 0.01),
-            Log10(spectral.OnsetCentroidHz),
-            mfcc[0], mfcc[1], mfcc[2], mfcc[3], mfcc[4], mfcc[5], mfcc[6], mfcc[7], mfcc[8], mfcc[9], mfcc[10], mfcc[11],
-        ];
+        return[Log10(spectral.CentroidHz), Log10(spectral.RolloffHz), Log10(spectral.BandwidthHz), spectral.Flatness, Math.Min(spectral.Flux, 2.0), Math.Clamp(spectral.TiltDbPerOctave, -24, 6), Math.Sqrt(bands[0]), Math.Sqrt(bands[1]), Math.Sqrt(bands[2]), Math.Sqrt(bands[3]), Math.Sqrt(bands[4]), Math.Sqrt(
+                                                                                                                                                                                                                                                                                                           bands[
+                                                                                                                                                                                                                                                                                                           5]), Math.Sqrt(
+                                                                                                                                                                                                                                                                                                                bands[
+                                                                                                                                                                                                                                                                                                                6]), Math.Clamp(
+                                                                                                                                                                                                                                                                                                                     dynamics.CrestDb,
+                                                                                                                                                                                                                                                                                                                     0,
+                                                                                                                                                                                                                                                                                                                     40), Log10(
+                                                                                                                                                                                                                                                                                                                          dynamics.AttackMs), Log10(
+                                                                                                                                                                                                                                                                                                                                              dynamics.DecayMs), Math.Log10(
+                                                                                                                                                                                                                                                                                                                                                                 technical.DurationSeconds +
+                                                                                                                                                                                                                                                                                                                                                                 0.01), sample.Tonality?.PitchConfidence ??
+            0, Math.Clamp(sample.Tonality?.HarmonicToNoiseDb ?? -10, -10, 40), Math.Log(1 + (sample.Rhythm?.OnsetsPerSecond ?? 0)), Math.Log10(dynamics.ActiveSeconds + 0.01), Log10(spectral.OnsetCentroidHz), mfcc[0], mfcc[1], mfcc[2], mfcc[3], mfcc[4], mfcc[5], mfcc[6], mfcc[7], mfcc[8], mfcc[9], mfcc[
+                                                                                                                                                                                                                                                                                                          10], mfcc[
+                                                                                                                                                                                                                                                                                                               11], ];
     }
     #endregion
 
     #region Public methods
-    ///<summary>Euclidean distance between two standardized vectors.</summary>
+    ///<summary>
+    ///Euclidean distance between two standardized vectors.
+    ///</summary>
     public static double Distance(double[] a, double[] b)
     {
         double sum = 0;
@@ -134,7 +134,9 @@ public sealed class FingerprintSpace
         return Math.Sqrt(sum);
     }
 
-    ///<summary>Standardized vector of <paramref name="sample"/>, or null when it has none.</summary>
+    ///<summary>
+    ///Standardized vector of <paramref name="sample"/>, or null when it has none.
+    ///</summary>
     public double[]? Vector(Sample sample)
     {
         if (_vectors.TryGetValue(sample.Id, out double[]? cached))

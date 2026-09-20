@@ -1,14 +1,6 @@
 namespace OvertonesPlayground.Ontology.Classification;
 
 ///<summary>
-///A sample whose family is already known, used to teach the nearest-neighbour vote.
-///</summary>
-///<param name="Id">Sample id, so a sample never votes for itself.</param>
-///<param name="Vector">Standardized acoustic fingerprint.</param>
-///<param name="FamilyKey">Key of the depth-2 instrument concept.</param>
-public sealed record TrainingExample(string Id, double[] Vector, string FamilyKey);
-
-///<summary>
 ///Votes from the audio itself. It is self-supervised: the ~95 % of files whose names already say what they are become
 ///training data, and every sample is classified by a distance-weighted vote of its nearest neighbours in the
 ///standardized feature space (leave-one-out for the training files). It cross-checks the names, fills in files whose
@@ -16,21 +8,16 @@ public sealed record TrainingExample(string Id, double[] Vector, string FamilyKe
 ///</summary>
 public sealed class SignalHeuristicClassifier : ISampleClassifier
 {
-    #region Constants
     ///<summary>Neighbours that vote.</summary>
     public const int DefaultNeighbours = 9;
 
     private const double DistanceSoftening = 0.25;
     private const double ConfidenceCeiling = 0.9;
-    #endregion
 
-    #region Fields
     private readonly FingerprintSpace _space;
     private readonly IReadOnlyList<TrainingExample> _training;
     private readonly int _neighbours;
-    #endregion
 
-    #region Constructors
     ///<summary>Creates a classifier over labelled examples.</summary>
     public SignalHeuristicClassifier(FingerprintSpace space, IReadOnlyList<TrainingExample> training, int neighbours = DefaultNeighbours)
     {
@@ -38,9 +25,7 @@ public sealed class SignalHeuristicClassifier : ISampleClassifier
         _training = training;
         _neighbours = neighbours;
     }
-    #endregion
 
-    #region Public methods
     ///<inheritdoc/>
     public IReadOnlyList<ClassificationProposal> Classify(ClassificationContext context)
     {
@@ -133,5 +118,4 @@ public sealed class SignalHeuristicClassifier : ISampleClassifier
                 .Select(pair => (pair.Key, Math.Min(ConfidenceCeiling, pair.Value / totalWeight * closeness))),
         ];
     }
-    #endregion
 }

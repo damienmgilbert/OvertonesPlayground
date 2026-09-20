@@ -3,25 +3,15 @@ using System.Text.RegularExpressions;
 namespace OvertonesPlayground.Ontology.Classification;
 
 ///<summary>
-///A file name split into the words that can name a concept and the attributes written in it.
-///</summary>
-///<param name="Words">Normalized words left after tempo, key and variation number were taken out.</param>
-///<param name="Attributes">Tempo, key, octave, variation number and stem.</param>
-public sealed record ParsedName(string[] Words, NamedAttributes Attributes);
-
-///<summary>
 ///Understands the naming conventions of the bundled sample library: <c>Bass Sub C#0</c>, <c>Banjo Arpeggio E Minor 100
 ///bpm</c>, <c>Kick 909 DMX 1</c>, <c>Kick 808 Tone11</c>, <c>808 Heavy E</c>. A lower-case letter after a knob name (<c>Kick 909 Tune1 d</c>) is a
 ///control setting, not a note, and is left alone.
 ///</summary>
 public static partial class FilenameParser
 {
-    #region Constants
     private static readonly Lazy<HashSet<string>> _kitWords = new(() =>
-        [.. Taxonomies.Kits.Aliases.Where(alias => alias.Tokens.Length == 1).Select(alias => alias.Tokens[0])]);
-    #endregion
+    [.. Taxonomies.Kits.Aliases.Where(alias => alias.Tokens.Length == 1).Select(alias => alias.Tokens[0])]);
 
-    #region Private methods
     [GeneratedRegex(@"(?<!\d)(\d{2,3})\s?bpm\b", RegexOptions.IgnoreCase)]
     private static partial Regex TempoPattern();
 
@@ -45,9 +35,7 @@ public static partial class FilenameParser
 
     private static KeyMode ParseMode(string text) =>
         text.StartsWith("min", StringComparison.OrdinalIgnoreCase) ? KeyMode.Minor : KeyMode.Major;
-    #endregion
 
-    #region Public methods
     ///<summary>Parses a file name (without extension).</summary>
     public static ParsedName Parse(string name)
     {
@@ -127,5 +115,4 @@ public static partial class FilenameParser
         NamedAttributes attributes = new(tempo, pitchClass, mode, octave, variation, string.Join(' ', words));
         return new ParsedName(words, attributes);
     }
-    #endregion
 }
