@@ -47,6 +47,12 @@ Things worth knowing about the data:
 
 * File names are strong evidence but not ground truth. Where the audio clearly contradicts a name for a well-defined family
   (kick, snare, hi-hat, tom, cymbal, clap, rim), the sample is flagged `NeedsReview` rather than silently trusted.
+* The audio agrees with the name for 85 % of the core kit sounds (kick, snare, hi-hat, tom, cymbal, clap, rim) and 67 % of all
+  named sounds, measured leave-one-out (`report`). That is a ceiling of the current fingerprint, not of the voting: the
+  confusions are between neighbours (kick and tom, snare and clap or rim, hi-hat and cymbal), and the loose families (hand and
+  electronic percussion, sfx) are too varied to recover by timbre. Changing the neighbour count or vote weighting, correcting for
+  class size, reweighting the feature groups, or an LDA projection in front of the vote each moved core agreement by no more than
+  about 1.5 points when judged on samples they were not fitted on, so none of them is in the classifier.
 * The name is authoritative for tempo. Detected tempo often lands on a related pulse of a drum loop (dotted or triplet feel), so
   `RhythmFacet.TempoAgreesWithName` means "metrically related", not "equal".
 * Loops are cut to whole bars, so `RhythmAnalyzer.SnapToLoopGrid` uses the clip's length to correct a confident detection: it
