@@ -80,7 +80,10 @@ public sealed class SampleDetailViewModel
     #region Private methods
     private static string Number(double value, string format = "0.#") => value.ToString(format, CultureInfo.InvariantCulture);
 
-    private static string Words(string pascalCase) => System.Text.RegularExpressions.Regex.Replace(pascalCase, "(?<=[a-z])(?=[A-Z])", " ");
+    ///<summary>
+    ///Turns <c>OutOfPhase</c> into <c>Out Of Phase</c>.
+    ///</summary>
+    internal static string Words(string pascalCase) => System.Text.RegularExpressions.Regex.Replace(pascalCase, "(?<=[a-z])(?=[A-Z])", " ");
 
     private static List<FactViewModel> BuildFacts(Sample sample)
     {
@@ -107,7 +110,21 @@ public sealed class SampleDetailViewModel
             facts.Add(new FactViewModel("Style", style.Path));
         }
 
-        facts.Add(new FactViewModel("Type", $"{Words(classification.ContentType.Value.ToString())}  ·  {Words(classification.Origin.Value.ToString())}"));
+        List<string> kinds = [];
+        if (classification.ContentType.Value != ContentType.Unknown)
+        {
+            kinds.Add(Words(classification.ContentType.Value.ToString()));
+        }
+
+        if (classification.Origin.Value != SoundOrigin.Unknown)
+        {
+            kinds.Add(Words(classification.Origin.Value.ToString()));
+        }
+
+        if (kinds.Count > 0)
+        {
+            facts.Add(new FactViewModel("Type", string.Join("  ·  ", kinds)));
+        }
 
         if (sample.Technical is { } technical)
         {

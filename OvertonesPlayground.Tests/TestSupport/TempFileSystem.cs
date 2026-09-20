@@ -7,6 +7,7 @@ namespace OvertonesPlayground.Tests.TestSupport;
 internal sealed class TempFileSystem : IFileSystem, IDisposable
 {
     private readonly string _root = Directory.CreateTempSubdirectory("overtones-tests-").FullName;
+    private readonly Dictionary<string, byte[]> _package = new(StringComparer.Ordinal);
 
     public TempFileSystem()
     {
@@ -18,11 +19,72 @@ internal sealed class TempFileSystem : IFileSystem, IDisposable
 
     public string CacheDirectory { get; }
 
-    public Task<bool> AppPackageFileExistsAsync(string filename) => Task.FromResult(false);
+    /// <summary>
+    /// How many times a file was opened from the fake app package.
+    /// </summary>
+    public int PackageOpenCount { get; private set; }
+
+    /// <summary>
+    /// Puts a file in the fake app package, as a bundled MauiAsset would be.
+    /// </summary>
+    public void AddPackageFile(string name, byte[] contents) => _package[name] = contents;
+
+    public Task<bool> AppPackageFileExistsAsync(string filename) => Task.FromResult(_package.ContainsKey(filename));
 
     public void Dispose() => Directory.Delete(_root, recursive: true);
 
-    public Task<Stream> OpenAppPackageFileAsync(string filename) => throw new FileNotFoundException("The test file system has no app package.", filename);
+    /// <summary>
+    /// Serves a package file through a stream that cannot seek, like an Android asset stream; throws for a file that was not added.
+    /// </summary>
+    public Task<Stream> OpenAppPackageFileAsync(string filename)
+    {
+        if (!_package.TryGetValue(filename, out byte[]? contents))
+        {
+            throw new FileNotFoundException("The test file system has no such app package file.", filename);
+        }
+
+        PackageOpenCount++;
+        return Task.FromResult<Stream>(new ForwardOnlyStream(new MemoryStream(contents)));
+    }
+
+    private sealed class ForwardOnlyStream(Stream inner) : Stream
+    {
+        public override bool CanRead => true;
+
+        public override bool CanSeek => false;
+
+        public override bool CanWrite => false;
+
+        public override long Length => throw new NotSupportedException();
+
+        public override long Position
+        {
+            get => throw new NotSupportedException();
+            set => throw new NotSupportedException();
+        }
+
+        public override void Flush()
+        {
+        }
+
+        public override int Read(byte[] buffer, int offset, int count) => inner.Read(buffer, offset, count);
+
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+
+        public override void SetLength(long value) => throw new NotSupportedException();
+
+        public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                inner.Dispose();
+            }
+
+            base.Dispose(disposing);
+        }
+    }
 
     /// <summary>
     /// A path inside the app-data folder, without creating anything.

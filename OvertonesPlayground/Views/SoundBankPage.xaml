@@ -46,8 +46,8 @@
             </VerticalStackLayout>
 
             <!-- Filter rows: one per facet. Chips forward their taps to the view model from code-behind. -->
-            <VerticalStackLayout Grid.Row="2" AutomationId="soundbank-filters" Padding="16,0,16,6" Spacing="4"
-                                 IsVisible="{Binding IsFilterPanelVisible}"
+            <ScrollView Grid.Row="2" AutomationId="soundbank-filters-scroll" MaximumHeightRequest="250" IsVisible="{Binding IsFilterPanelVisible}">
+            <VerticalStackLayout AutomationId="soundbank-filters" Padding="16,0,16,6" Spacing="4"
                                  BindableLayout.ItemsSource="{Binding FacetGroups}">
                 <BindableLayout.ItemTemplate>
                     <DataTemplate x:DataType="vm:FacetGroupViewModel">
@@ -84,6 +84,7 @@
                     </DataTemplate>
                 </BindableLayout.ItemTemplate>
             </VerticalStackLayout>
+            </ScrollView>
 
             <!-- Results: one virtualised list; the whole list is replaced on every change. -->
             <CollectionView Grid.Row="3" AutomationId="soundbank-results" ItemsSource="{Binding Results}" SelectionMode="None">
@@ -138,7 +139,8 @@
                 <Label AutomationId="soundbank-detail-empty" Text="Select a sound to see how the ontology describes it." HorizontalTextAlignment="Center" VerticalTextAlignment="Center" Margin="0,40"
                        TextColor="{DynamicResource TextFillColorSecondary}" IsVisible="{Binding HasDetail, Converter={StaticResource InvertedBool}}" />
 
-                <VerticalStackLayout AutomationId="soundbank-detail" Spacing="12" BindingContext="{Binding Detail}" x:DataType="vm:SampleDetailViewModel" IsVisible="{Binding Source={RelativeSource AncestorType={x:Type vm:SoundBankViewModel}}, Path=HasDetail}">
+                <VerticalStackLayout IsVisible="{Binding HasDetail}">
+                <VerticalStackLayout AutomationId="soundbank-detail" Spacing="12" BindingContext="{Binding Detail}" x:DataType="vm:SampleDetailViewModel">
 
                     <Label Style="{StaticResource SubtitleTextBlockStyle}" Text="{Binding Title}" LineBreakMode="WordWrap" />
 
@@ -208,6 +210,7 @@
                             </DataTemplate>
                         </BindableLayout.ItemTemplate>
                     </VerticalStackLayout>
+                </VerticalStackLayout>
                 </VerticalStackLayout>
             </Grid>
         </ScrollView>

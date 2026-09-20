@@ -170,6 +170,7 @@ public partial class SoundBankViewModel : BaseViewModel
         Results = [.. found.Select(sample => _rows[sample.Id])];
         ResultSummary = $"{Results.Count:N0} of {_index.Count:N0} sounds";
         HasActiveFilters = HasAnyFilter();
+        OnPropertyChanged(nameof(IsSimilarMode));
     }
 
     ///<summary>
@@ -182,9 +183,9 @@ public partial class SoundBankViewModel : BaseViewModel
         List<FacetChipViewModel> chips = [];
         if (_instrumentSelection is not null)
         {
-            string up = _instrumentSelection.Parent is { Parent: not null } grandParent ? grandParent.DisplayName : "all instruments";
-            string parentName = _instrumentSelection.Parent is { Parent: not null } named ? named.DisplayName : up;
-            chips.Add(new FacetChipViewModel(UpKey, $"‹ Back to {parentName}", -1));
+            InstrumentConcept? above = _instrumentSelection.Parent as InstrumentConcept;
+            bool aboveIsRoot = above is null || above.Parent is null;
+            chips.Add(new FacetChipViewModel(UpKey, $"‹ Back to {(aboveIsRoot ? "all instruments" : above!.DisplayName)}", -1));
         }
 
         foreach (InstrumentConcept child in taxonomy.ChildrenOf(parent).Where(child => _instrumentCounts.GetValueOrDefault(child.Key) > 0 && child.Key != "unclassified"))
@@ -201,10 +202,9 @@ public partial class SoundBankViewModel : BaseViewModel
 
     private void ToggleInstrument(FacetChipViewModel chip)
     {
-        InstrumentConcept? current = _instrumentSelection;
         if (chip.Key == UpKey)
         {
-            _instrumentSelection = current?.Parent is { Parent: not null } up ? (InstrumentConcept)up : null;
+            _instrumentSelection = _instrumentSelection?.Parent is InstrumentConcept { Parent: not null } above ? above : null;
         }
         else
         {
@@ -463,7 +463,9 @@ public partial class SoundBankViewModel : BaseViewModel
 
             _previewRow = row;
             row.IsPreviewing = true;
-            _playback.TriggerVoice(PreviewVoiceKey, path, new PadVoiceOptions());
+            // Named arguments select the record's own constructor, whose defaults are speed 1 and no pan. `new PadVoiceOptions()`
+            // would be the struct default instead: volume 0 and speed 0, which the player rejects as unsupported.
+            _playback.TriggerVoice(PreviewVoiceKey, path, new PadVoiceOptions(Volume: 1.0));
 
             // The voice ends by itself; keep the button in step with it.
             double seconds = row.Sample.Technical?.DurationSeconds ?? 1.0;
@@ -493,7 +495,13 @@ public partial class SoundBankViewModel : BaseViewModel
     ///The detail panel's content for the selected sound.
     ///</summary>
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasDetail))]
     public partial SampleDetailViewModel? Detail { get; set; }
+
+    ///<summary>
+    ///Whether a sound is selected, so the detail panel has something to show.
+    ///</summary>
+    public bool HasDetail => Detail is not null;
 
     ///<summary>
     ///Every filter row: instrument, kit, type, character, stereo, length, loudness, envelope and curation.

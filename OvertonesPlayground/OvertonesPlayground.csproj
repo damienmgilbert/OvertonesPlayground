@@ -76,6 +76,11 @@
 		<MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
 	</ItemGroup>
 
+	<!-- The sample ontology: model, analyzers, classifiers and query engine, shared with tools/SampleAnalyzer and the tests. -->
+	<ItemGroup>
+		<ProjectReference Include="..\OvertonesPlayground.Ontology\OvertonesPlayground.Ontology.csproj" />
+	</ItemGroup>
+
 	<ItemGroup>
 		<PackageReference Include="CommunityToolkit.Common" Version="8.4.2" />
 		<PackageReference Include="CommunityToolkit.Diagnostics" Version="8.4.2" />

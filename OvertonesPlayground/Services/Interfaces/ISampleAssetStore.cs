@@ -19,7 +19,8 @@ public interface ISampleAssetStore
     ///<summary>
     ///Copies the bundled asset <paramref name="assetName"/> into <paramref name="destinationDirectory"/> as a permanent file
     ///(unlike <see cref="GetLocalPathAsync"/>, whose copies can be evicted) and returns its path. If a file of that name is
-    ///already there, a numbered name is used instead, so nothing is overwritten.
+    ///already there, a numbered name is used instead, so nothing is overwritten. The file is 16-bit PCM, the only format the
+    ///app's editors read: 24-bit, extensible and float samples are converted (16-bit ones are copied unchanged).
     ///</summary>
     Task<string> CopyToAsync(string assetName, string destinationDirectory, CancellationToken cancellationToken = default);
     #endregion

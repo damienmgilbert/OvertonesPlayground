@@ -1,3 +1,4 @@
+using OvertonesPlayground.Ontology.Analysis;
 using OvertonesPlayground.Services.Interfaces;
 
 namespace OvertonesPlayground.Services.Implementations;
@@ -59,6 +60,52 @@ public class SampleAssetStore : ISampleAssetStore
             }
         }
     }
+    ///<summary>
+    ///Writes the cached sample to <paramref name="target"/> in a form every library tool can open. The editor, trim, mixer and
+    ///multi-track tools read 16-bit PCM only (<see cref="WavFile"/>), while most bundled samples are 24-bit or
+    ///<c>WAVE_FORMAT_EXTENSIBLE</c>, so those are converted to 16-bit PCM (rounded and clamped; sample rate and channels are
+    ///kept). A plain 16-bit PCM file is copied byte for byte.
+    ///</summary>
+    private static async Task WriteAsLibraryClipAsync(string source, string target, CancellationToken cancellationToken)
+    {
+        byte[] bytes = await File.ReadAllBytesAsync(source, cancellationToken);
+        WavData? wav = null;
+        try
+        {
+            wav = RiffWavReader.Read(bytes);
+        }
+        catch (Exception ex) when (ex is NotSupportedException or InvalidDataException)
+        {
+            // Not a WAV the reader understands (for example an AIFF): hand it over as it is rather than lose the sound.
+        }
+
+        bool isAlreadyEditable = wav is null || wav.Format is { BitsPerSample: 16, IsFloat: false, IsExtensible: false };
+        if (isAlreadyEditable)
+        {
+            await File.WriteAllBytesAsync(target, bytes, cancellationToken);
+            return;
+        }
+
+        float[][] channels = wav.Audio.Channels;
+        int frames = wav.Audio.FrameCount;
+        short[] interleaved = new short[frames * channels.Length];
+        for (int frame = 0; frame < frames; frame++)
+        {
+            for (int channel = 0; channel < channels.Length; channel++)
+            {
+                interleaved[(frame * channels.Length) + channel] = PcmMath.ClampToShort(channels[channel][frame] * 32767.0);
+            }
+        }
+
+        WavFile converted = new()
+        {
+            Channels = (short)channels.Length,
+            SampleRate = wav.Audio.SampleRate,
+            BitsPerSample = 16,
+            Samples = interleaved,
+        };
+        await converted.WriteAsync(target);
+    }
     #endregion
 
     #region Public methods
@@ -78,7 +125,7 @@ public class SampleAssetStore : ISampleAssetStore
             target = Path.Combine(destinationDirectory, $"{stem} ({number}){extension}");
         }
 
-        File.Copy(cached, target);
+        await WriteAsLibraryClipAsync(cached, target, cancellationToken);
         return target;
     }
 

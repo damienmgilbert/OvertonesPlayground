@@ -2,16 +2,7 @@ namespace OvertonesPlayground.Tests.Ontology;
 
 public sealed class SampleIndexTests
 {
-    private static SampleIndex Index() => new(TestSamples.DrumKit(6).Concat(
-    [
-        TestSamples.Make("808 Oracle 1", "bass-808", centroidHz: 45, durationSeconds: 2.5, fundamentalHz: 41.2, kit: "808", keyPitchClass: 4, lufs: -9, character: TonalCharacter.Pitched | TonalCharacter.Sub),
-        TestSamples.Make("Break Ghosts 90 bpm", "drum-loop", centroidHz: 900, flatness: 0.5, durationSeconds: 5.3, tempoBpm: 90, content: ContentType.Break, image: StereoImage.Wide, lufs: -20),
-        TestSamples.Make("Groove B 180 bpm", "drum-loop", centroidHz: 950, flatness: 0.5, durationSeconds: 5.0, tempoBpm: 180, content: ContentType.Loop, style: "hip-hop"),
-        TestSamples.Make("Vinyl Dirt 1", "noise", centroidHz: 5300, flatness: 0.78, durationSeconds: 4.8, content: ContentType.Texture, image: StereoImage.DualMono, lufs: -30),
-        TestSamples.Make("Kick 909 DMX 1", "kick", centroidHz: 70, kit: "909", origin: SoundOrigin.DrumMachine, stem: "kick 909 dmx", variation: 1),
-        TestSamples.Make("Kick 909 DMX 2", "kick", centroidHz: 75, kit: "909", origin: SoundOrigin.DrumMachine, stem: "kick 909 dmx", variation: 2),
-        TestSamples.Make("Snare 909 DMX 1", "snare", centroidHz: 1900, kit: "909", stem: "snare 909 dmx", variation: 1),
-    ]));
+    private static SampleIndex Index() => new(TestSamples.Library());
 
     #region Specifications
     [Fact]

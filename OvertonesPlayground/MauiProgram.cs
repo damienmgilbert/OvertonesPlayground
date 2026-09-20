@@ -49,6 +49,11 @@ public static class MauiProgram
         services.AddSingleton<IPublicStorageService, PublicStorageService>();
         services.AddSingleton<ITextToSpeechService, TextToSpeechService>();
         services.AddSingleton<ISpeechToTextService, SpeechToTextService>();
+
+        // The Sound Bank: the precomputed ontology catalog of the bundled samples, and the copy-out of a sample from the app
+        // package to a real file (playback and the library both need a path).
+        services.AddSingleton<ISampleCatalogService, SampleCatalogService>();
+        services.AddSingleton<ISampleAssetStore, SampleAssetStore>();
     }
 
     ///<summary>
@@ -80,6 +85,10 @@ public static class MauiProgram
         // a fresh view model would know nothing of the running import, which would finish into a list nobody is looking at.
         services.AddSingleton<LibraryViewModel>();
         services.AddSingleton<LibraryPage>();
+
+        // The Sound Bank keeps its search, filters and selection when the user flips to another page and back.
+        services.AddSingleton<SoundBankViewModel>();
+        services.AddSingleton<SoundBankPage>();
 
         // Re-created fresh each time they're navigated to.
         services.AddTransient<SoundCreatorViewModel>();

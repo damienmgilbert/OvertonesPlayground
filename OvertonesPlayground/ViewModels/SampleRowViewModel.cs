@@ -123,7 +123,7 @@ public partial class SampleRowViewModel : ObservableObject
     public Sample Sample { get; }
 
     ///<summary>
-    ///Instrument path and kit, for example "Percussion › Hi-Hat › Closed Hi-Hat  ·  Roland 909".
+    ///Instrument path and kit, for example "Percussion > Hi-Hat > Closed Hi-Hat  ·  Roland 909".
     ///</summary>
     public string Subtitle { get; }
     #endregion
