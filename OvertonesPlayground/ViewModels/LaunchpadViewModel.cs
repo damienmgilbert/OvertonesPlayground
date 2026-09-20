@@ -42,10 +42,11 @@ public partial class LaunchpadViewModel : BaseViewModel
     ///<summary>
     ///The colors of the eight pad columns, taken from the hardware; a sample's pad is lit in its column's color.
     ///</summary>
-    private static readonly string[] ColumnColors = ["#E9EC9E", "#EE857F", "#82C2EE", "#DC8AEB", "#72E6E6", "#84E68E", "#EADF8E", "#AA90F5",];
+    private static readonly IReadOnlyList<string> ColumnColors = LaunchpadColumn.Colors;
 
     private readonly LaunchpadPad[][] _banks;
     private readonly Stopwatch _clock = Stopwatch.StartNew();
+    private readonly ILaunchpadExampleService _examples;
     private readonly IFileSystem _fileSystem;
     private readonly IAudioLibraryService _libraryService;
     private readonly IMixdownService _mixdownService;
@@ -62,7 +63,7 @@ public partial class LaunchpadViewModel : BaseViewModel
     ///Creates the view model, fills the grid with <see cref="Rows"/> x <see cref="Columns"/> empty pads, builds the ring of
     ///buttons and restores the layout the app last saved.
     ///</summary>
-    public LaunchpadViewModel(IAudioPlaybackService playbackService, IAudioLibraryService libraryService, ISoundSynthesisService synthesisService, IMixdownService mixdownService, IPreferences preferences, IFileSystem fileSystem, ILogger<LaunchpadViewModel> logger) : base(logger)
+    public LaunchpadViewModel(IAudioPlaybackService playbackService, IAudioLibraryService libraryService, ISoundSynthesisService synthesisService, IMixdownService mixdownService, IPreferences preferences, IFileSystem fileSystem, ILaunchpadExampleService examples, ILogger<LaunchpadViewModel> logger) : base(logger)
     {
         ConstructorLog(Rows, Columns);
         _playbackService = playbackService;
@@ -71,6 +72,7 @@ public partial class LaunchpadViewModel : BaseViewModel
         _mixdownService = mixdownService;
         _preferences = preferences;
         _fileSystem = fileSystem;
+        _examples = examples;
         Title = "Launchpad";
         IsTextPanelVisible = _preferences.Get(TextPanelVisibleKey, true);
 

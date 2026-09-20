@@ -70,6 +70,35 @@ Things worth knowing about the data:
   original. The app's own `WavFile` (Editor, Trim, Mixer, Multi-Track) reads 16-bit PCM only, so **Add to library** converts a
   sample to 16-bit PCM (16-bit samples are copied unchanged); the ontology has its own reader and does not depend on `WavFile`.
 
+## Launchpad example setups
+
+Open **Launchpad > Projects > Examples...** to load a ready-made setup built from the sound bank: **Boom Bap** (90 BPM, E minor),
+**808 Trap** (140 BPM, C minor) or **Dark Club** (130 BPM, F minor). Loading one copies the sounds it uses out of the app package
+into `LaunchpadSamples` in the app's data folder (once; later loads reuse them), replaces the pads and sequencer, and can be undone
+(Shift + Record Arm). It is a normal Launchpad project afterwards: change anything, then *Save as...* to keep it.
+
+Each setup has the kit on bank A (a column per instrument role) and loops on bank B, and a three-pattern sequence. They are
+recipes over the ontology (`LaunchpadExamples`), not lists of file names for the drums, and every setup follows the same rules,
+which `LaunchpadExamplesTests` check against the real catalog:
+
+* **A column is a lane** (low end, backbeat, accents, hats, cymbals, percussion, toms, colour) and means the same in every bank,
+  because the Launchpad's column mixer (volume, pan, echo, speed) is shared by all four banks. The most typical sound of a lane is
+  on the bottom row, since the sequencer can only take a track's sample from the bottom four rows.
+* **Kits:** drums come from one kit, with a second one only for what it lacks (the 909 kit has no hats; the 808 kit's kicks are
+  long sub-bass tails), and the three setups use different kits so they do not sound alike.
+* **The mix:** kick, snare and hats survive being summed to mono; kicks leave room for an 808 bass instead of stacking a second
+  sub-bass on it; every pad is brought to the loudness of its role (a pad volume can only lower a sound, so a sound quieter than
+  its target stays at full volume).
+* **Tempo and key:** a loop is only used if the tempo in its name is within half a percent of the setup's, and its key, if it has
+  one, is a note of the setup's scale (a loop at 130 BPM in E is left out of an F minor setup).
+* **Capabilities:** Radio is on (saved with the project now), so closed and open hats share a column and cut each other and a
+  column of loops launches one at a time; the sequencer uses accents (velocity), ghost notes (a step that plays half the time)
+  and swing. Echo (a column's Sends) is only on the accent column, which never holds a loop: the echo plays a second copy of the
+  pad an eighth note later, which on a loop would layer a delayed duplicate of the whole loop.
+
+Things the recipes cannot decide for you: whether it sounds good (the rules only rule out what clashes), and Note and Chord mode,
+which play the last pad you tapped, so tap an 808 pad first.
+
 ## Testing
 
 ```bash

@@ -41,6 +41,9 @@
 		<Compile Include="..\OvertonesPlayground\Services\Implementations\DynamicsProcessor.cs" Link="Linked\Services\DynamicsProcessor.cs" />
 		<Compile Include="..\OvertonesPlayground\Services\Implementations\FastFourierTransform.cs" Link="Linked\Services\FastFourierTransform.cs" />
 		<Compile Include="..\OvertonesPlayground\Services\Implementations\MixdownService.cs" Link="Linked\Services\MixdownService.cs" />
+		<Compile Include="..\OvertonesPlayground\Services\Implementations\LaunchpadExampleBuilder.cs" Link="Linked\Services\LaunchpadExampleBuilder.cs" />
+		<Compile Include="..\OvertonesPlayground\Services\Implementations\LaunchpadExampleService.cs" Link="Linked\Services\LaunchpadExampleService.cs" />
+		<Compile Include="..\OvertonesPlayground\Services\Implementations\LaunchpadExamples.cs" Link="Linked\Services\LaunchpadExamples.cs" />
 		<Compile Include="..\OvertonesPlayground\Services\Implementations\PcmMath.cs" Link="Linked\Services\PcmMath.cs" />
 		<Compile Include="..\OvertonesPlayground\Services\Implementations\SampleAssetStore.cs" Link="Linked\Services\SampleAssetStore.cs" />
 		<Compile Include="..\OvertonesPlayground\Services\Implementations\SampleCatalogService.cs" Link="Linked\Services\SampleCatalogService.cs" />

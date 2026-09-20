@@ -28,6 +28,7 @@ public partial class LaunchpadViewModel
     {
         project.Normalize();
         _project = project;
+        _isRadioOn = project.IsRadioOn;
 
         foreach (LaunchpadPad pad in _banks.SelectMany(bank => bank))
         {
@@ -80,6 +81,7 @@ public partial class LaunchpadViewModel
     private LaunchpadProject BuildProject()
     {
         _project.Bank = Bank;
+        _project.IsRadioOn = _isRadioOn;
         _project.Pads = [.. _banks.SelectMany(bank => bank).Where(pad => pad.HasClip)];
         return _project;
     }
@@ -242,6 +244,11 @@ public partial class LaunchpadViewModel
             ShowProjectList("Open which project?", OpenProject);
             return Task.CompletedTask;
         }));
+        choices.Add(new LaunchpadMenuChoice("Examples...", () =>
+        {
+            ShowExampleList();
+            return Task.CompletedTask;
+        }));
         choices.Add(new LaunchpadMenuChoice("New project", () =>
         {
             StartNewProject();
@@ -276,6 +283,50 @@ public partial class LaunchpadViewModel
         }))];
         MenuRequested?.Invoke(this, new LaunchpadMenuEventArgs(title, choices));
     }
+
+    ///<summary>
+    ///Asks the page to list the ready-made setups, and loads the one picked.
+    ///</summary>
+    private void ShowExampleList()
+    {
+        List<LaunchpadMenuChoice> choices = [.. _examples.Examples.Select(example => new LaunchpadMenuChoice(example.Name, () => LoadExampleAsync(example)))];
+        MenuRequested?.Invoke(this, new LaunchpadMenuEventArgs("Load an example setup", choices));
+    }
+
+    ///<summary>
+    ///Builds a ready-made setup from the sound bank and makes it the current project, replacing the pads and sequencer. The sounds
+    ///it uses are copied out of the app package the first time, which takes a moment. What was here before can be brought back with
+    ///Undo.
+    ///</summary>
+    private async Task LoadExampleAsync(LaunchpadExampleInfo example)
+    {
+        IsBusy = true;
+        Say($"Loading '{example.Name}'...");
+        try
+        {
+            LaunchpadProject project = await _examples.CreateAsync(example.Id);
+            StopAll();
+            PushUndo();
+            ClearTool();
+            ApplyProject(project);
+            Mode = LaunchpadMode.Session;
+            Layer = LaunchpadLayer.None;
+            Say($"Loaded '{example.Name}'. {example.Description} Undo brings back what was here before.");
+            Changed();
+        }
+        catch (Exception ex) when (ex is IOException or InvalidDataException or InvalidOperationException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
+        {
+            Log_ExampleFailed(example.Id, ex);
+            Say($"Couldn't load '{example.Name}'.");
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Couldn't load the Launchpad example {ExampleId}.")]
+    private partial void Log_ExampleFailed(string exampleId, Exception exception);
 
     ///<summary>
     ///Opens a saved project, replacing the current pads and sequencer.

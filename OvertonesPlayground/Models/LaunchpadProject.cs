@@ -66,6 +66,12 @@ public class LaunchpadProject
     public double MasterVolume { get; set; } = 1;
 
     ///<summary>
+    ///Whether Radio is on: playing a pad stops the others in its column, so a column of loops launches one at a time and a
+    ///closed hi-hat cuts an open one.
+    ///</summary>
+    public bool IsRadioOn { get; set; }
+
+    ///<summary>
     ///The project's name; also its file name when saved.
     ///</summary>
     public string Name { get; set; } = string.Empty;

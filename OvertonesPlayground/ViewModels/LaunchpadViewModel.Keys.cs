@@ -583,6 +583,7 @@ public partial class LaunchpadViewModel
     {
         _isRadioOn = !_isRadioOn;
         Say(_isRadioOn ? "Radio on: playing a pad stops the others in its column." : "Radio off.");
+        Changed();
     }
 
     ///<summary>

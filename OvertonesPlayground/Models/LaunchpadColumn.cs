@@ -6,6 +6,14 @@ namespace OvertonesPlayground.Models;
 ///</summary>
 public class LaunchpadColumn
 {
+    #region Constants
+    ///<summary>
+    ///The colors of the eight pad columns, taken from the hardware; a sample's pad (and a sequencer track) is lit in its column's
+    ///color.
+    ///</summary>
+    public static readonly IReadOnlyList<string> Colors = ["#E9EC9E", "#EE857F", "#82C2EE", "#DC8AEB", "#72E6E6", "#84E68E", "#EADF8E", "#AA90F5"];
+    #endregion
+
     #region Public properties
     ///<summary>
     ///Whether the column is armed for Capture.

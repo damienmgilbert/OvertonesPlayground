@@ -8,11 +8,12 @@ public sealed class LaunchpadViewModelTests : IDisposable
     private readonly IAudioPlaybackService _playback = Substitute.For<IAudioPlaybackService>();
     private readonly FakePreferences _preferences = new();
     private readonly ISoundSynthesisService _synthesis = Substitute.For<ISoundSynthesisService>();
+    private readonly ILaunchpadExampleService _examples = Substitute.For<ILaunchpadExampleService>();
 
     public void Dispose() => _files.Dispose();
 
     #region Helpers
-    private LaunchpadViewModel Create() => new(_playback, _library, _synthesis, _mixdown, _preferences, _files, NullLogger<LaunchpadViewModel>.Instance);
+    private LaunchpadViewModel Create() => new(_playback, _library, _synthesis, _mixdown, _preferences, _files, _examples, NullLogger<LaunchpadViewModel>.Instance);
 
     private static LaunchpadKeyViewModel Key(LaunchpadViewModel viewModel, LaunchpadControl control) => viewModel.AllKeys.First(key => key.Control == control);
 
@@ -673,7 +674,7 @@ public sealed class LaunchpadViewModelTests : IDisposable
     private static void NameProjectsWith(LaunchpadViewModel viewModel, string name) => viewModel.TextPrompt = (_, _, _) => Task.FromResult<string?>(name);
 
     [Fact]
-    public void ProjectsButton_OffersSaveOpenNewAndDelete()
+    public void ProjectsButton_OffersSaveOpenExamplesNewAndDelete()
     {
         LaunchpadViewModel viewModel = Create();
         MenuWatcher menu = new(viewModel);
@@ -681,7 +682,7 @@ public sealed class LaunchpadViewModelTests : IDisposable
         Press(viewModel, LaunchpadControl.Projects);
 
         Assert.StartsWith("Projects", menu.Last.Title);
-        Assert.Equal(["Save as...", "Open...", "New project", "Delete..."], menu.Last.Choices.Select(choice => choice.Text));
+        Assert.Equal(["Save as...", "Open...", "Examples...", "New project", "Delete..."], menu.Last.Choices.Select(choice => choice.Text));
     }
 
     [Fact]
@@ -854,6 +855,150 @@ public sealed class LaunchpadViewModelTests : IDisposable
 
         Assert.NotEqual(first, second);
         Assert.StartsWith("Scale:", viewModel.StatusMessage);
+    }
+    #endregion
+
+    #region Examples
+    private static readonly LaunchpadExampleInfo Demo = new("demo", "Demo · 128 BPM", "A demo setup.");
+
+    private LaunchpadProject DemoProject()
+    {
+        string kick = _files.CreateFile("LaunchpadSamples/Kick.wav");
+        string loop = _files.CreateFile("LaunchpadSamples/Loop.wav");
+        LaunchpadProject project = new() { Tempo = 128, IsRadioOn = true, ScaleIndex = 1 };
+        project.Pads.Add(new LaunchpadPad { Bank = 0, Index = 56, ClipPath = kick, Label = "Kick", Volume = 0.6 });
+        project.Pads.Add(new LaunchpadPad { Bank = 1, Index = 57, ClipPath = loop, Label = "Loop", IsLooping = true });
+        project.Columns[3].Pan = 0.2;
+        project.Sequence.Tracks[0] = new LaunchpadTrack { ClipPath = kick, Label = "Kick", Column = 0 };
+        return project;
+    }
+
+    private LaunchpadProject SavedLayout() =>
+        System.Text.Json.JsonSerializer.Deserialize<LaunchpadProject>(File.ReadAllText(_files.InAppData("launchpad.json")))!;
+
+    [Fact]
+    public async Task Examples_TheMenuListsTheSetupsTheServiceOffers()
+    {
+        _examples.Examples.Returns([Demo]);
+        LaunchpadViewModel viewModel = Create();
+        MenuWatcher menu = new(viewModel);
+        Press(viewModel, LaunchpadControl.Projects);
+
+        await menu.ChooseAsync("Examples");
+
+        Assert.Equal("Load an example setup", menu.Last.Title);
+        Assert.Equal(["Demo · 128 BPM"], menu.Last.Choices.Select(choice => choice.Text));
+    }
+
+    [Fact]
+    public async Task Examples_ChoosingOne_LoadsItsPadsMixerSequencerRadioAndTempo()
+    {
+        _examples.Examples.Returns([Demo]);
+        _examples.CreateAsync("demo", Arg.Any<CancellationToken>()).Returns(DemoProject());
+        LaunchpadViewModel viewModel = Create();
+        MenuWatcher menu = new(viewModel);
+        Press(viewModel, LaunchpadControl.Projects);
+        await menu.ChooseAsync("Examples");
+
+        await menu.ChooseAsync("Demo");
+
+        Assert.True(viewModel.Pads[56].HasClip);
+        Assert.Equal("Kick", viewModel.Pads[56].Label);
+        Assert.Equal(0.6, viewModel.Pads[56].Pad.Volume);
+        Assert.False(viewModel.IsBusy);
+        Assert.Equal(LaunchpadMode.Session, viewModel.Mode);
+        Assert.StartsWith("Loaded 'Demo · 128 BPM'. A demo setup. Undo brings back", viewModel.StatusMessage);
+
+        // Everything is saved with the layout, so it survives the app being closed.
+        LaunchpadProject saved = SavedLayout();
+        Assert.Equal(128, saved.Tempo);
+        Assert.True(saved.IsRadioOn);
+        Assert.Equal(2, saved.Pads.Count);
+        Assert.Contains(saved.Pads, pad => pad is { Bank: 1, Index: 57, IsLooping: true });
+        Assert.Equal(0.2, saved.Columns[3].Pan);
+        Assert.True(saved.Sequence.Tracks[0].HasSource);
+    }
+
+    [Fact]
+    public async Task Examples_LoadedWhileSomethingIsOnTheGrid_CanBeUndone()
+    {
+        _examples.Examples.Returns([Demo]);
+        _examples.CreateAsync("demo", Arg.Any<CancellationToken>()).Returns(DemoProject());
+        LaunchpadViewModel viewModel = Create();
+        await AssignAsync(viewModel, index: 0, name: "Mine");
+        MenuWatcher menu = new(viewModel);
+        Press(viewModel, LaunchpadControl.Projects);
+        await menu.ChooseAsync("Examples");
+        await menu.ChooseAsync("Demo");
+        Assert.False(viewModel.Pads[0].HasClip);
+
+        Press(viewModel, LaunchpadControl.Shift);
+        Press(viewModel, LaunchpadControl.RecordArm);
+
+        Assert.True(viewModel.Pads[0].HasClip);
+        Assert.Equal("Mine", viewModel.Pads[0].Label);
+        Assert.False(viewModel.Pads[56].HasClip);
+    }
+
+    [Fact]
+    public async Task Examples_LoadedWhilePlaying_StopsTheSoundsFirst()
+    {
+        _examples.Examples.Returns([Demo]);
+        _examples.CreateAsync("demo", Arg.Any<CancellationToken>()).Returns(DemoProject());
+        LaunchpadViewModel viewModel = Create();
+        MenuWatcher menu = new(viewModel);
+        Press(viewModel, LaunchpadControl.Projects);
+        await menu.ChooseAsync("Examples");
+
+        await menu.ChooseAsync("Demo");
+
+        _playback.Received().StopAllPads();
+    }
+
+    [Theory]
+    [InlineData(typeof(InvalidDataException))]
+    [InlineData(typeof(IOException))]
+    [InlineData(typeof(InvalidOperationException))]
+    public async Task Examples_TheServiceFails_SaysSoAndLeavesTheGridAlone(Type exceptionType)
+    {
+        _examples.Examples.Returns([Demo]);
+        _examples.CreateAsync("demo", Arg.Any<CancellationToken>()).Returns<Task<LaunchpadProject>>(_ => throw (Exception)Activator.CreateInstance(exceptionType)!);
+        LaunchpadViewModel viewModel = Create();
+        await AssignAsync(viewModel, index: 0, name: "Mine");
+        MenuWatcher menu = new(viewModel);
+        Press(viewModel, LaunchpadControl.Projects);
+        await menu.ChooseAsync("Examples");
+
+        await menu.ChooseAsync("Demo");
+
+        Assert.Equal("Couldn't load 'Demo · 128 BPM'.", viewModel.StatusMessage);
+        Assert.True(viewModel.Pads[0].HasClip);
+        Assert.False(viewModel.IsBusy);
+    }
+
+    [Fact]
+    public void Radio_TurnedOnWithShiftAndMute_IsSavedWithTheLayout()
+    {
+        LaunchpadViewModel viewModel = Create();
+        Press(viewModel, LaunchpadControl.Shift);
+        Press(viewModel, LaunchpadControl.Mute);
+
+        Assert.True(SavedLayout().IsRadioOn);
+        Assert.True(Key(viewModel, LaunchpadControl.Mute).IsLit);
+    }
+
+    [Fact]
+    public async Task Radio_SavedOn_IsOnAgainWhenTheAppStartsAndStaysOnWhenTheLayoutIsSavedAgain()
+    {
+        LaunchpadViewModel first = Create();
+        Press(first, LaunchpadControl.Shift);
+        Press(first, LaunchpadControl.Mute);
+
+        LaunchpadViewModel second = Create();
+        await AssignAsync(second, index: 3);
+
+        Assert.True(Key(second, LaunchpadControl.Mute).IsLit);
+        Assert.True(SavedLayout().IsRadioOn);
     }
     #endregion
 }
