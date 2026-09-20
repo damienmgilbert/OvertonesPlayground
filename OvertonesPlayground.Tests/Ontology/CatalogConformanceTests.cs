@@ -8,8 +8,6 @@ namespace OvertonesPlayground.Tests.Ontology;
 public sealed class CatalogConformanceTests
 {
     private static readonly Lazy<string> _rawDirectory = new(FindRawDirectory);
-#endregion
-    #region Fields
     private static readonly Lazy<SampleCatalog> _catalog = new(
                                                            () =>
                                                            {
