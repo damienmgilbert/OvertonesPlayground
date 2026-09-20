@@ -441,7 +441,7 @@ public sealed class SoundBankViewModelTests : IDisposable
     public async Task ToggleChip_TempoBand_MatchesTheWholeNumberTheRowShows()
     {
         // Regression from the tablet: a detected 139.9 BPM is shown as "140 BPM" but was listed under 120-139.
-        _catalog.GetIndexAsync(Arg.Any<CancellationToken>()).Returns(new SampleIndex([TestSamples.Make("Rounds up", tempoBpm: 139.9), TestSamples.Make("Rounds down", tempoBpm: 139.4), TestSamples.Make("Lower edge", tempoBpm: 119.6), ]));
+        _catalog.GetIndexAsync(Arg.Any<CancellationToken>()).Returns(new SampleIndex([TestSamples.Make("Rounds up", tempoBpm: 139.9), TestSamples.Make("Rounds down", tempoBpm: 139.4), TestSamples.Make("Lower edge", tempoBpm: 119.6),]));
         SoundBankViewModel viewModel = await LoadedAsync();
 
         viewModel.ToggleChipCommand.Execute(Chip(viewModel, "Tempo (BPM)", "140"));
