@@ -37,6 +37,12 @@
                 <Label AutomationId="soundbank-summary" Style="{StaticResource CaptionTextBlockStyle}" Text="{Binding ResultSummary}" TextColor="{DynamicResource TextFillColorSecondary}" />
                 <Label AutomationId="soundbank-status" Style="{StaticResource CaptionTextBlockStyle}" Text="{Binding StatusMessage}" TextColor="{DynamicResource TextFillColorSecondary}"
                        IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBool}}" />
+                <Border AutomationId="soundbank-pick-banner" StrokeShape="RoundRectangle 10" Padding="12,6" IsVisible="{Binding IsPickMode}" BackgroundColor="{DynamicResource SubtleFillColorSecondary}">
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                        <Label Grid.Column="0" VerticalOptions="Center" Text="{Binding PickPrompt, StringFormat='{0}: pick a sound, then tap Use this sound'}" />
+                        <Button AutomationId="soundbank-pick-cancel" Grid.Column="1" Text="Cancel" Padding="12,4" Command="{Binding CancelPickCommand}" />
+                    </Grid>
+                </Border>
                 <Border AutomationId="soundbank-similar-banner" StrokeShape="RoundRectangle 10" Padding="12,6" IsVisible="{Binding IsSimilarMode}" BackgroundColor="{DynamicResource SubtleFillColorSecondary}">
                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
                         <Label Grid.Column="0" VerticalOptions="Center" Text="{Binding SimilarToName, StringFormat='Sounds most like {0}, nearest first'}" />
@@ -146,7 +152,8 @@
 
                     <HorizontalStackLayout Spacing="8">
                         <Button AutomationId="soundbank-detail-play" Text="Audition" controls:Icon.Glyph="{x:Static models:IconFont.Play_arrow}" Padding="14,6" Clicked="OnDetailPreviewClicked" />
-                        <Button AutomationId="soundbank-detail-add" Text="Add to library" controls:Icon.Glyph="{x:Static models:IconFont.Add}" Padding="14,6" Clicked="OnDetailAddClicked" />
+                        <Button AutomationId="soundbank-detail-use" Text="Use this sound" controls:Icon.Glyph="{x:Static models:IconFont.Check}" Padding="14,6" IsVisible="{Binding IsPickMode}" Clicked="OnDetailUseClicked" />
+                        <Button AutomationId="soundbank-detail-add" Text="Add to library" IsVisible="{Binding IsPickMode, Converter={StaticResource InvertedBool}}" controls:Icon.Glyph="{x:Static models:IconFont.Add}" Padding="14,6" Clicked="OnDetailAddClicked" />
                         <Button AutomationId="soundbank-detail-similar" Text="Sounds like this" controls:Icon.Glyph="{x:Static models:IconFont.Graphic_eq}" Padding="14,6" Clicked="OnDetailSimilarClicked" />
                     </HorizontalStackLayout>
 

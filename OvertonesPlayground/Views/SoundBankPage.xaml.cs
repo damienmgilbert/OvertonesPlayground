@@ -44,6 +44,8 @@ public partial class SoundBankPage : ContentPage
 
     private void OnDetailAddClicked(object? sender, EventArgs e) => _viewModel.AddToLibraryCommand.Execute(null);
 
+    private void OnDetailUseClicked(object? sender, EventArgs e) => _viewModel.UseSampleCommand.Execute(null);
+
     private void OnDetailPreviewClicked(object? sender, EventArgs e) => _viewModel.TogglePreviewCommand.Execute(null);
 
     private void OnDetailSimilarClicked(object? sender, EventArgs e) => _viewModel.FindSimilarCommand.Execute(null);
@@ -70,6 +72,7 @@ public partial class SoundBankPage : ContentPage
     {
         base.OnDisappearing();
         _viewModel.StopPreviewCommand.Execute(null);
+        _viewModel.AbandonPick();
     }
     #endregion
 }

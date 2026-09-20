@@ -21,7 +21,7 @@ public sealed class SoundBankViewModelTests : IDisposable
     #region Private methods
     private static FacetChipViewModel Chip(SoundBankViewModel viewModel, string group, string key) => viewModel.FacetGroups.Single(g => g.Title == group).Chips.Single(c => c.Key == key);
 
-    private SoundBankViewModel Create() => new(_catalog, _assets, _playback, _library, _fileSystem, NullLogger<SoundBankViewModel>.Instance);
+    private SoundBankViewModel Create() => new(_catalog, _assets, _playback, _library, _fileSystem, Substitute.For<ISamplePickerService>(), NullLogger<SoundBankViewModel>.Instance);
 
     private async Task<SoundBankViewModel> LoadedAsync()
     {

@@ -50,6 +50,7 @@ public partial class SoundBankViewModel : BaseViewModel
     private readonly ISampleCatalogService _catalog;
     private readonly IFileSystem _fileSystem;
     private readonly IAudioPlaybackService _playback;
+    private readonly ISamplePickerService _picker;
 
     private FacetGroupViewModel? _instrumentGroup;
     private IReadOnlyDictionary<string, int> _instrumentCounts = new Dictionary<string, int>();
@@ -68,6 +69,7 @@ public partial class SoundBankViewModel : BaseViewModel
         IAudioPlaybackService playback,
         IAudioLibraryService libraryService,
         IFileSystem fileSystem,
+        ISamplePickerService picker,
         ILogger<SoundBankViewModel> logger) : base(logger)
     {
         _catalog = catalog;
@@ -75,6 +77,12 @@ public partial class SoundBankViewModel : BaseViewModel
         _playback = playback;
         _libraryService = libraryService;
         _fileSystem = fileSystem;
+        _picker = picker;
+        _picker.PickingChanged += (_, _) =>
+        {
+            OnPropertyChanged(nameof(IsPickMode));
+            OnPropertyChanged(nameof(PickPrompt));
+        };
         Title = "Sound Bank";
     }
     #endregion
@@ -276,7 +284,56 @@ public partial class SoundBankViewModel : BaseViewModel
     }
     #endregion
 
+    #region Properties
+    ///<summary>
+    ///True while another page has asked the user to choose a sound: the page then offers "Use this sound" and "Cancel".
+    ///</summary>
+    public bool IsPickMode => _picker.IsPicking;
+
+    ///<summary>
+    ///What the sound is being chosen for, shown above the list in pick mode.
+    ///</summary>
+    public string? PickPrompt => _picker.Prompt;
+    #endregion
+
     #region Commands
+    ///<summary>
+    ///Copies the sound into the library, like <see cref="AddToLibraryCommand"/>, and hands it to the page that asked for one.
+    ///</summary>
+    [RelayCommand]
+    private async Task UseSampleAsync(SampleRowViewModel? row)
+    {
+        row ??= SelectedRow;
+        if (row is null || !_picker.IsPicking)
+        {
+            return;
+        }
+
+        try
+        {
+            string destination = Path.Combine(_fileSystem.AppDataDirectory, "Clips");
+            string path = await _assets.CopyToAsync(row.Sample.Id, destination);
+            AudioClip clip = await _libraryService.AddClipAsync(path, row.Name);
+            await _picker.CompleteAsync(clip);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException or NotSupportedException or InvalidOperationException)
+        {
+            Log_AddFailed(row.Name, ex);
+            StatusMessage = "Couldn't use that sound.";
+        }
+    }
+
+    ///<summary>
+    ///Cancels choosing a sound and goes back to the page that asked.
+    ///</summary>
+    [RelayCommand]
+    private Task CancelPickAsync() => _picker.CancelAsync();
+
+    ///<summary>
+    ///Ends any pick still waiting, because the user has left the Sound Bank without choosing.
+    ///</summary>
+    public void AbandonPick() => _picker.Abandon();
+
     ///<summary>
     ///Copies a sound into the user's library, so the editor, player, mixer and launchpad can use it like any imported clip.
     ///</summary>

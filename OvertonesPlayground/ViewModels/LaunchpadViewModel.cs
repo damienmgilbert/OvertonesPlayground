@@ -125,7 +125,18 @@ public partial class LaunchpadViewModel : BaseViewModel
     partial void OnToolChanged(LaunchpadTool value) => RefreshAll();
 
     ///<summary>
-    ///Opens the file picker and assigns the chosen sample to a pad, lit in its column's color.
+    ///Assigns <paramref name="clip"/> to a pad, lit in its column's color.
+    ///</summary>
+    public void AssignClip(LaunchpadPadViewModel pad, AudioClip clip)
+    {
+        PushUndo();
+        Log_AssignedClip(clip.Name, pad.Index);
+        pad.Assign(clip.FilePath, clip.Name, ColumnColors[pad.Column]);
+        Changed();
+    }
+
+    ///<summary>
+    ///Opens the device's file picker and assigns the chosen sample to a pad, lit in its column's color.
     ///</summary>
     [RelayCommand]
     private async Task AssignAsync(LaunchpadPadViewModel? pad)
@@ -143,10 +154,7 @@ public partial class LaunchpadViewModel : BaseViewModel
                 return;
             }
 
-            PushUndo();
-            Log_AssignedClip(clip.Name, pad.Index);
-            pad.Assign(clip.FilePath, clip.Name, ColumnColors[pad.Column]);
-            Changed();
+            AssignClip(pad, clip);
         }
         catch (Exception ex)
         {

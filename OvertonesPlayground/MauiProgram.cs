@@ -54,6 +54,7 @@ public static class MauiProgram
         // package to a real file (playback and the library both need a path).
         services.AddSingleton<ISampleCatalogService, SampleCatalogService>();
         services.AddSingleton<ISampleAssetStore, SampleAssetStore>();
+        services.AddSingleton<ISamplePickerService, SamplePickerService>();
         services.AddSingleton<ILaunchpadExampleService, LaunchpadExampleService>();
     }
 

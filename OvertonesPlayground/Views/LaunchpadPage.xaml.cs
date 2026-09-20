@@ -1,3 +1,5 @@
+using OvertonesPlayground.Models;
+using OvertonesPlayground.Services.Interfaces;
 using OvertonesPlayground.ViewModels;
 #if ANDROID
 using Microsoft.Maui.Platform;
@@ -22,7 +24,8 @@ public partial class LaunchpadPage : ContentPage
     ///</summary>
     private const double DeviceRowUnits = 10.05;
 
-    private const string AssignSampleChoice = "Assign sample...";
+    private const string AssignSampleChoice = "Assign sample from Sound Bank...";
+    private const string ImportSampleChoice = "Import from this device...";
     private const string ClearPadChoice = "Clear pad";
     private const string LoopOffChoice = "Loop: turn off";
     private const string LoopOnChoice = "Loop: turn on";
@@ -70,6 +73,7 @@ public partial class LaunchpadPage : ContentPage
 
     #region Fields
     private readonly ILogger<LaunchpadPage> _logger;
+    private readonly ISamplePickerService _samplePicker;
     private readonly LaunchpadViewModel _viewModel;
     private bool _isMenuOpen;
     #endregion
@@ -78,8 +82,9 @@ public partial class LaunchpadPage : ContentPage
     ///<summary>
     ///Creates the page, binds it to its view model, and listens for menu requests.
     ///</summary>
-    public LaunchpadPage(LaunchpadViewModel viewModel, ILogger<LaunchpadPage> logger)
+    public LaunchpadPage(LaunchpadViewModel viewModel, ISamplePickerService samplePicker, ILogger<LaunchpadPage> logger)
     {
+        _samplePicker = samplePicker;
         InitializeComponent();
         BindingContext = _viewModel = viewModel;
         _logger = logger;
@@ -296,7 +301,7 @@ public partial class LaunchpadPage : ContentPage
     {
         string title = pad.HasClip ? $"Pad {pad.Index + 1}: {pad.Label}" : $"Pad {pad.Index + 1} (empty)";
 
-        List<string> choices = [AssignSampleChoice];
+        List<string> choices = [AssignSampleChoice, ImportSampleChoice];
         if (pad.HasClip)
         {
             choices.Add(pad.IsLooping ? LoopOffChoice : LoopOnChoice);
@@ -307,6 +312,14 @@ public partial class LaunchpadPage : ContentPage
         switch (chosen)
         {
             case AssignSampleChoice:
+                AudioClip? clip = await _samplePicker.PickAsync($"Sound for pad {pad.Index + 1}", "//launchpad");
+                if (clip is not null)
+                {
+                    _viewModel.AssignClip(pad, clip);
+                }
+
+                break;
+            case ImportSampleChoice:
                 await _viewModel.AssignCommand.ExecuteAsync(pad);
                 break;
             case LoopOnChoice:
