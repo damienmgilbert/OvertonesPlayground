@@ -48,6 +48,9 @@ public partial class TeachingPopover : ContentView
     /// <summary>Whether a tap outside the popover closes it.</summary>
     public static readonly BindableProperty IsLightDismissEnabledProperty = BindableProperty.Create(nameof(IsLightDismissEnabled), typeof(bool), typeof(TeachingPopover), true, propertyChanged: OnLightDismissChanged);
 
+    /// <summary>An area, in window coordinates, that the popover should keep off when it can: it opens on the side of the target where it covers less of it.</summary>
+    public static readonly BindableProperty AvoidBoundsProperty = BindableProperty.Create(nameof(AvoidBounds), typeof(Rect?), typeof(TeachingPopover), null);
+
     /// <summary>The text of the tip.</summary>
     public static readonly BindableProperty MessageProperty = BindableProperty.Create(nameof(Message), typeof(string), typeof(TeachingPopover), string.Empty);
 
@@ -86,6 +89,12 @@ public partial class TeachingPopover : ContentView
         // However the animation ended, the bubble rests fully visible and at full size.
         Bubble.Opacity = 1;
         Bubble.Scale = 1;
+    }
+
+    private static double Overlap(Rect first, Rect second)
+    {
+        Rect shared = first.Intersect(second);
+        return shared.IsEmpty ? 0 : shared.Width * shared.Height;
     }
 
     private static void OnLightDismissChanged(BindableObject bindable, object oldValue, object newValue) => ((TeachingPopover)bindable).Scrim.InputTransparent = !(bool)newValue;
@@ -137,6 +146,18 @@ public partial class TeachingPopover : ContentView
             TeachingPlacement.Auto or _ => roomBelow >= height || roomBelow >= roomAbove,
         };
 
+        // Given an area to keep clear, and room for the popover on both sides, it opens on the side that covers less of that area.
+        if (Placement == TeachingPlacement.Auto && AvoidBounds is { } avoid && roomBelow >= height && roomAbove >= height)
+        {
+            Rect area = new(avoid.X - overlayBox.X, avoid.Y - overlayBox.Y, avoid.Width, avoid.Height);
+            double coveredBelow = Overlap(new Rect(left, targetBottom + TargetGap, width, height), area);
+            double coveredAbove = Overlap(new Rect(left, targetTop - TargetGap - height, width, height), area);
+            if (coveredBelow != coveredAbove)
+            {
+                below = coveredBelow < coveredAbove;
+            }
+        }
+
         Bubble.HorizontalOptions = LayoutOptions.Start;
         Bubble.AnchorX = (tailLeft + (TailWidth / 2)) / width;
         if (below)
@@ -168,7 +189,7 @@ public partial class TeachingPopover : ContentView
     /// adding up the layout offsets) accounts for scrolling, translations and safe-area insets, so the target and the overlay
     /// can be compared directly.
     /// </summary>
-    private static Rect WindowBounds(VisualElement element)
+    internal static Rect WindowBounds(VisualElement element)
     {
 #if ANDROID
         if (element.Handler?.PlatformView is Android.Views.View view && view.Context is { } context)
@@ -269,6 +290,12 @@ public partial class TeachingPopover : ContentView
     #endregion
 
     #region Public properties
+    public Rect? AvoidBounds
+    {
+        get => (Rect?)GetValue(AvoidBoundsProperty);
+        set => SetValue(AvoidBoundsProperty, value);
+    }
+
     public string ActionText
     {
         get => (string)GetValue(ActionTextProperty);

@@ -98,10 +98,29 @@ public partial class LaunchpadViewModel
     ///<summary>
     ///Goes to the next scale for Note and Chord modes.
     ///</summary>
-    private void CycleScale()
+    private void CycleScale() => SetScale((_project.ScaleIndex + 1) % LaunchpadScale.Count);
+
+    ///<summary>
+    ///Chooses the scale for Note and Chord modes.
+    ///</summary>
+    private void SetScale(int scaleIndex)
     {
-        _project.ScaleIndex = (_project.ScaleIndex + 1) % LaunchpadScale.Count;
+        _project.ScaleIndex = scaleIndex;
         Say($"Scale: {LaunchpadScale.Name(_project.ScaleIndex)}.");
+        Changed();
+    }
+
+    ///<summary>
+    ///Puts every column's mixer settings, the master and the transpose back to their starting values. Undo brings them back.
+    ///</summary>
+    private void ResetMixer()
+    {
+        PushUndo();
+        _project.Columns = [.. Enumerable.Range(0, LaunchpadProject.ColumnCount).Select(_ => new LaunchpadColumn())];
+        _project.MasterPan = 0;
+        _project.MasterVolume = 1;
+        _project.Transpose = 0;
+        Say("Mixer, master and transpose reset.");
         Changed();
     }
 
@@ -208,6 +227,12 @@ public partial class LaunchpadViewModel
     ///</summary>
     private void SaveLayout()
     {
+        // While a tutorial has borrowed the pads, the user's own layout stays on disk untouched.
+        if (_tutorial is not null)
+        {
+            return;
+        }
+
         try
         {
             File.WriteAllText(LayoutFilePath, JsonSerializer.Serialize(BuildProject()));
@@ -434,13 +459,7 @@ public partial class LaunchpadViewModel
             }),
             new LaunchpadMenuChoice("Reset the mixer, master and transpose", () =>
             {
-                PushUndo();
-                _project.Columns = [.. Enumerable.Range(0, LaunchpadProject.ColumnCount).Select(_ => new LaunchpadColumn())];
-                _project.MasterPan = 0;
-                _project.MasterVolume = 1;
-                _project.Transpose = 0;
-                Say("Mixer, master and transpose reset.");
-                Changed();
+                ResetMixer();
                 return Task.CompletedTask;
             }),
             new LaunchpadMenuChoice($"Clear bank {(char)('A' + Bank)}", () =>

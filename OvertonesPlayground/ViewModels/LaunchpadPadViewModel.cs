@@ -117,6 +117,12 @@ public partial class LaunchpadPadViewModel : ObservableObject
     public partial bool IsEditMode { get; set; }
 
     ///<summary>
+    ///Whether a tutorial is pointing at this pad, so it is outlined.
+    ///</summary>
+    [ObservableProperty]
+    public partial bool IsSpotlit { get; set; }
+
+    ///<summary>
     ///Returns whether the pad is set to loop.
     ///</summary>
     public bool IsLooping => Pad.IsLooping;

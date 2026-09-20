@@ -18,6 +18,22 @@ public interface ILaunchpadExampleService
     ///<exception cref="ArgumentException">There is no such example.</exception>
     ///<exception cref="InvalidDataException">The sound bank catalog can't be read.</exception>
     Task<LaunchpadProject> CreateAsync(string exampleId, CancellationToken cancellationToken = default);
+
+    ///<summary>
+    ///Builds the setup a tutorial starts from (one of <c>groove</c>, <c>beat</c> or <c>keys</c>), the same way <see cref="CreateAsync"/> builds an
+    ///example: the sounds are copied out of the app package once and reused. Lessons are not listed in <see cref="Examples"/>.
+    ///</summary>
+    ///<exception cref="ArgumentException">There is no such lesson setup.</exception>
+    ///<exception cref="InvalidDataException">The sound bank catalog can't be read.</exception>
+    Task<LaunchpadProject> CreateLessonAsync(string lessonId, CancellationToken cancellationToken = default);
+
+    ///<summary>
+    ///Copies one sound of the bank into the folder the setups' sounds are kept in (unless it is there already) and returns the path
+    ///of the copy, so a tutorial can put a sound from the Sound Bank on a pad.
+    ///</summary>
+    ///<param name="sampleName">The sound's name in the Sound Bank, without the file extension.</param>
+    ///<exception cref="ArgumentException">The bank has no such sound.</exception>
+    Task<string> PrepareSampleAsync(string sampleName, CancellationToken cancellationToken = default);
     #endregion
 
     #region Properties

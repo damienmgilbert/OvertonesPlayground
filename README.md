@@ -99,6 +99,29 @@ which `LaunchpadExamplesTests` check against the real catalog:
 Things the recipes cannot decide for you: whether it sounds good (the rules only rule out what clashes), and Note and Chord mode,
 which play the last pad you tapped, so tap an 808 pad first.
 
+## Launchpad tutorials
+
+Tap the logo on the **Launchpad** and choose a tutorial (or the guide to every button). There are nine, and each plays out on the real
+pads with sounds from the sound bank: **1 Meet the pads** (banks, loops, edit mode, putting a sound bank sound on a pad),
+**2 Rhythm** (a beat built step by step in the sequencer), **3 Timing** (tempo, tap tempo, click, swing, fixed length),
+**4 Feel** (velocity, probability, micro step, pattern settings, mutation, undo), **5 Play it live** (quantise, record arm, capture,
+print to clip), **6 Melody**, **7 Harmony**, **8 Timbre** and **9 Mixing** (layers, volume, pan, mute, solo, radio, echo, master
+controls, stop clip, setup, projects). Between them they cover every button.
+
+A step is a tip (`TeachingPopover`) that points at a button or pad, which are outlined in yellow, and says what it is for. **Show me**
+then carries the step out on the Launchpad, and the tip comes back with what to notice. **Exit** leaves at any time.
+
+* **Your own pads are set aside.** A tutorial loads a lesson setup, built from the sound bank like the example setups
+  (`LaunchpadLessons`: the boom-bap drum kit and loops with an empty sequencer, the same with a finished beat, and pitched instruments
+  in C: the same C3 on five instruments, mallet guitar notes, and chord samples). The layout you had is saved when it starts, is not
+  saved over while it runs, and is put back when it ends, when you press Exit or Back, or when you leave the page.
+* **Steps are scripts** (`LaunchpadTutorials`): press a button, tap some pads, let it play, through `ILaunchpadTutorialHost`, which the
+  view model implements by doing what a finger would. Pad numbers count along each row from the top left, 0 to 63.
+* **Tests** (`LaunchpadTutorialsTests`, `LaunchpadLessonsTests`, `LaunchpadViewModelTutorialTests`) check that every button and every
+  shifted function is taught, that each step points at something real, that the sounds a step names exist in the catalog and the pads
+  it taps hold the sounds it says, and that every tutorial can be played to its end on the real view model and leaves your pads
+  exactly as they were.
+
 ## Testing
 
 ```bash

@@ -19,6 +19,7 @@
     <Color x:Key="LogoFaceColor">#F4F4F5</Color>
     <Color x:Key="LogoMarkColor">#111113</Color>
     <Color x:Key="PadBadgeColor">#E6101010</Color>
+    <Color x:Key="SpotlightColor">#FFD54A</Color>
 
     <SolidColorBrush x:Key="DeviceBodyBrush" Color="{StaticResource DeviceBodyColor}" />
     <SolidColorBrush x:Key="DeviceEdgeBrush" Color="{StaticResource DeviceEdgeColor}" />
@@ -28,6 +29,7 @@
     <SolidColorBrush x:Key="LedEdgeLitBrush" Color="{StaticResource LedTextColor}" />
     <SolidColorBrush x:Key="LogoFaceBrush" Color="{StaticResource LogoFaceColor}" />
     <SolidColorBrush x:Key="LogoMarkBrush" Color="{StaticResource LogoMarkColor}" />
+    <SolidColorBrush x:Key="SpotlightBrush" Color="{StaticResource SpotlightColor}" />
 
     <!-- The black body the pads and buttons sit in. -->
     <Style x:Key="DeviceBodyStyle" TargetType="Border">

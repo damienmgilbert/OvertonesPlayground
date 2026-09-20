@@ -98,6 +98,12 @@ public partial class LaunchpadKeyViewModel : ObservableObject
     public partial bool IsLit { get; set; }
 
     ///<summary>
+    ///Whether a tutorial is pointing at this button, so it is outlined.
+    ///</summary>
+    [ObservableProperty]
+    public partial bool IsSpotlit { get; set; }
+
+    ///<summary>
     ///Whether Shift is latched, so the key's second label is the one that will run.
     ///</summary>
     [ObservableProperty]

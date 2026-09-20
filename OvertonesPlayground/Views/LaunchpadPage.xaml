@@ -41,6 +41,11 @@
                             <Setter Property="Background" Value="{StaticResource KeyFaceLitBrush}" />
                             <Setter Property="Stroke" Value="{StaticResource LedEdgeLitBrush}" />
                         </DataTrigger>
+                        <!-- A tutorial is pointing at this button: a bright outline. -->
+                        <DataTrigger TargetType="Border" Binding="{Binding IsSpotlit}" Value="True">
+                            <Setter Property="Stroke" Value="{StaticResource SpotlightBrush}" />
+                            <Setter Property="StrokeThickness" Value="3" />
+                        </DataTrigger>
                     </Border.Triggers>
                     <Border.GestureRecognizers>
                         <TapGestureRecognizer Tapped="OnKeyTapped" CommandParameter="{Binding .}" />
@@ -100,6 +105,9 @@
                                LineBreakMode="TailTruncation" MaxLines="2" InputTransparent="True" />
                         <Label Margin="2" Text="loop" FontSize="{DynamicResource PadFontSize}" TextColor="{StaticResource PadBadgeColor}"
                                HorizontalOptions="Center" VerticalOptions="End" InputTransparent="True" IsVisible="{Binding IsLoopBadgeVisible}" />
+                        <!-- A tutorial is pointing at this pad. Drawn as an overlay that takes no touch, like the badges. -->
+                        <Border StrokeShape="RoundRectangle 6" Stroke="{StaticResource SpotlightBrush}" StrokeThickness="3" BackgroundColor="Transparent"
+                                InputTransparent="True" IsVisible="{Binding IsSpotlit}" AutomationId="{Binding Index, StringFormat='launchpad-spotlight-{0}'}" />
                         <!-- Edit-mode badge: a plain tap opens the pad menu instead of playing the pad. -->
                         <Label Style="{StaticResource IconTextBlockStyle}" Text="{x:Static models:IconFont.Edit}"
                                Margin="2" FontSize="14" TextColor="{StaticResource PadBadgeColor}"
@@ -128,16 +136,16 @@
             <Border x:Name="DeviceBody" Style="{StaticResource DeviceBodyStyle}" Padding="6">
                 <Grid x:Name="Surface" ColumnDefinitions="*,*,*,*,*,*,*,*,*,*" RowDefinitions="0.9*,*,*,*,*,*,*,*,*,0.45*,0.7*">
 
-                    <FlexLayout Grid.Row="0" Grid.Column="0" Direction="Row"
+                    <FlexLayout x:Name="ShiftLayout" Grid.Row="0" Grid.Column="0" Direction="Row"
                                 BindableLayout.ItemsSource="{Binding ShiftKeys}" BindableLayout.ItemTemplate="{StaticResource KeyTemplate}" />
-                    <FlexLayout Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="8" Direction="Row"
+                    <FlexLayout x:Name="TopLayout" Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="8" Direction="Row"
                                 BindableLayout.ItemsSource="{Binding TopKeys}" BindableLayout.ItemTemplate="{StaticResource KeyTemplate}" />
 
                     <!-- The logo. It isn't a control on the hardware, so here it opens the guide to what every button does. -->
                     <Border Grid.Row="0" Grid.Column="9" AutomationId="launchpad-logo" Margin="{DynamicResource KeyGap}" StrokeShape="RoundRectangle 5" StrokeThickness="0"
                             Background="{StaticResource LogoFaceBrush}"
-                            SemanticProperties.Description="Novation logo. Tap for a guide to what every button does."
-                            ToolTipProperties.Text="Tap for a guide to what every button does.">
+                            SemanticProperties.Description="Novation logo. Tap for a guide to what every button does, and for step-by-step tutorials."
+                            ToolTipProperties.Text="Tap for a guide to every button and for tutorials.">
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Tapped="OnLogoTapped" />
                         </Border.GestureRecognizers>
@@ -145,22 +153,22 @@
                                         HorizontalOptions="Center" VerticalOptions="Center" Margin="8" InputTransparent="True" />
                     </Border>
 
-                    <FlexLayout Grid.Row="1" Grid.RowSpan="8" Grid.Column="0" Direction="Column"
+                    <FlexLayout x:Name="LeftLayout" Grid.Row="1" Grid.RowSpan="8" Grid.Column="0" Direction="Column"
                                 BindableLayout.ItemsSource="{Binding LeftKeys}" BindableLayout.ItemTemplate="{StaticResource KeyTemplate}" />
 
                     <Grid x:Name="PadGrid" AutomationId="launchpad-pads" Grid.Row="1" Grid.RowSpan="8" Grid.Column="1" Grid.ColumnSpan="8"
                           RowDefinitions="*,*,*,*,*,*,*,*" ColumnDefinitions="*,*,*,*,*,*,*,*"
                           BindableLayout.ItemsSource="{Binding Pads}" BindableLayout.ItemTemplate="{StaticResource PadTemplate}" />
 
-                    <FlexLayout Grid.Row="1" Grid.RowSpan="8" Grid.Column="9" Direction="Column"
+                    <FlexLayout x:Name="RightLayout" Grid.Row="1" Grid.RowSpan="8" Grid.Column="9" Direction="Column"
                                 BindableLayout.ItemsSource="{Binding RightKeys}" BindableLayout.ItemTemplate="{StaticResource KeyTemplate}" />
 
-                    <FlexLayout Grid.Row="9" Grid.Column="1" Grid.ColumnSpan="8" Direction="Row"
+                    <FlexLayout x:Name="TrackLayout" Grid.Row="9" Grid.Column="1" Grid.ColumnSpan="8" Direction="Row"
                                 BindableLayout.ItemsSource="{Binding TrackKeys}" BindableLayout.ItemTemplate="{StaticResource KeyTemplate}" />
 
-                    <FlexLayout Grid.Row="10" Grid.Column="0" Direction="Row"
+                    <FlexLayout x:Name="SetupLayout" Grid.Row="10" Grid.Column="0" Direction="Row"
                                 BindableLayout.ItemsSource="{Binding SetupKeys}" BindableLayout.ItemTemplate="{StaticResource KeyTemplate}" />
-                    <FlexLayout Grid.Row="10" Grid.Column="1" Grid.ColumnSpan="8" Direction="Row"
+                    <FlexLayout x:Name="FunctionLayout" Grid.Row="10" Grid.Column="1" Grid.ColumnSpan="8" Direction="Row"
                                 BindableLayout.ItemsSource="{Binding FunctionKeys}" BindableLayout.ItemTemplate="{StaticResource KeyTemplate}" />
 
                     <!-- The hint, status and message: a card floating over the top of the pads, so every button stays in view. It never
@@ -190,7 +198,17 @@
 
         <controls:TeachingPopover x:Name="LaunchpadTip" Target="{x:Reference TipAnchor}" TipKey="launchpad" Glyph="{x:Static models:IconFont.Lightbulb}"
                                   Title="Play the pads"
-                                  Message="Tap a pad to play its sample. To give a pad a sample, loop it or clear it, turn on edit mode with the pencil in the top bar, or press and hold the pad. The eye in the top bar hides the hints and messages. The buttons around the pads work like the ones on a Launchpad Pro: tap the logo for a guide to each." />
+                                  Message="Tap a pad to play its sample. To give a pad a sample, loop it or clear it, turn on edit mode with the pencil in the top bar, or press and hold the pad. The eye in the top bar hides the hints and messages. The buttons around the pads work like the ones on a Launchpad Pro: tap the logo for a guide to each, and for step-by-step tutorials that play out on the pads." />
+
+        <!-- Where a tutorial tip points when it is about a top bar button (which, like the eye, has no element of its own): a hairline the
+             code-behind lines up with that button. -->
+        <BoxView x:Name="TutorialAnchor" AutomationId="launchpad-tutorial-anchor" HorizontalOptions="End" VerticalOptions="Start" WidthRequest="40" HeightRequest="1"
+                 Margin="0,0,96,0" Color="Transparent" InputTransparent="True" />
+
+        <!-- The tutorial's tip. The code-behind moves it from one button or pad to the next, and it stays until Exit or the last step: tapping
+             outside it does nothing, so a stray tap on the pads never dismisses it. -->
+        <controls:TeachingPopover x:Name="TutorialTip" AutomationId="launchpad-tutorial-tip" Target="{x:Reference TutorialAnchor}" IsLightDismissEnabled="False"
+                                  CloseText="Exit" />
     </Grid>
 
 </ContentPage>

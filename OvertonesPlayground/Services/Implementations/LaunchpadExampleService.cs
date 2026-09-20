@@ -1,4 +1,5 @@
 using OvertonesPlayground.Models;
+using OvertonesPlayground.Ontology.Model;
 using OvertonesPlayground.Ontology.Querying;
 using OvertonesPlayground.Services.Interfaces;
 
@@ -33,21 +34,17 @@ public sealed class LaunchpadExampleService : ILaunchpadExampleService
     }
     #endregion
 
-    #region Public methods
-    ///<inheritdoc/>
-    public async Task<LaunchpadProject> CreateAsync(string exampleId, CancellationToken cancellationToken = default)
+    #region Private methods
+    ///<summary>
+    ///Builds a setup with <paramref name="build"/> and makes its sounds real files. It builds once with the sounds' asset names as
+    ///their paths to learn which sounds the setup needs, copies those out of the app package (a sound already copied is reused),
+    ///then builds again with the real files. The build is deterministic, so both come out the same.
+    ///</summary>
+    private async Task<LaunchpadProject> MaterializeAsync(Func<SampleIndex, Func<Sample, string>, LaunchpadProject> build, CancellationToken cancellationToken)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(exampleId);
-        if (Examples.All(example => example.Id != exampleId))
-        {
-            throw new ArgumentException($"There is no Launchpad example called '{exampleId}'.", nameof(exampleId));
-        }
-
         SampleIndex index = await _catalog.GetIndexAsync(cancellationToken);
 
-        // Build once with the sounds' asset names as their paths to learn which sounds the setup needs, copy those out of the
-        // app package, then build again with the real files. The build is deterministic, so both come out the same.
-        LaunchpadProject draft = LaunchpadExamples.Build(exampleId, index, sample => sample.Id);
+        LaunchpadProject draft = build(index, sample => sample.Id);
         List<string> needed =
         [
             .. draft.Pads.Select(pad => pad.ClipPath)
@@ -62,11 +59,51 @@ public sealed class LaunchpadExampleService : ILaunchpadExampleService
         foreach (string assetName in needed)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            string existing = Path.Combine(directory, assetName);
-            paths[assetName] = File.Exists(existing) ? existing : await _assets.CopyToAsync(assetName, directory, cancellationToken);
+            paths[assetName] = await CopiedAsync(assetName, directory, cancellationToken);
         }
 
-        return LaunchpadExamples.Build(exampleId, index, sample => paths[sample.Id]);
+        return build(index, sample => paths[sample.Id]);
+    }
+
+    private async Task<string> CopiedAsync(string assetName, string directory, CancellationToken cancellationToken)
+    {
+        string existing = Path.Combine(directory, assetName);
+        return File.Exists(existing) ? existing : await _assets.CopyToAsync(assetName, directory, cancellationToken);
+    }
+    #endregion
+
+    #region Public methods
+    ///<inheritdoc/>
+    public async Task<LaunchpadProject> CreateAsync(string exampleId, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(exampleId);
+        if (Examples.All(example => example.Id != exampleId))
+        {
+            throw new ArgumentException($"There is no Launchpad example called '{exampleId}'.", nameof(exampleId));
+        }
+
+        return await MaterializeAsync((index, pathOf) => LaunchpadExamples.Build(exampleId, index, pathOf), cancellationToken);
+    }
+
+    ///<inheritdoc/>
+    public async Task<LaunchpadProject> CreateLessonAsync(string lessonId, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(lessonId);
+        if (!LaunchpadLessons.Ids.Contains(lessonId))
+        {
+            throw new ArgumentException($"There is no Launchpad lesson setup called '{lessonId}'.", nameof(lessonId));
+        }
+
+        return await MaterializeAsync((index, pathOf) => LaunchpadLessons.Build(lessonId, index, pathOf), cancellationToken);
+    }
+
+    ///<inheritdoc/>
+    public async Task<string> PrepareSampleAsync(string sampleName, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(sampleName);
+        SampleIndex index = await _catalog.GetIndexAsync(cancellationToken);
+        Sample sample = index.Find(sampleName + ".wav") ?? throw new ArgumentException($"The sound bank has no sound called '{sampleName}'.", nameof(sampleName));
+        return await CopiedAsync(sample.Id, Path.Combine(_fileSystem.AppDataDirectory, SamplesFolderName), cancellationToken);
     }
     #endregion
 
