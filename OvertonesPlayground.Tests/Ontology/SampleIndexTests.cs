@@ -60,6 +60,22 @@ public sealed class SampleIndexTests
     }
 
     [Fact]
+    public void TempoBand_IsHalfOpenSoNeighbouringBandsNeverShareASample()
+    {
+        SampleIndex index = new([
+            TestSamples.Make("Just under", tempoBpm: 99.9),
+            TestSamples.Make("On the edge", tempoBpm: 100),
+            TestSamples.Make("Top of band", tempoBpm: 119.99),
+            TestSamples.Make("Next band", tempoBpm: 120),
+            TestSamples.Make("No tempo"),
+        ]);
+
+        Assert.Equal(["Just under"], index.Query(new SampleQuery { Filter = SampleSpecs.TempoBand(80, 100) }).Select(s => s.Name));
+        Assert.Equal(["On the edge", "Top of band"], index.Query(new SampleQuery { Filter = SampleSpecs.TempoBand(100, 120) }).Select(s => s.Name));
+        Assert.Equal(["Next band"], index.Query(new SampleQuery { Filter = SampleSpecs.TempoBand(120, double.PositiveInfinity) }).Select(s => s.Name));
+    }
+
+    [Fact]
     public void Any_MatchesEverything_AndNeedsReviewFindsFlaggedSamples()
     {
         SampleIndex index = new([TestSamples.Make("A", needsReview: true), TestSamples.Make("B")]);

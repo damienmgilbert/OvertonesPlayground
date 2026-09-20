@@ -1,3 +1,4 @@
+using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using OvertonesPlayground.Models;
@@ -11,9 +12,9 @@ namespace OvertonesPlayground.ViewModels;
 
 ///<summary>
 ///View model for the Sound Bank: a browser over the ~2,200 bundled samples, driven by the sample ontology. It searches by
-///text, filters by instrument (drilling down the taxonomy), kit, content type, sound character, stereo image, length, loudness
-///and envelope, sorts by any acoustic facet, finds sounds that sound like a chosen one, auditions a sound, and copies one into
-///the user's library.
+///text, filters by instrument (drilling down the taxonomy), kit, content type, tempo, key, sound character, stereo image,
+///length, loudness and envelope, sorts by any acoustic facet, finds sounds that sound like a chosen one, auditions a sound, and
+///copies one into the user's library.
 ///</summary>
 public partial class SoundBankViewModel : BaseViewModel
 {
@@ -25,6 +26,21 @@ public partial class SoundBankViewModel : BaseViewModel
 
     private const int MaxKitChips = 16;
     private const string UpKey = "^up";
+
+    ///<summary>
+    ///The tempo ranges offered as filters. They cover the whole range without overlapping, so a sound is in exactly one band.
+    ///The edges sit half a BPM below the whole numbers in the labels because rows show a tempo rounded to a whole number: a
+    ///detected 139.9 is listed as "140 BPM", so it belongs under 140-159 and not under 120-139.
+    ///</summary>
+    private static readonly TempoBand[] _tempoBands =
+    [
+        new("slow", "Under 80", 0, 79.5),
+        new("80", "80-99", 79.5, 99.5),
+        new("100", "100-119", 99.5, 119.5),
+        new("120", "120-139", 119.5, 139.5),
+        new("140", "140-159", 139.5, 159.5),
+        new("160", "160+", 159.5, double.PositiveInfinity),
+    ];
     #endregion
 
     #region Fields
@@ -95,6 +111,19 @@ public partial class SoundBankViewModel : BaseViewModel
             EnumChips(index.CountBy(sample => (ContentType?)sample.Classification.ContentType.Value), [ContentType.OneShot, ContentType.Loop, ContentType.Break, ContentType.Phrase, ContentType.Stab, ContentType.Texture, ContentType.Transition]),
             key => SampleSpecs.ContentTypeIs(Enum.Parse<ContentType>(key)));
 
+        FacetGroupViewModel tempo = new(
+            "Tempo (BPM)",
+            [.. _tempoBands.Select(band => new FacetChipViewModel(band.Key, band.Label, index.All.Count(band.Specification.IsSatisfiedBy)))
+                .Where(chip => chip.Count > 0)],
+            key => _tempoBands.Single(band => band.Key == key).Specification);
+
+        FacetGroupViewModel musicalKey = new(
+            "Key",
+            [.. Enumerable.Range(0, 12)
+                .Select(pitchClass => new FacetChipViewModel(pitchClass.ToString(CultureInfo.InvariantCulture), MusicalNotes.PitchClassName(pitchClass), index.All.Count(sample => sample.EffectivePitchClass == pitchClass)))
+                .Where(chip => chip.Count > 0)],
+            key => SampleSpecs.PitchClassIs(int.Parse(key, CultureInfo.InvariantCulture)));
+
         TonalCharacter[] characters = [TonalCharacter.Pitched, TonalCharacter.Unpitched, TonalCharacter.Noisy, TonalCharacter.Harmonic, TonalCharacter.Metallic, TonalCharacter.Sub, TonalCharacter.Dark, TonalCharacter.Warm, TonalCharacter.Bright];
         FacetGroupViewModel character = new(
             "Character",
@@ -128,7 +157,7 @@ public partial class SoundBankViewModel : BaseViewModel
             [new FacetChipViewModel("review", "Needs review", flagged)],
             _ => SampleSpecs.NeedsReview());
 
-        FacetGroups = [_instrumentGroup, kits, types, character, stereo, length, loudness, envelope, review];
+        FacetGroups = [_instrumentGroup, kits, types, tempo, musicalKey, character, stereo, length, loudness, envelope, review];
     }
 
     ///<summary>
@@ -504,7 +533,7 @@ public partial class SoundBankViewModel : BaseViewModel
     public bool HasDetail => Detail is not null;
 
     ///<summary>
-    ///Every filter row: instrument, kit, type, character, stereo, length, loudness, envelope and curation.
+    ///Every filter row: instrument, kit, type, tempo, key, character, stereo, length, loudness, envelope and curation.
     ///</summary>
     [ObservableProperty]
     public partial IReadOnlyList<FacetGroupViewModel> FacetGroups { get; set; } = [];
@@ -572,5 +601,15 @@ public partial class SoundBankViewModel : BaseViewModel
     ///The sort orders to choose from.
     ///</summary>
     public IReadOnlyList<SampleSortKey> SortKeys { get; } = Enum.GetValues<SampleSortKey>();
+    #endregion
+
+    #region Nested types
+    ///<summary>
+    ///One tempo filter: a label and the half-open range of BPM it stands for.
+    ///</summary>
+    private sealed record TempoBand(string Key, string Label, double From, double Below)
+    {
+        public SampleSpecification Specification { get; } = SampleSpecs.TempoBand(From, Below);
+    }
     #endregion
 }

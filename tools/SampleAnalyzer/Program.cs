@@ -5,7 +5,7 @@ namespace SampleAnalyzer;
 ///<summary>
 ///Command-line entry point. Commands:
 ///<code>
-///analyze   decode every audio file, measure it, classify the corpus and write the catalog
+///analyze   decode every audio file (or, with --changed-only, only new or changed ones), measure it, classify the corpus and write the catalog
 ///classify  re-run only the classification on an existing catalog (no audio is read; use it to tune the lexicon)
 ///report    print a data-quality report for a catalog
 ///verify    check that a catalog matches the files on disk
@@ -53,9 +53,14 @@ internal static class Program
             SampleAnalyzer - builds the sample ontology catalog for OvertonesPlayground.
 
               analyze  [--raw <dir>] [--out <catalog.json>] [--overrides <overrides.json>] [--parallel <n>] [--limit <n>]
+                       [--changed-only [--catalog <catalog.json>]]
               classify [--catalog <catalog.json>] [--out <catalog.json>] [--overrides <overrides.json>]
               report   [--catalog <catalog.json>] [--review <n>]
               verify   [--catalog <catalog.json>] [--raw <dir>]
+
+            --changed-only keeps the samples of the existing catalog whose file is unchanged (same size and SHA-256) and decodes
+            only new or changed files. Everything is classified again, so overrides and taxonomy edits still apply. It analyses
+            everything when the catalog is missing, unreadable, or was written by another analyzer version.
 
             Defaults resolve from the repository root: audio in OvertonesPlayground/Resources/Raw, catalog in
             OvertonesPlayground/Resources/Raw/sample-catalog.json, overrides in tools/SampleAnalyzer/overrides.json.
@@ -83,7 +88,7 @@ internal static class Program
 
             int result = args[0].ToLowerInvariant() switch
             {
-                "analyze" => AnalyzeCommand.Run(raw, options.GetValueOrDefault("out") ?? catalogPath, overridesPath, options),
+                "analyze" => AnalyzeCommand.Run(raw, catalogPath, options.GetValueOrDefault("out") ?? catalogPath, overridesPath, options),
                 "classify" => AnalyzeCommand.Reclassify(options.GetValueOrDefault("catalog") ?? catalogPath, options.GetValueOrDefault("out") ?? catalogPath, overridesPath),
                 "report" => ReportCommand.Run(catalogPath, options),
                 "verify" => VerifyCommand.Run(catalogPath, raw),

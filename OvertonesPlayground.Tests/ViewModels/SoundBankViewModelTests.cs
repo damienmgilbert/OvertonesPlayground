@@ -46,7 +46,7 @@ public sealed class SoundBankViewModelTests : IDisposable
     {
         SoundBankViewModel viewModel = await LoadedAsync();
 
-        Assert.Equal(["Instrument", "Kit", "Type", "Character", "Stereo", "Length", "Loudness", "Envelope", "Curation"], viewModel.FacetGroups.Select(g => g.Title));
+        Assert.Equal(["Instrument", "Kit", "Type", "Tempo (BPM)", "Key", "Character", "Stereo", "Length", "Loudness", "Envelope", "Curation"], viewModel.FacetGroups.Select(g => g.Title));
         Assert.True(viewModel.FacetGroups.Single(g => g.Title == "Character").IsMultiSelect);
         Assert.False(viewModel.FacetGroups.Single(g => g.Title == "Kit").IsMultiSelect);
     }
@@ -158,6 +158,90 @@ public sealed class SoundBankViewModelTests : IDisposable
     }
 
     [Fact]
+    public async Task TempoRow_OffersOnlyTheBandsThatHaveSoundsInTempoOrder()
+    {
+        SoundBankViewModel viewModel = await LoadedAsync();
+
+        FacetGroupViewModel tempo = viewModel.FacetGroups.Single(g => g.Title == "Tempo (BPM)");
+
+        Assert.Equal(["80", "160"], tempo.Chips.Select(c => c.Key));
+        Assert.Equal(["80-99  1", "160+  1"], tempo.Chips.Select(c => c.Display));
+        Assert.False(tempo.IsMultiSelect);
+    }
+
+    [Fact]
+    public async Task ToggleChip_TempoBand_KeepsSoundsInThatRangeOnly()
+    {
+        SoundBankViewModel viewModel = await LoadedAsync();
+
+        viewModel.ToggleChipCommand.Execute(Chip(viewModel, "Tempo (BPM)", "80"));
+        Assert.Equal(["Break Ghosts 90 bpm"], viewModel.Results.Select(r => r.Name));
+
+        viewModel.ToggleChipCommand.Execute(Chip(viewModel, "Tempo (BPM)", "160"));
+        Assert.Equal(["Groove B 180 bpm"], viewModel.Results.Select(r => r.Name));
+        Assert.False(Chip(viewModel, "Tempo (BPM)", "80").IsSelected);
+    }
+
+    [Fact]
+    public async Task ToggleChip_TempoBand_MatchesTheWholeNumberTheRowShows()
+    {
+        // Regression from the tablet: a detected 139.9 BPM is shown as "140 BPM" but was listed under 120-139.
+        _catalog.GetIndexAsync(Arg.Any<CancellationToken>()).Returns(new SampleIndex([
+            TestSamples.Make("Rounds up", tempoBpm: 139.9),
+            TestSamples.Make("Rounds down", tempoBpm: 139.4),
+            TestSamples.Make("Lower edge", tempoBpm: 119.6),
+        ]));
+        SoundBankViewModel viewModel = await LoadedAsync();
+
+        viewModel.ToggleChipCommand.Execute(Chip(viewModel, "Tempo (BPM)", "140"));
+        Assert.Equal(["Rounds up"], viewModel.Results.Select(r => r.Name));
+        Assert.Contains("140 BPM", viewModel.Results[0].Badges);
+
+        viewModel.ToggleChipCommand.Execute(Chip(viewModel, "Tempo (BPM)", "120"));
+        Assert.Equal(["Lower edge", "Rounds down"], viewModel.Results.Select(r => r.Name));
+        Assert.Contains("139 BPM", viewModel.Results.Single(r => r.Name == "Rounds down").Badges);
+    }
+
+    [Fact]
+    public async Task KeyRow_OffersEachKeyThatOccursWithItsNoteNameAndCount()
+    {
+        SoundBankViewModel viewModel = await LoadedAsync();
+
+        FacetGroupViewModel key = viewModel.FacetGroups.Single(g => g.Title == "Key");
+
+        // The 808 is named in E; the six test kicks have a detected fundamental of 55 Hz, which is an A.
+        Assert.Equal(["4", "9"], key.Chips.Select(c => c.Key));
+        Assert.Equal(["E  1", "A  6"], key.Chips.Select(c => c.Display));
+        Assert.False(key.IsMultiSelect);
+    }
+
+    [Fact]
+    public async Task ToggleChip_Key_UsesTheNamedKeyOrElseTheDetectedPitch()
+    {
+        SoundBankViewModel viewModel = await LoadedAsync();
+
+        viewModel.ToggleChipCommand.Execute(Chip(viewModel, "Key", "4"));
+        Assert.Equal(["808 Oracle 1"], viewModel.Results.Select(r => r.Name));
+
+        viewModel.ToggleChipCommand.Execute(Chip(viewModel, "Key", "9"));
+        Assert.Equal(6, viewModel.Results.Count);
+        Assert.All(viewModel.Results, row => Assert.StartsWith("Kick Test", row.Name, StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task ToggleChip_TempoAndKeyCombineWithOtherRows()
+    {
+        SoundBankViewModel viewModel = await LoadedAsync();
+
+        viewModel.ToggleChipCommand.Execute(Chip(viewModel, "Tempo (BPM)", "80"));
+        viewModel.ToggleChipCommand.Execute(Chip(viewModel, "Key", "4"));
+
+        Assert.Empty(viewModel.Results);
+        Assert.Equal("0 of 25 sounds", viewModel.ResultSummary);
+        Assert.True(viewModel.HasActiveFilters);
+    }
+
+    [Fact]
     public async Task ToggleChip_Null_DoesNothing()
     {
         SoundBankViewModel viewModel = await LoadedAsync();
@@ -174,6 +258,8 @@ public sealed class SoundBankViewModelTests : IDisposable
         viewModel.SearchText = "kick";
         viewModel.ToggleChipCommand.Execute(Chip(viewModel, "Kit", "909"));
         viewModel.ToggleChipCommand.Execute(Chip(viewModel, "Instrument", "percussion"));
+        viewModel.ToggleChipCommand.Execute(Chip(viewModel, "Tempo (BPM)", "80"));
+        viewModel.ToggleChipCommand.Execute(Chip(viewModel, "Key", "4"));
 
         viewModel.ClearFiltersCommand.Execute(null);
 

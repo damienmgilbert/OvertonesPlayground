@@ -4,8 +4,10 @@
 
 `OvertonesPlayground/Resources/Raw` holds about 2,200 bundled WAV samples (~970 MB). The **Sound Bank** page (flyout > *Sound
 Bank*) lets you browse them by what they *are*, not just by file name: search, filter by instrument (drilling down the
-taxonomy), kit, type, sound character, stereo image, length, loudness and envelope, sort by any acoustic facet, audition a
-sound, find sounds that sound like it, and copy one into your library.
+taxonomy), kit, type, tempo, key, sound character, stereo image, length, loudness and envelope, sort by any acoustic facet,
+audition a sound, find sounds that sound like it, and copy one into your library. The tempo row offers six BPM bands and the key
+row the twelve pitch classes; both use the tempo or key written in the file name when there is one, and the detected value
+otherwise (so only sounds with a tempo or a clear pitch appear under them).
 
 That is driven by an ontology, in [`OvertonesPlayground.Ontology`](OvertonesPlayground.Ontology) (plain `net10.0`, no MAUI, so the
 app, the tests and the analyzer tool all share it):
@@ -33,6 +35,7 @@ dotnet run --project tools/SampleAnalyzer -c Release -- analyze
 | Command | Use it to |
 | --- | --- |
 | `analyze` | Decode every file, measure it, classify the corpus and write the catalog (about 5 s for the whole bank). |
+| `analyze --changed-only` | Keep the samples of the existing catalog whose file is unchanged (same size and SHA-256), decode only new or changed files, drop entries whose file is gone, then classify the whole corpus again so overrides and taxonomy edits still apply. With nothing changed it takes about 2 s. It falls back to a full analysis when the catalog is missing, unreadable or built by another analyzer version, and can't be combined with `--limit`. |
 | `classify` | Re-run **only the classification** on the existing catalog, without reading any audio. This is the fast loop for tuning the taxonomy, lexicon or overrides. |
 | `report` | Print a data-quality report: coverage, audio-versus-name agreement per family, tempo and key agreement, facet distributions, and the list of samples flagged for review. |
 | `verify` | Check that the catalog matches the files on disk (missing, extra, changed). |

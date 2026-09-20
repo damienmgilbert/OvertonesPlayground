@@ -79,8 +79,7 @@ public class SampleAssetStore : ISampleAssetStore
             // Not a WAV the reader understands (for example an AIFF): hand it over as it is rather than lose the sound.
         }
 
-        bool isAlreadyEditable = wav is null || wav.Format is { BitsPerSample: 16, IsFloat: false, IsExtensible: false };
-        if (isAlreadyEditable)
+        if (wav is null || wav.Format is { BitsPerSample: 16, IsFloat: false, IsExtensible: false })
         {
             await File.WriteAllBytesAsync(target, bytes, cancellationToken);
             return;

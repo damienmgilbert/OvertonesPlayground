@@ -90,7 +90,15 @@ public static class SampleSpecs
     public static SampleSpecification StyleIs(string key) =>
         Of($"Style={key}", s => s.Classification.Style is not null && Taxonomies.Styles.TryGet(s.Classification.Style.Value, out StyleConcept? style) && style.IsA(key));
 
-    ///<summary>The effective tempo lies between the two values (half and double time are not folded).</summary>
+    ///<summary>
+    ///The effective tempo is at least <paramref name="fromBpm"/> and below <paramref name="belowBpm"/>, so neighbouring
+    ///bands never share a sample (half and double time are not folded). Use <see cref="double.PositiveInfinity"/> for an open
+    ///top band.
+    ///</summary>
+    public static SampleSpecification TempoBand(double fromBpm, double belowBpm) =>
+        Of($"Tempo {Number(fromBpm)}..<{Number(belowBpm)} BPM", s => s.EffectiveTempoBpm is { } bpm && bpm >= fromBpm && bpm < belowBpm);
+
+    ///<summary>The effective tempo lies between the two values, both included (half and double time are not folded).</summary>
     public static SampleSpecification TempoBetween(double minBpm, double maxBpm) =>
         Of($"Tempo {Number(minBpm)}-{Number(maxBpm)} BPM", s => s.EffectiveTempoBpm is { } bpm && bpm >= minBpm && bpm <= maxBpm);
     #endregion
