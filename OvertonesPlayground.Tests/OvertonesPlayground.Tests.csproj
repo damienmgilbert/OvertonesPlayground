@@ -53,6 +53,11 @@
 		<Content Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
 	</ItemGroup>
 
+	<!-- The sample ontology is a plain net10.0 library (no MAUI), so unlike the app it can be referenced directly. -->
+	<ItemGroup>
+		<ProjectReference Include="..\OvertonesPlayground.Ontology\OvertonesPlayground.Ontology.csproj" />
+	</ItemGroup>
+
 	<!-- The same global usings the app declares, so the linked sources compile unchanged. -->
 	<ItemGroup>
 		<Using Include="CommunityToolkit.Mvvm" />
@@ -62,6 +67,15 @@
 		<!-- Test-only conveniences. -->
 		<Using Include="NSubstitute" />
 		<Using Include="OvertonesPlayground.Models" />
+		<Using Include="OvertonesPlayground.Ontology.Analysis" />
+		<Using Include="OvertonesPlayground.Ontology.Analysis.Dsp" />
+		<Using Include="OvertonesPlayground.Ontology.Analysis.Features" />
+		<Using Include="OvertonesPlayground.Ontology.Catalog" />
+		<Using Include="OvertonesPlayground.Ontology.Classification" />
+		<Using Include="OvertonesPlayground.Ontology.Concepts" />
+		<Using Include="OvertonesPlayground.Ontology.Facets" />
+		<Using Include="OvertonesPlayground.Ontology.Model" />
+		<Using Include="OvertonesPlayground.Ontology.Querying" />
 		<Using Include="OvertonesPlayground.Services.Interfaces" />
 		<Using Include="OvertonesPlayground.Tests.TestSupport" />
 		<Using Include="OvertonesPlayground.ViewModels" />

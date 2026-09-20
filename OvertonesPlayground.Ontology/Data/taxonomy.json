@@ -1,0 +1,264 @@
+{
+  "instruments": {
+    "key": "instrument",
+    "name": "Instrument",
+    "content": "OneShot",
+    "children": [
+      {
+        "key": "percussion",
+        "name": "Percussion",
+        "children": [
+          { "key": "kick", "name": "Kick", "distinctive": true, "aliases": ["kick", "kicks", "kik", "bass drum"] },
+          { "key": "snare", "name": "Snare", "distinctive": true, "aliases": ["snare", "snares"] },
+          { "key": "tom", "name": "Tom", "distinctive": true, "aliases": ["tom", "toms"] },
+          { "key": "clap", "name": "Clap", "distinctive": true, "aliases": ["clap", "claps", "handclap", "hand clap"] },
+          { "key": "rim", "name": "Rim / Sidestick", "distinctive": true, "aliases": ["rim", "rims", "rimshot", "rim shot", "sidestick", "side stick"] },
+          { "key": "snap", "name": "Snap", "aliases": ["snap", "snaps", "finger snap"] },
+          {
+            "key": "hihat",
+            "name": "Hi-Hat",
+            "distinctive": true,
+            "aliases": ["hihat", "hihats", "hi hat", "hi hats", "hat", "hats", "hh", "tops"],
+            "children": [
+              { "key": "hihat-closed", "name": "Closed Hi-Hat", "aliases": ["hihat closed", "hi hat closed", "closed hihat", "closed hat", "hat closed", "hats closed"] },
+              { "key": "hihat-open", "name": "Open Hi-Hat", "aliases": ["hihat open", "hi hat open", "open hihat", "open hat", "hat open", "hihat off"] },
+              { "key": "hihat-pedal", "name": "Pedal Hi-Hat", "aliases": ["hihat foot", "hi hat foot", "foot hat", "hihat pedal"] }
+            ]
+          },
+          {
+            "key": "cymbal",
+            "name": "Cymbal",
+            "distinctive": true,
+            "aliases": ["cymbal", "cymbals"],
+            "children": [
+              { "key": "crash", "name": "Crash", "aliases": ["crash", "crashes"] },
+              { "key": "ride", "name": "Ride", "aliases": ["ride", "rides"] },
+              { "key": "splash", "name": "Splash", "aliases": ["splash"] },
+              { "key": "china", "name": "China", "aliases": ["china"] }
+            ]
+          },
+          {
+            "key": "hand-percussion",
+            "name": "Hand Percussion",
+            "aliases": ["perc", "hand percussion"],
+            "children": [
+              { "key": "shaker", "name": "Shaker", "aliases": ["shaker", "shakers", "shake", "egg shaker", "maracas", "maraca", "rattle", "rattles", "sandpaper"] },
+              { "key": "tambourine", "name": "Tambourine", "aliases": ["tamb", "tambo", "tambourine", "tambourines"] },
+              { "key": "cabasa", "name": "Cabasa", "aliases": ["cabasa", "cabassa"] },
+              { "key": "conga", "name": "Conga", "aliases": ["conga", "congas"] },
+              { "key": "bongo", "name": "Bongo", "aliases": ["bongo", "bongos"] },
+              { "key": "timbale", "name": "Timbale", "aliases": ["timbale", "timbales"] },
+              { "key": "djembe", "name": "Djembe", "aliases": ["djembe"] },
+              { "key": "tabla", "name": "Tabla", "aliases": ["tabla", "tablas"] },
+              { "key": "pandeiro", "name": "Pandeiro", "aliases": ["pandeiro"] },
+              { "key": "cuica", "name": "Cuica", "aliases": ["cuica"] },
+              { "key": "agogo", "name": "Agogo", "aliases": ["agogo"] },
+              { "key": "cowbell", "name": "Cowbell", "aliases": ["cowbell", "cowbells"] },
+              { "key": "triangle", "name": "Triangle", "aliases": ["triangle"] },
+              { "key": "clave", "name": "Clave", "aliases": ["clave", "claves"] },
+              { "key": "woodblock", "name": "Wood Block", "aliases": ["wood", "woodblock", "wood block", "temple", "temple block", "block"] },
+              { "key": "castanet", "name": "Castanet", "aliases": ["castanet", "castanets"] },
+              { "key": "sticks", "name": "Sticks", "aliases": ["stick", "sticks"] },
+              { "key": "flexitone", "name": "Flexatone", "aliases": ["flexitone", "flexatone"] }
+            ]
+          },
+          { "key": "electronic-percussion", "name": "Electronic Percussion", "aliases": ["e perc", "eperc", "electronic perc", "electronic percussion", "mini drum"] },
+          {
+            "key": "tuned-percussion",
+            "name": "Tuned Percussion",
+            "aliases": ["tuned percussion"],
+            "children": [
+              { "key": "mallet", "name": "Mallet", "aliases": ["mallet", "mallets", "vibraphone", "vibes", "marimba", "glockenspiel"] },
+              { "key": "xylophone", "name": "Xylophone", "aliases": ["xylophone"] },
+              { "key": "bell", "name": "Bell", "aliases": ["bell", "bells", "chime", "chimes"] },
+              { "key": "timpani", "name": "Timpani", "aliases": ["timpani", "timp"] }
+            ]
+          }
+        ]
+      },
+      {
+        "key": "keys",
+        "name": "Keys",
+        "children": [
+          { "key": "piano", "name": "Piano", "aliases": ["piano", "grand piano", "grand"] },
+          { "key": "e-piano", "name": "Electric Piano", "aliases": ["e piano", "epiano", "electric piano", "rhodes", "wurli", "wurlitzer", "celeste"] },
+          { "key": "organ", "name": "Organ", "aliases": ["organ"] },
+          { "key": "harpsichord", "name": "Harpsichord", "aliases": ["harpsichord", "clav", "clavinet"] }
+        ]
+      },
+      {
+        "key": "strings-plucked",
+        "name": "Strings & Plucked",
+        "children": [
+          { "key": "guitar", "name": "Guitar", "aliases": ["guitar", "guitars", "electric guitar"] },
+          { "key": "bowed", "name": "Bowed", "aliases": ["bowed", "violin", "cello"] },
+          { "key": "banjo", "name": "Banjo", "aliases": ["banjo"] },
+          { "key": "lyre", "name": "Lyre", "aliases": ["lyre", "harp"] },
+          { "key": "orchestral-strings", "name": "Orchestral Strings", "aliases": ["strings", "string", "orchestra", "orchestral"] }
+        ]
+      },
+      {
+        "key": "brass-winds",
+        "name": "Brass & Winds",
+        "children": [
+          { "key": "brass", "name": "Brass", "aliases": ["brass", "flugelhorn", "trumpet", "horn", "horns"] },
+          { "key": "airhorn", "name": "Air Horn", "aliases": ["airhorn", "air horn"] }
+        ]
+      },
+      {
+        "key": "synth",
+        "name": "Synth",
+        "aliases": ["synth", "synths", "phasersynth"],
+        "children": [
+          { "key": "synth-chord", "name": "Synth Chord", "aliases": ["synth chord", "synth stab", "chord", "chords"] },
+          { "key": "synth-pad", "name": "Synth Pad", "aliases": ["pad", "pads", "wavetable", "wavetable pads", "synth pad"] },
+          { "key": "synth-note", "name": "Synth Note", "aliases": ["synth note", "synth prism", "synth bend", "synth acid"] }
+        ]
+      },
+      {
+        "key": "bass",
+        "name": "Bass",
+        "aliases": ["bass"],
+        "children": [
+          { "key": "bass-808", "name": "808 Bass", "aliases": ["^808"] },
+          { "key": "bass-sub", "name": "Sub Bass", "aliases": ["bass sub", "sub bass", "sub"] },
+          { "key": "bass-synth", "name": "Synth Bass", "aliases": ["synth bass", "bass synth"] },
+          { "key": "bass-electric", "name": "Electric Bass", "aliases": ["bass electric", "bass guitar", "electric bass"] }
+        ]
+      },
+      {
+        "key": "vocal",
+        "name": "Vocal",
+        "aliases": ["vocal", "vocals", "voice", "vox", "choir", "chant", "chants", "shout", "shouts", "beatbox", "inhale", "scat"]
+      },
+      {
+        "key": "sfx",
+        "name": "Sound Effect",
+        "aliases": ["fx", "sfx", "effect", "effects"],
+        "children": [
+          { "key": "impact", "name": "Impact", "content": "Transition", "aliases": ["impact", "impacts", "stinger", "landing"] },
+          { "key": "riser", "name": "Riser", "content": "Transition", "aliases": ["riser", "risers", "build", "buildup", "swell", "swells", "sweep", "sweeps", "sweeper", "whoosh", "reverse"] },
+          { "key": "noise", "name": "Noise", "content": "Texture", "aliases": ["noise", "static", "crackle", "hiss", "white noise"] },
+          { "key": "atmosphere", "name": "Atmosphere", "content": "Texture", "aliases": ["atmos", "atmosphere", "ambience", "ambient", "underwater", "forest", "rain", "wind", "television", "tv", "radio", "sonar", "soundboard", "bleak"] },
+          { "key": "foley", "name": "Foley", "aliases": ["foley", "cash register", "paper", "tea", "sink", "broken glass", "glass", "turn signal", "stylus", "tube", "cat", "hornet", "heart", "wire", "machine noise"] },
+          { "key": "zap", "name": "Zap / Laser", "aliases": ["zap", "zaps", "laser", "siren", "sirens", "spark", "drip", "sonar ping"] },
+          { "key": "glitch", "name": "Glitch / Click", "aliases": ["click", "clicks", "blip", "blips", "blop", "blops", "glitch", "stutter", "pop", "bomb tick", "tick"] }
+        ]
+      },
+      {
+        "key": "stab",
+        "name": "Stab",
+        "content": "Stab",
+        "aliases": ["stab", "stabs"]
+      },
+      { "key": "unclassified", "name": "Unclassified" },
+      {
+        "key": "loop-groove",
+        "name": "Loop / Groove",
+        "content": "Loop",
+        "children": [
+          { "key": "drum-loop", "name": "Drum Loop", "aliases": ["break", "breaks", "beat", "beats", "groove", "grooves", "drum loop", "drums", "drum", "bluesbreak", "shuffle"] },
+          { "key": "mixed-loop", "name": "Mixed Loop", "aliases": ["loop", "loops", "arp", "arpeggio", "riff", "lick"] }
+        ]
+      }
+    ]
+  },
+
+  "kits": {
+    "key": "kit",
+    "name": "Kit",
+    "children": [
+      {
+        "key": "drum-machine",
+        "name": "Drum Machine",
+        "origin": "DrumMachine",
+        "children": [
+          { "key": "808", "name": "Roland 808", "aliases": ["808"], "origin": "Analog" },
+          { "key": "909", "name": "Roland 909", "aliases": ["909"] },
+          { "key": "707", "name": "Roland 707", "aliases": ["707"] },
+          { "key": "606", "name": "Roland 606", "aliases": ["606"] },
+          { "key": "dmx", "name": "Oberheim DMX", "aliases": ["dmx"] },
+          { "key": "r100", "name": "R100", "aliases": ["r100"] },
+          { "key": "ed10", "name": "ED10", "aliases": ["ed10"] }
+        ]
+      },
+      {
+        "key": "sampler",
+        "name": "Sampler",
+        "origin": "Sampled",
+        "children": [
+          { "key": "mpc", "name": "Akai MPC", "aliases": ["mpc"] },
+          { "key": "sp", "name": "E-mu SP", "aliases": ["sp"] },
+          { "key": "vinyl", "name": "Vinyl", "aliases": ["vinyl", "stylus"] }
+        ]
+      },
+      {
+        "key": "pack",
+        "name": "Pack / Series",
+        "children": [
+          { "key": "taka", "name": "Taka", "aliases": ["taka"] },
+          { "key": "ldre", "name": "LDre", "aliases": ["ldre"] },
+          { "key": "decap", "name": "DECAP", "aliases": ["decap"] },
+          { "key": "tamuz", "name": "Tamuz", "aliases": ["tamuz"] },
+          { "key": "rktd", "name": "RKTD", "aliases": ["rktd", "rk"] },
+          { "key": "er", "name": "ER", "aliases": ["er"] },
+          { "key": "prommer", "name": "Prommer", "aliases": ["prommer"] },
+          { "key": "bnyx", "name": "BNYX", "aliases": ["bnyx"] },
+          { "key": "fenk", "name": "Fenk", "aliases": ["fenk"] },
+          { "key": "mkit", "name": "Mkit", "aliases": ["mkit"] },
+          { "key": "plymouth", "name": "Plymouth", "aliases": ["plymouth"] },
+          { "key": "dlj", "name": "DLJ", "aliases": ["dlj"] },
+          { "key": "dld", "name": "DLD", "aliases": ["dld"] },
+          { "key": "dla", "name": "DLA", "aliases": ["dla"] },
+          { "key": "mks", "name": "MKS", "aliases": ["mks"] }
+        ]
+      }
+    ]
+  },
+
+  "styles": {
+    "key": "style",
+    "name": "Style",
+    "children": [
+      {
+        "key": "electronic",
+        "name": "Electronic",
+        "aliases": ["electronic", "electro", "edm", "idm", "techno", "digi"],
+        "children": [
+          { "key": "house", "name": "House", "aliases": ["house", "uk club", "club"] },
+          { "key": "garage", "name": "Garage", "aliases": ["garage", "uk garage"] },
+          { "key": "dnb", "name": "Drum & Bass / Jungle", "aliases": ["drum and bass", "dnb", "jungle", "jungly", "breakbeat"] }
+        ]
+      },
+      {
+        "key": "hip-hop",
+        "name": "Hip-Hop",
+        "aliases": ["hip hop", "hiphop", "boom bap", "slow hop", "hop"],
+        "children": [
+          { "key": "trap", "name": "Trap", "aliases": ["trap"] }
+        ]
+      },
+      {
+        "key": "funk-soul",
+        "name": "Funk / Soul / Disco",
+        "aliases": ["funk", "funky", "soul", "groovy"],
+        "children": [
+          { "key": "disco", "name": "Disco", "aliases": ["disco"] }
+        ]
+      },
+      { "key": "rock", "name": "Rock", "aliases": ["rock", "metal", "punk"] },
+      { "key": "jazz", "name": "Jazz", "aliases": ["jazz", "jazzy", "swing"] },
+      {
+        "key": "latin-world",
+        "name": "Latin / World",
+        "aliases": ["latin", "afro", "african", "samba", "semba", "bossa", "brazil", "brazilian", "greek", "temple"],
+        "children": [
+          { "key": "dancehall", "name": "Dancehall / Reggae", "aliases": ["dancehall", "reggae", "dub"] }
+        ]
+      },
+      { "key": "cinematic", "name": "Cinematic / Ambient", "aliases": ["cinematic", "ambient", "atmospheric", "orchestral", "dark"] },
+      { "key": "retro", "name": "Retro", "aliases": ["70s", "80s", "90s", "vintage", "old school", "oldschool"] },
+      { "key": "lo-fi", "name": "Lo-Fi", "aliases": ["lofi", "lo fi", "dusty", "8bit", "10bit", "crushed"] }
+    ]
+  }
+}

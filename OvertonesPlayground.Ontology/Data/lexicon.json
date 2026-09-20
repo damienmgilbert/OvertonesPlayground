@@ -1,0 +1,18 @@
+{
+  "contentTypes": {
+    "Loop": ["loop", "loops", "arp", "arpeggio", "groove", "grooves", "beat", "beats", "riff", "shuffle"],
+    "Break": ["break", "breaks", "bluesbreak", "chop", "chops", "chopped"],
+    "Phrase": ["phrase", "phrases", "lick", "melody", "harmony", "harmonies"],
+    "Stab": ["stab", "stabs", "chord", "chords"],
+    "Texture": ["atmos", "atmosphere", "ambience", "ambient", "pad", "pads", "noise", "static", "crackle", "forest", "rain", "wind", "underwater", "television", "wavetable", "drone"],
+    "Transition": ["riser", "risers", "sweep", "sweeps", "sweeper", "swell", "swells", "impact", "impacts", "whoosh", "stinger", "landing", "reverse", "build", "buildup"]
+  },
+  "origins": {
+    "Acoustic": ["acoustic", "acoustified", "real", "live", "natural", "organic", "brush", "grand"],
+    "Analog": ["analog", "analogue", "tape"],
+    "Digital": ["digital", "digi", "10bit", "8bit", "bit", "fm", "wavetable", "sine"],
+    "Sampled": ["vinyl", "dusty", "dust", "stylus", "sample", "sampled"],
+    "Processed": ["processed", "verb", "reverb", "reverse", "distorted", "crushed", "charred", "burned", "abuse", "layered", "electrified", "squashed"]
+  },
+  "ignoredTokens": ["and", "the", "of", "a", "in", "on", "to", "my", "new", "copy"]
+}

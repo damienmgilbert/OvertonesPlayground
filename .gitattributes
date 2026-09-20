@@ -61,3 +61,7 @@
 #*.PDF   diff=astextplain
 #*.rtf   diff=astextplain
 #*.RTF   diff=astextplain
+
+# Audio samples are binary; never normalise line endings or diff them.
+*.wav binary
+*.aif binary

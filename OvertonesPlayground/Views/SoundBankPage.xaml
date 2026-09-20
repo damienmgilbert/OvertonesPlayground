@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:OvertonesPlayground.Controls"
+             xmlns:vm="clr-namespace:OvertonesPlayground.ViewModels"
+             xmlns:models="clr-namespace:OvertonesPlayground.Models"
+             x:Class="OvertonesPlayground.Views.SoundBankPage" AutomationId="soundbank-page"
+             x:DataType="vm:SoundBankViewModel"
+             Title="{Binding Title}">
+
+    <ContentPage.ToolbarItems>
+        <ToolbarItem AutomationId="soundbank-filters-toggle" Text="Filters" controls:Icon.Glyph="{x:Static models:IconFont.Filter_alt}" controls:Icon.Size="24" Clicked="OnToggleFiltersClicked" />
+    </ContentPage.ToolbarItems>
+
+    <Grid ColumnDefinitions="*,440">
+
+        <!-- Left: search, filters and the result list -->
+        <Grid Grid.Column="0" RowDefinitions="Auto,Auto,Auto,*">
+
+            <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="8" Padding="16,10,16,4">
+                <SearchBar AutomationId="soundbank-search" Grid.Column="0" Placeholder="Search names, instruments, kits, keys..." Text="{Binding SearchText}" />
+                <Picker AutomationId="soundbank-sort" Grid.Column="1" Title="Sort by" WidthRequest="130" VerticalOptions="Center"
+                        ItemsSource="{Binding SortKeys}" SelectedItem="{Binding SortKey}" />
+                <Button AutomationId="soundbank-sort-direction" Grid.Column="2" Text="Order" ToolTipProperties.Text="Reverse the sort order" controls:Icon.Glyph="{x:Static models:IconFont.Trending_up}" Padding="12,6"
+                        VerticalOptions="Center" Command="{Binding ToggleSortDirectionCommand}">
+                    <Button.Triggers>
+                        <DataTrigger TargetType="Button" Binding="{Binding SortDescending}" Value="True">
+                            <Setter Property="controls:Icon.Glyph" Value="{x:Static models:IconFont.Trending_down}" />
+                        </DataTrigger>
+                    </Button.Triggers>
+                </Button>
+                <Button AutomationId="soundbank-clear" Grid.Column="3" Text="Clear" ToolTipProperties.Text="Remove the search and every filter" controls:Icon.Glyph="{x:Static models:IconFont.Close}" Padding="12,6"
+                        VerticalOptions="Center" IsVisible="{Binding HasActiveFilters}" Command="{Binding ClearFiltersCommand}" />
+            </Grid>
+
+            <VerticalStackLayout Grid.Row="1" Padding="16,0,16,4" Spacing="4">
+                <Label AutomationId="soundbank-summary" Style="{StaticResource CaptionTextBlockStyle}" Text="{Binding ResultSummary}" TextColor="{DynamicResource TextFillColorSecondary}" />
+                <Label AutomationId="soundbank-status" Style="{StaticResource CaptionTextBlockStyle}" Text="{Binding StatusMessage}" TextColor="{DynamicResource TextFillColorSecondary}"
+                       IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBool}}" />
+                <Border AutomationId="soundbank-similar-banner" StrokeShape="RoundRectangle 10" Padding="12,6" IsVisible="{Binding IsSimilarMode}" BackgroundColor="{DynamicResource SubtleFillColorSecondary}">
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                        <Label Grid.Column="0" VerticalOptions="Center" Text="{Binding SimilarToName, StringFormat='Sounds most like {0}, nearest first'}" />
+                        <Button AutomationId="soundbank-similar-clear" Grid.Column="1" Text="Done" Padding="12,4" Command="{Binding ClearSimilarCommand}" />
+                    </Grid>
+                </Border>
+            </VerticalStackLayout>
+
+            <!-- Filter rows: one per facet. Chips forward their taps to the view model from code-behind. -->
+            <VerticalStackLayout Grid.Row="2" AutomationId="soundbank-filters" Padding="16,0,16,6" Spacing="4"
+                                 IsVisible="{Binding IsFilterPanelVisible}"
+                                 BindableLayout.ItemsSource="{Binding FacetGroups}">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="vm:FacetGroupViewModel">
+                        <Grid ColumnDefinitions="88,*" ColumnSpacing="8" AutomationId="{Binding Title, StringFormat='soundbank-group-{0}'}">
+                            <VerticalStackLayout Grid.Column="0" VerticalOptions="Center">
+                                <Label Style="{StaticResource CaptionTextBlockStyle}" FontAttributes="Bold" Text="{Binding Title}" />
+                            </VerticalStackLayout>
+                            <ScrollView Grid.Column="1" Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
+                                <HorizontalStackLayout Spacing="6" BindableLayout.ItemsSource="{Binding Chips}">
+                                    <BindableLayout.ItemTemplate>
+                                        <DataTemplate x:DataType="vm:FacetChipViewModel">
+                                            <Border AutomationId="{Binding Key, StringFormat='soundbank-chip-{0}'}" StrokeShape="RoundRectangle 15" Padding="12,5" BackgroundColor="{DynamicResource ControlFillColorDefault}">
+                                                <Border.GestureRecognizers>
+                                                    <TapGestureRecognizer Tapped="OnChipTapped" />
+                                                </Border.GestureRecognizers>
+                                                <Border.Triggers>
+                                                    <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                                        <Setter Property="BackgroundColor" Value="{DynamicResource AccentFillColorDefault}" />
+                                                    </DataTrigger>
+                                                </Border.Triggers>
+                                                <Label Style="{StaticResource CaptionTextBlockStyle}" Text="{Binding Display}" VerticalOptions="Center">
+                                                    <Label.Triggers>
+                                                        <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="True">
+                                                            <Setter Property="TextColor" Value="{DynamicResource TextOnAccentFillColorPrimary}" />
+                                                        </DataTrigger>
+                                                    </Label.Triggers>
+                                                </Label>
+                                            </Border>
+                                        </DataTemplate>
+                                    </BindableLayout.ItemTemplate>
+                                </HorizontalStackLayout>
+                            </ScrollView>
+                        </Grid>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
+
+            <!-- Results: one virtualised list; the whole list is replaced on every change. -->
+            <CollectionView Grid.Row="3" AutomationId="soundbank-results" ItemsSource="{Binding Results}" SelectionMode="None">
+                <CollectionView.EmptyView>
+                    <Label AutomationId="soundbank-empty" Text="No sounds match. Try removing a filter." HorizontalTextAlignment="Center" VerticalTextAlignment="Center" />
+                </CollectionView.EmptyView>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="vm:SampleRowViewModel">
+                        <Border AutomationId="{Binding Name, StringFormat='soundbank-row-{0}'}" StrokeShape="RoundRectangle 10" Padding="12,8" Margin="12,3" BackgroundColor="{DynamicResource CardBackgroundFillColorDefault}">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnRowTapped" />
+                            </Border.GestureRecognizers>
+                            <Border.Triggers>
+                                <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                    <Setter Property="BackgroundColor" Value="{DynamicResource SubtleFillColorSecondary}" />
+                                </DataTrigger>
+                            </Border.Triggers>
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                                <VerticalStackLayout Grid.Column="0" Spacing="2" VerticalOptions="Center">
+                                    <Label Style="{StaticResource BodyStrongTextBlockStyle}" Text="{Binding Name}" LineBreakMode="TailTruncation" />
+                                    <Label Style="{StaticResource CaptionTextBlockStyle}" Text="{Binding Subtitle}" TextColor="{DynamicResource TextFillColorSecondary}" LineBreakMode="TailTruncation" />
+                                    <HorizontalStackLayout Spacing="6" BindableLayout.ItemsSource="{Binding Badges}">
+                                        <BindableLayout.ItemTemplate>
+                                            <DataTemplate x:DataType="x:String">
+                                                <Border StrokeShape="RoundRectangle 8" Padding="7,1" BackgroundColor="{DynamicResource ControlFillColorSecondary}">
+                                                    <Label Style="{StaticResource CaptionTextBlockStyle}" FontSize="11" Text="{Binding .}" />
+                                                </Border>
+                                            </DataTemplate>
+                                        </BindableLayout.ItemTemplate>
+                                    </HorizontalStackLayout>
+                                </VerticalStackLayout>
+                                <Button AutomationId="{Binding Name, StringFormat='soundbank-row-{0}-play'}" Grid.Column="1" VerticalOptions="Center" Padding="10,6"
+                                        controls:Icon.Glyph="{x:Static models:IconFont.Play_arrow}" controls:Icon.Size="22"
+                                        SemanticProperties.Description="{Binding Name, StringFormat='Audition {0}'}"
+                                        Clicked="OnPreviewClicked">
+                                    <Button.Triggers>
+                                        <DataTrigger TargetType="Button" Binding="{Binding IsPreviewing}" Value="True">
+                                            <Setter Property="controls:Icon.Glyph" Value="{x:Static models:IconFont.Stop}" />
+                                        </DataTrigger>
+                                    </Button.Triggers>
+                                </Button>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </Grid>
+
+        <!-- Right: everything the ontology knows about the selected sound -->
+        <ScrollView Grid.Column="1" AutomationId="soundbank-detail-scroll">
+            <Grid Padding="8,10,16,16">
+                <Label AutomationId="soundbank-detail-empty" Text="Select a sound to see how the ontology describes it." HorizontalTextAlignment="Center" VerticalTextAlignment="Center" Margin="0,40"
+                       TextColor="{DynamicResource TextFillColorSecondary}" IsVisible="{Binding HasDetail, Converter={StaticResource InvertedBool}}" />
+
+                <VerticalStackLayout AutomationId="soundbank-detail" Spacing="12" BindingContext="{Binding Detail}" x:DataType="vm:SampleDetailViewModel" IsVisible="{Binding Source={RelativeSource AncestorType={x:Type vm:SoundBankViewModel}}, Path=HasDetail}">
+
+                    <Label Style="{StaticResource SubtitleTextBlockStyle}" Text="{Binding Title}" LineBreakMode="WordWrap" />
+
+                    <HorizontalStackLayout Spacing="8">
+                        <Button AutomationId="soundbank-detail-play" Text="Audition" controls:Icon.Glyph="{x:Static models:IconFont.Play_arrow}" Padding="14,6" Clicked="OnDetailPreviewClicked" />
+                        <Button AutomationId="soundbank-detail-add" Text="Add to library" controls:Icon.Glyph="{x:Static models:IconFont.Add}" Padding="14,6" Clicked="OnDetailAddClicked" />
+                        <Button AutomationId="soundbank-detail-similar" Text="Sounds like this" controls:Icon.Glyph="{x:Static models:IconFont.Graphic_eq}" Padding="14,6" Clicked="OnDetailSimilarClicked" />
+                    </HorizontalStackLayout>
+
+                    <Border StrokeShape="RoundRectangle 10" Padding="12,8" BackgroundColor="{DynamicResource SystemFillColorCautionBackground}" IsVisible="{Binding NeedsReview}">
+                        <VerticalStackLayout Spacing="2" BindableLayout.ItemsSource="{Binding ReviewNotes}">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="x:String">
+                                    <Label Style="{StaticResource CaptionTextBlockStyle}" Text="{Binding ., StringFormat='Needs review: {0}'}" />
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <!-- The measured facts, one line each -->
+                    <VerticalStackLayout Spacing="6" BindableLayout.ItemsSource="{Binding Facts}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="vm:FactViewModel">
+                                <Grid ColumnDefinitions="96,*" ColumnSpacing="8">
+                                    <Label Grid.Column="0" Style="{StaticResource CaptionTextBlockStyle}" FontAttributes="Bold" Text="{Binding Label}" TextColor="{DynamicResource TextFillColorSecondary}" />
+                                    <Label Grid.Column="1" Style="{StaticResource CaptionTextBlockStyle}" Text="{Binding Value}" LineBreakMode="WordWrap" />
+                                </Grid>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+
+                    <!-- Spectral balance -->
+                    <VerticalStackLayout Spacing="4">
+                        <Label Style="{StaticResource CaptionTextBlockStyle}" FontAttributes="Bold" Text="Spectral balance" TextColor="{DynamicResource TextFillColorSecondary}" />
+                        <VerticalStackLayout Spacing="3" BindableLayout.ItemsSource="{Binding Bands}">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="vm:BandBarViewModel">
+                                    <Grid ColumnDefinitions="118,*,52" ColumnSpacing="8">
+                                        <Label Grid.Column="0" Style="{StaticResource CaptionTextBlockStyle}" FontSize="11" Text="{Binding Band}" VerticalOptions="Center" />
+                                        <ProgressBar Grid.Column="1" Progress="{Binding Fraction}" VerticalOptions="Center" />
+                                        <Label Grid.Column="2" Style="{StaticResource CaptionTextBlockStyle}" FontSize="11" Text="{Binding Percent}" HorizontalTextAlignment="End" VerticalOptions="Center" />
+                                    </Grid>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+
+                    <!-- Related sounds -->
+                    <VerticalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding Related}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="vm:RelatedGroupViewModel">
+                                <VerticalStackLayout Spacing="4">
+                                    <Label Style="{StaticResource CaptionTextBlockStyle}" FontAttributes="Bold" Text="{Binding Title}" TextColor="{DynamicResource TextFillColorSecondary}" />
+                                    <FlexLayout Wrap="Wrap" JustifyContent="Start" AlignItems="Start" BindableLayout.ItemsSource="{Binding Items}">
+                                        <BindableLayout.ItemTemplate>
+                                            <DataTemplate x:DataType="vm:RelatedSampleViewModel">
+                                                <Border StrokeShape="RoundRectangle 13" Padding="10,4" Margin="0,0,6,6" BackgroundColor="{DynamicResource ControlFillColorDefault}">
+                                                    <Border.GestureRecognizers>
+                                                        <TapGestureRecognizer Tapped="OnRelatedTapped" />
+                                                    </Border.GestureRecognizers>
+                                                    <Label Style="{StaticResource CaptionTextBlockStyle}" Text="{Binding Name}" LineBreakMode="TailTruncation" MaximumWidthRequest="280" />
+                                                </Border>
+                                            </DataTemplate>
+                                        </BindableLayout.ItemTemplate>
+                                    </FlexLayout>
+                                </VerticalStackLayout>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </Grid>
+        </ScrollView>
+    </Grid>
+
+</ContentPage>

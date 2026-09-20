@@ -1,0 +1,47 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<!-- Platform-neutral core of the sample ontology: model, taxonomy, DSP analyzers, classifiers, query engine and the
+	     catalog format. It deliberately has no MAUI dependency so the offline analyzer tool, the unit tests and the
+	     net10.0-android app can all share it. -->
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<LangVersion>preview</LangVersion>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<RootNamespace>OvertonesPlayground.Ontology</RootNamespace>
+		<EnableNETAnalyzers>true</EnableNETAnalyzers>
+		<EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+		<AnalysisLevel>preview-all</AnalysisLevel>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+		<!-- preview-all turns on every optional rule. These are style-only (primary constructors, collection-expression
+		     suggestions, null-argument guards on internal-facing APIs, "Long"/"Short" enum names ...) and would bury real
+		     diagnostics; the app suppresses the same ones per type in GlobalSuppressions.cs. -->
+		<NoWarn>$(NoWarn);CA1062;CA1819;CA1308;CA1711;CA1720;CA2225;IDE0290;IDE0028;IDE0047;IDE0048;IDE0024;IDE0004;IDE0072;IDE0078;IDE0200;IDE0058</NoWarn>
+	</PropertyGroup>
+
+	<!-- The app's radix-2 FFT is platform-neutral, so it is compiled into this assembly instead of being duplicated. It is
+	     `internal`, and only the analyzers in this library use it. -->
+	<ItemGroup>
+		<Compile Include="..\OvertonesPlayground\Services\Implementations\FastFourierTransform.cs" Link="Analysis\Dsp\FastFourierTransform.cs" />
+	</ItemGroup>
+
+	<!-- Data-driven ontology: the concept trees and the filename lexicon ship inside the assembly so the analyzer tool, the
+	     app and the tests all see the same vocabulary. -->
+	<ItemGroup>
+		<EmbeddedResource Include="Data\*.json" LogicalName="OvertonesPlayground.Ontology.Data.%(Filename)%(Extension)" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Using Include="OvertonesPlayground.Ontology.Analysis" />
+		<Using Include="OvertonesPlayground.Ontology.Analysis.Dsp" />
+		<Using Include="OvertonesPlayground.Ontology.Analysis.Features" />
+		<Using Include="OvertonesPlayground.Ontology.Catalog" />
+		<Using Include="OvertonesPlayground.Ontology.Classification" />
+		<Using Include="OvertonesPlayground.Ontology.Facets" />
+		<Using Include="OvertonesPlayground.Ontology.Model" />
+		<Using Include="OvertonesPlayground.Ontology.Querying" />
+		<Using Include="OvertonesPlayground.Ontology.Concepts" />
+	</ItemGroup>
+
+</Project>
