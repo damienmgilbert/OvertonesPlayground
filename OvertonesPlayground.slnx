@@ -1,4 +1,5 @@
 <Solution>
+  <Project Path="OvertonesPlayground.Ontology/OvertonesPlayground.Ontology.csproj" />
   <Project Path="OvertonesPlayground.Tests/OvertonesPlayground.Tests.csproj" />
   <Project Path="OvertonesPlayground/OvertonesPlayground.csproj">
     <Deploy Solution="Debug|*" />
