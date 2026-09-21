@@ -38,6 +38,23 @@ public partial class TextToSpeechViewModel : BaseViewModel
 
     #region Private methods
     ///<summary>
+    ///Forgets the preview once the controls no longer match it, so Save can't store a sound other than the one set up.
+    ///</summary>
+    private void DiscardStalePreview()
+    {
+        if (_pendingClip is null)
+        {
+            return;
+        }
+
+        _pendingClip = null;
+        CanSave = false;
+        StatusMessage = "Text changed - tap Generate & Play to hear it before saving.";
+    }
+
+    partial void OnTextChanged(string value) => DiscardStalePreview();
+
+    ///<summary>
     ///Gates <see cref="GenerateCommand"/> so it can't run with blank text.
     ///</summary>
     private bool CanGenerate() => !string.IsNullOrWhiteSpace(Text);
@@ -84,6 +101,9 @@ public partial class TextToSpeechViewModel : BaseViewModel
     [LoggerMessage(Level = LogLevel.Debug, Message = "Generating speech ({Length} characters).")]
     private partial void Log_GeneratingSpeech(int length);
 
+    [LoggerMessage(Level = LogLevel.Error, Message = "Failed to save the generated clip.")]
+    private partial void Log_SaveFailed(Exception exception);
+
     [LoggerMessage(Level = LogLevel.Debug, Message = "Saving generated speech clip '{ClipName}'.")]
     private partial void Log_SavingClip(string clipName);
 
@@ -107,6 +127,11 @@ public partial class TextToSpeechViewModel : BaseViewModel
 
             _pendingClip = null;
             CanSave = false;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            Log_SaveFailed(ex);
+            StatusMessage = "Couldn't save that speech clip to your library.";
         }
         finally
         {

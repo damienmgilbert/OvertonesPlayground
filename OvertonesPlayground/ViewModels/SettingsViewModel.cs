@@ -53,17 +53,30 @@ public partial class SettingsViewModel : BaseViewModel
     ///<summary>
     ///Deletes every clip in the library, including their files on disk.
     ///</summary>
+    ///<remarks>The page asks the user to confirm first, using <see cref="CountClipsAsync"/>.</remarks>
     [RelayCommand]
     private async Task ClearLibraryAsync()
     {
-        IReadOnlyList<AudioClip> clips = await _libraryService.GetClipsAsync();
-        Log_ClearingLibrary(clips.Count);
-        foreach (AudioClip clip in clips)
+        IsBusy = true;
+        try
         {
-            await _libraryService.DeleteClipAsync(clip);
-        }
+            IReadOnlyList<AudioClip> clips = await _libraryService.GetClipsAsync();
+            Log_ClearingLibrary(clips.Count);
+            foreach (AudioClip clip in clips)
+            {
+                await _libraryService.DeleteClipAsync(clip);
+            }
 
-        StatusMessage = "Library cleared.";
+            StatusMessage = "Library cleared.";
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            StatusMessage = "Couldn't clear the whole library. Some clips may be left.";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
     }
 
     [LoggerMessage(Level = LogLevel.Debug, Message = "Clearing library: {ClipCount} clips.")]
@@ -112,6 +125,13 @@ public partial class SettingsViewModel : BaseViewModel
         Log_StoppingAllAudio();
         _playbackService.StopEverything();
     }
+    #endregion
+
+    #region Public methods
+    ///<summary>
+    ///How many clips Clear Library would delete, so the page can say so when it asks.
+    ///</summary>
+    public async Task<int> CountClipsAsync() => (await _libraryService.GetClipsAsync()).Count;
     #endregion
 
     #region Public properties

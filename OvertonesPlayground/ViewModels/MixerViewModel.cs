@@ -72,8 +72,8 @@ public partial class MixerViewModel : BaseViewModel
     private partial void Log_StoppingAllChannels();
 
     ///<summary>
-    ///Re-evaluates solo dimming whenever any channel's solo state changes, so soloing one channel visually dims the
-    ///others - matching Ableton/Audacity mixer behavior.
+    ///Re-evaluates solo whenever any channel's solo state changes: soloing one channel dims and silences the others,
+    ///matching Ableton/Audacity mixer behavior.
     ///</summary>
     private void OnChannelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {

@@ -20,19 +20,13 @@ internal sealed class WavFile
     private const short SupportedBitsPerSample = 16;
     #endregion
 
-    #region Public methods
+    #region Private methods
     ///<summary>
-    ///Reads a WAV file from <paramref name="path"/> and returns its parsed format and samples.
+    ///The synchronous body of <see cref="ReadAsync"/>.
     ///</summary>
-    ///<exception cref="ArgumentException"><paramref name="path"/> is null, empty, or whitespace.</exception>
-    ///<exception cref="FileNotFoundException"><paramref name="path"/> does not exist.</exception>
-    ///<exception cref="InvalidDataException">The file isn't a well-formed RIFF/WAV file, or is truncated/corrupt.</exception>
-    ///<exception cref="NotSupportedException">The file isn't uncompressed 16-bit PCM.</exception>
-    public static async Task<WavFile> ReadAsync(string path)
+    private static WavFile Read(string path)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(path);
-
-        await using FileStream stream = File.OpenRead(path);
+        using FileStream stream = File.OpenRead(path);
         using BinaryReader reader = new(stream);
 
         try
@@ -142,6 +136,24 @@ internal sealed class WavFile
             // is, rather than letting a raw EndOfStreamException (with no file path) surface to callers.
             throw new InvalidDataException($"'{path}' is truncated or corrupt.", ex);
         }
+    }
+    #endregion
+
+    #region Public methods
+    ///<summary>
+    ///Reads a WAV file from <paramref name="path"/> and returns its parsed format and samples.
+    ///</summary>
+    ///<exception cref="ArgumentException"><paramref name="path"/> is null, empty, or whitespace.</exception>
+    ///<exception cref="FileNotFoundException"><paramref name="path"/> does not exist.</exception>
+    ///<exception cref="InvalidDataException">The file isn't a well-formed RIFF/WAV file, or is truncated/corrupt.</exception>
+    ///<exception cref="NotSupportedException">The file isn't uncompressed 16-bit PCM.</exception>
+    public static async Task<WavFile> ReadAsync(string path)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+
+        // The parsing is synchronous, so it runs on a worker thread: a long clip would otherwise freeze the screen of
+        // whichever page asked for it.
+        return await Task.Run(() => Read(path)).ConfigureAwait(false);
     }
 
     ///<summary>

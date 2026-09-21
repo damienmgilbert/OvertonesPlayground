@@ -591,10 +591,30 @@ public sealed class LaunchpadViewModelTests : IDisposable
         Press(viewModel, LaunchpadControl.Projects);
         await menu.ChooseAsync("Delete");
         await menu.ChooseAsync("Beat");
+        Assert.Equal("Delete 'Beat'? This can't be undone.", menu.Last.Title);
+        await menu.ChooseAsync("Delete project");
 
         Assert.False(File.Exists(_files.InAppData("LaunchpadProjects", "Beat.json")));
         Assert.Equal("Deleted project 'Beat'.", viewModel.StatusMessage);
         Assert.True(viewModel.Pads[0].HasClip);
+    }
+
+    [Fact]
+    public async Task Projects_Delete_AsksFirstAndKeepsTheFileUntilConfirmed()
+    {
+        LaunchpadViewModel viewModel = Create();
+        await AssignAsync(viewModel, index: 0);
+        NameProjectsWith(viewModel, "Beat");
+        MenuWatcher menu = new(viewModel);
+        Press(viewModel, LaunchpadControl.Projects);
+        await menu.ChooseAsync("Save as");
+
+        Press(viewModel, LaunchpadControl.Projects);
+        await menu.ChooseAsync("Delete");
+        await menu.ChooseAsync("Beat");
+
+        Assert.Equal(["Delete project"], menu.Last.Choices.Select(choice => choice.Text));
+        Assert.True(File.Exists(_files.InAppData("LaunchpadProjects", "Beat.json")));
     }
 
     [Fact]

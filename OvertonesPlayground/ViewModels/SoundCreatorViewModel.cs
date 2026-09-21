@@ -15,11 +15,18 @@ public partial class SoundCreatorViewModel : BaseViewModel
     private readonly IAudioLibraryService _libraryService;
     private readonly IPermissionsService _permissionsService;
     private readonly IAudioRecorderService _recorderService;
+
+    ///<summary>
+    ///The UI thread's context, captured when recording starts. The recorder's clock ticks on a background thread, and the
+    ///elapsed time it reports is bound to the screen.
+    ///</summary>
+    private SynchronizationContext? _uiContext;
     #endregion
 
     #region Constructors
     ///<summary>
-    ///Creates the view model and subscribes to the recorder's elapsed-time updates.
+    ///Creates the view model. It listens to the recorder's clock only while a take is running, so a page that has gone away
+    ///isn't kept alive by the (app-wide) recorder.
     ///</summary>
     public SoundCreatorViewModel(IAudioRecorderService recorderService, IAudioLibraryService libraryService, IPermissionsService permissionsService, ILogger<SoundCreatorViewModel> logger) : base(logger)
     {
@@ -27,8 +34,6 @@ public partial class SoundCreatorViewModel : BaseViewModel
         _libraryService = libraryService;
         _permissionsService = permissionsService;
         Title = "Audio Recorder";
-
-        _recorderService.ElapsedChanged += (_, elapsed) => ElapsedText = elapsed.ToString(@"mm\:ss");
     }
     #endregion
 
@@ -46,6 +51,7 @@ public partial class SoundCreatorViewModel : BaseViewModel
 
         Log_CancelingRecording();
         await _recorderService.CancelAsync();
+        StopListeningToClock();
         IsRecording = false;
         StatusMessage = "Recording discarded.";
     }
@@ -63,6 +69,22 @@ public partial class SoundCreatorViewModel : BaseViewModel
     private partial void Log_StoppingRecording(string clipName);
 
     ///<summary>
+    ///Shows the recorder's elapsed time, on the UI thread when there is one.
+    ///</summary>
+    private void OnElapsedChanged(object? sender, TimeSpan elapsed)
+    {
+        string text = elapsed.ToString(@"mm\:ss");
+        if (_uiContext is null)
+        {
+            ElapsedText = text;
+        }
+        else
+        {
+            _uiContext.Post(_ => ElapsedText = text, null);
+        }
+    }
+
+    ///<summary>
     ///Requests microphone permission if needed, then starts recording.
     ///</summary>
     private async Task StartRecordingAsync()
@@ -75,8 +97,15 @@ public partial class SoundCreatorViewModel : BaseViewModel
             return;
         }
 
-        NewClipName = $"Recording {DateTime.Now:HH:mm:ss}";
+        // Keep a name the user typed; only propose one when the box is empty.
+        if (string.IsNullOrWhiteSpace(NewClipName))
+        {
+            NewClipName = $"Recording {DateTime.Now:HH:mm:ss}";
+        }
+
         Log_StartingRecording(NewClipName);
+        _uiContext = SynchronizationContext.Current;
+        _recorderService.ElapsedChanged += OnElapsedChanged;
         await _recorderService.StartAsync();
         IsRecording = true;
         StatusMessage = null;
@@ -95,10 +124,20 @@ public partial class SoundCreatorViewModel : BaseViewModel
         string name = string.IsNullOrWhiteSpace(NewClipName) ? $"Recording {DateTime.Now:HHmmss}" : NewClipName;
         Log_StoppingRecording(name);
         AudioClip recorded = await _recorderService.StopAsync(name);
+        StopListeningToClock();
         IsRecording = false;
 
         AudioClip clip = await _libraryService.AddClipAsync(recorded.FilePath, name, isUserRecording: true);
+
+        // The name belonged to that take; the next one gets a fresh proposal.
+        NewClipName = string.Empty;
         StatusMessage = clip.PublicStorageLocation is { } location ? $"Saved '{clip.Name}' - also in {location}." : $"Saved '{clip.Name}' to your library.";
+    }
+
+    private void StopListeningToClock()
+    {
+        _recorderService.ElapsedChanged -= OnElapsedChanged;
+        _uiContext = null;
     }
 
     ///<summary>

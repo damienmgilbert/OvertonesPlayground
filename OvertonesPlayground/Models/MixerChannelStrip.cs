@@ -28,6 +28,17 @@ public class MixerChannelStrip
     public bool IsSoloed { get; set; }
 
     ///<summary>
+    ///Whether another channel's solo is silencing this one. Set by the mixer, which is the only place that knows about the
+    ///other channels.
+    ///</summary>
+    public bool IsSilencedBySolo { get; set; }
+
+    ///<summary>
+    ///The volume this channel should actually sound at: silent while muted or silenced by another channel's solo.
+    ///</summary>
+    public double AudibleVolume => IsMuted || IsSilencedBySolo ? 0 : Volume;
+
+    ///<summary>
     ///Display name of the channel.
     ///</summary>
     public string Name { get; set; } = string.Empty;

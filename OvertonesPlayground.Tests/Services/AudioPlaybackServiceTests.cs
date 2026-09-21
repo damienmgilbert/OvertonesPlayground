@@ -209,6 +209,32 @@ public sealed class AudioPlaybackServiceTests
         Assert.Equal(0, LastPlayer.Volume);
     }
 
+    [Fact]
+    public void PlayChannel_SilencedByAnotherChannelsSolo_StartsSilent()
+    {
+        AudioPlaybackService service = Create();
+        MixerChannelStrip strip = Strip(volume: 0.9);
+        strip.IsSilencedBySolo = true;
+
+        service.PlayChannel(strip);
+
+        Assert.Equal(0, LastPlayer.Volume);
+    }
+
+    [Fact]
+    public void UpdateChannel_SoloEndingElsewhere_BringsTheVoiceBack()
+    {
+        AudioPlaybackService service = Create();
+        MixerChannelStrip strip = Strip(volume: 0.7);
+        strip.IsSilencedBySolo = true;
+        service.PlayChannel(strip);
+
+        strip.IsSilencedBySolo = false;
+        service.UpdateChannel(strip);
+
+        Assert.Equal(0.7, LastPlayer.Volume);
+    }
+
     [Theory]
     [InlineData(null)]
     [InlineData("")]

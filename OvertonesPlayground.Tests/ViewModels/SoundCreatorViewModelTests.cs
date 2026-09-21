@@ -70,13 +70,37 @@ public sealed class SoundCreatorViewModelTests
     [InlineData(0, "00:00")]
     [InlineData(65, "01:05")]
     [InlineData(600, "10:00")]
-    public void ElapsedChanged_UpdatesTheClock(double seconds, string expected)
+    public async Task ElapsedChanged_WhileRecording_UpdatesTheClock(double seconds, string expected)
     {
-        SoundCreatorViewModel viewModel = Create();
+        SoundCreatorViewModel viewModel = await RecordingAsync();
 
         _recorder.ElapsedChanged += Raise.Event<EventHandler<TimeSpan>>(_recorder, TimeSpan.FromSeconds(seconds));
 
         Assert.Equal(expected, viewModel.ElapsedText);
+    }
+
+    [Fact]
+    public async Task ElapsedChanged_AfterTheTakeIsSaved_IsNoLongerListenedTo()
+    {
+        SoundCreatorViewModel viewModel = await RecordingAsync("Take");
+        _recorder.StopAsync("Take").Returns(TestData.Clip("raw"));
+        _library.AddClipAsync(default!, default!, default).ReturnsForAnyArgs(TestData.Clip("Take"));
+        await viewModel.ToggleRecordingCommand.ExecuteAsync(null);
+
+        _recorder.ElapsedChanged += Raise.Event<EventHandler<TimeSpan>>(_recorder, TimeSpan.FromSeconds(42));
+
+        Assert.Equal("00:00", viewModel.ElapsedText);
+    }
+
+    [Fact]
+    public async Task ElapsedChanged_AfterCancelling_IsNoLongerListenedTo()
+    {
+        SoundCreatorViewModel viewModel = await RecordingAsync();
+        await viewModel.CancelRecordingCommand.ExecuteAsync(null);
+
+        _recorder.ElapsedChanged += Raise.Event<EventHandler<TimeSpan>>(_recorder, TimeSpan.FromSeconds(42));
+
+        Assert.Equal("00:00", viewModel.ElapsedText);
     }
 
     [Fact]
@@ -139,6 +163,29 @@ public sealed class SoundCreatorViewModelTests
         await viewModel.ToggleRecordingCommand.ExecuteAsync(null);
 
         Assert.Equal("Saved 'My take' - also in Music/take.wav.", viewModel.StatusMessage);
+    }
+
+    [Fact]
+    public async Task Toggle_WhenIdle_KeepsANameTheUserTyped()
+    {
+        SoundCreatorViewModel viewModel = Create();
+        viewModel.NewClipName = "Guitar riff";
+
+        await viewModel.ToggleRecordingCommand.ExecuteAsync(null);
+
+        Assert.Equal("Guitar riff", viewModel.NewClipName);
+    }
+
+    [Fact]
+    public async Task Toggle_WhileRecording_ClearsTheNameForTheNextTake()
+    {
+        SoundCreatorViewModel viewModel = await RecordingAsync("My take");
+        _recorder.StopAsync("My take").Returns(TestData.Clip("raw"));
+        _library.AddClipAsync(default!, default!, default).ReturnsForAnyArgs(TestData.Clip("My take"));
+
+        await viewModel.ToggleRecordingCommand.ExecuteAsync(null);
+
+        Assert.Equal(string.Empty, viewModel.NewClipName);
     }
 
     [Fact]

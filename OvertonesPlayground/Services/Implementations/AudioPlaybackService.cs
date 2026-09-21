@@ -139,7 +139,7 @@ public class AudioPlaybackService : IAudioPlaybackService
         _audioFocusService.RequestFocus();
         IAudioPlayer player = _audioManager.CreatePlayer(channel.SourceClipPath!);
         player.Loop = true;
-        player.Volume = channel.IsMuted ? 0 : channel.Volume;
+        player.Volume = channel.AudibleVolume;
         player.Balance = channel.Pan;
 
         _channelPlayers[channel.Id] = player;
@@ -267,7 +267,7 @@ public class AudioPlaybackService : IAudioPlaybackService
         bool found = _channelPlayers.TryGetValue(channel.Id, out IAudioPlayer? player);
         if (found)
         {
-            player?.Volume = channel.IsMuted ? 0 : channel.Volume;
+            player?.Volume = channel.AudibleVolume;
             player?.Balance = channel.Pan;
         }
     }

@@ -296,7 +296,7 @@ public partial class LaunchpadViewModel
         }));
         choices.Add(new LaunchpadMenuChoice("Delete...", () =>
         {
-            ShowProjectList("Delete which project?", DeleteProject);
+            ShowProjectList("Delete which project?", ConfirmDeleteProject);
             return Task.CompletedTask;
         }));
 
@@ -389,6 +389,19 @@ public partial class LaunchpadViewModel
             Log_LayoutRestoreFailed(ex);
             Say($"Couldn't open '{name}'.");
         }
+    }
+
+    ///<summary>
+    ///Asks before deleting a saved project: Undo can't bring a deleted file back.
+    ///</summary>
+    private void ConfirmDeleteProject(string name)
+    {
+        List<LaunchpadMenuChoice> choices = [new LaunchpadMenuChoice("Delete project", () =>
+        {
+            DeleteProject(name);
+            return Task.CompletedTask;
+        })];
+        MenuRequested?.Invoke(this, new LaunchpadMenuEventArgs($"Delete '{name}'? This can't be undone.", choices));
     }
 
     ///<summary>

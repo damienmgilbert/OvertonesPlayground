@@ -411,6 +411,101 @@ public sealed class GeneratorViewModelTests
     }
 
     [Fact]
+    public async Task Drum_ChangingAParameterAfterGenerate_DropsTheStalePreview()
+    {
+        AudioClip preview = PreviewClip("Kick");
+        _synthesis.GenerateDrumAsync(default, default!, default!).ReturnsForAnyArgs(preview);
+        DrumSynthViewModel viewModel = CreateDrum();
+        await viewModel.GenerateCommand.ExecuteAsync(null);
+
+        viewModel.SelectedDrumParams.DecayRate += 1;
+        await viewModel.SaveCommand.ExecuteAsync(null);
+
+        Assert.False(viewModel.CanSave);
+        Assert.Equal("Settings changed - tap Generate & Play to hear it before saving.", viewModel.StatusMessage);
+        await _library.DidNotReceiveWithAnyArgs().AddClipAsync(default!, default!, default);
+    }
+
+    [Fact]
+    public async Task Drum_Save_LibraryFails_ReportsItAndKeepsThePreview()
+    {
+        AudioClip preview = PreviewClip("Kick");
+        _synthesis.GenerateDrumAsync(default, default!, default!).ReturnsForAnyArgs(preview);
+        _library.AddClipAsync(default!, default!, default).ReturnsForAnyArgs(Task.FromException<AudioClip>(new IOException()));
+        DrumSynthViewModel viewModel = CreateDrum();
+        await viewModel.GenerateCommand.ExecuteAsync(null);
+
+        await viewModel.SaveCommand.ExecuteAsync(null);
+
+        Assert.Equal("Couldn't save that drum sample to your library.", viewModel.StatusMessage);
+        Assert.True(viewModel.CanSave);
+        Assert.False(viewModel.IsBusy);
+    }
+
+    [Fact]
+    public async Task Speech_EditingTheTextAfterGenerate_DropsTheStalePreview()
+    {
+        AudioClip preview = PreviewClip("Hello");
+        _speech.SynthesizeAsync(default!, default!).ReturnsForAnyArgs(preview);
+        TextToSpeechViewModel viewModel = CreateSpeech();
+        viewModel.Text = "Hello";
+        await viewModel.GenerateCommand.ExecuteAsync(null);
+
+        viewModel.Text = "Hello there";
+        await viewModel.SaveCommand.ExecuteAsync(null);
+
+        Assert.False(viewModel.CanSave);
+        Assert.Equal("Text changed - tap Generate & Play to hear it before saving.", viewModel.StatusMessage);
+        await _library.DidNotReceiveWithAnyArgs().AddClipAsync(default!, default!, default);
+    }
+
+    [Fact]
+    public async Task Speech_Save_LibraryFails_ReportsIt()
+    {
+        AudioClip preview = PreviewClip("Hello");
+        _speech.SynthesizeAsync(default!, default!).ReturnsForAnyArgs(preview);
+        _library.AddClipAsync(default!, default!, default).ReturnsForAnyArgs(Task.FromException<AudioClip>(new UnauthorizedAccessException()));
+        TextToSpeechViewModel viewModel = CreateSpeech();
+        viewModel.Text = "Hello";
+        await viewModel.GenerateCommand.ExecuteAsync(null);
+
+        await viewModel.SaveCommand.ExecuteAsync(null);
+
+        Assert.Equal("Couldn't save that speech clip to your library.", viewModel.StatusMessage);
+    }
+
+    [Fact]
+    public async Task Tone_ChangingASettingAfterGenerate_DropsTheStalePreview()
+    {
+        AudioClip preview = PreviewClip("Sine 440Hz");
+        _synthesis.GenerateToneAsync(default, default, default, default, default!).ReturnsForAnyArgs(preview);
+        ToneGeneratorViewModel viewModel = CreateTone();
+        await viewModel.GenerateCommand.ExecuteAsync(null);
+
+        viewModel.FrequencyHz = 880;
+        await viewModel.SaveCommand.ExecuteAsync(null);
+
+        Assert.False(viewModel.CanSave);
+        Assert.Equal("Settings changed - tap Generate & Play to hear it before saving.", viewModel.StatusMessage);
+        await _library.DidNotReceiveWithAnyArgs().AddClipAsync(default!, default!, default);
+    }
+
+    [Fact]
+    public async Task Tone_Save_LibraryFails_ReportsIt()
+    {
+        AudioClip preview = PreviewClip("Sine 440Hz");
+        _synthesis.GenerateToneAsync(default, default, default, default, default!).ReturnsForAnyArgs(preview);
+        _library.AddClipAsync(default!, default!, default).ReturnsForAnyArgs(Task.FromException<AudioClip>(new IOException()));
+        ToneGeneratorViewModel viewModel = CreateTone();
+        await viewModel.GenerateCommand.ExecuteAsync(null);
+
+        await viewModel.SaveCommand.ExecuteAsync(null);
+
+        Assert.Equal("Couldn't save that tone to your library.", viewModel.StatusMessage);
+        Assert.True(viewModel.CanSave);
+    }
+
+    [Fact]
     public void Tone_StartsAsAnEightyPercentSineAtConcertPitch()
     {
         ToneGeneratorViewModel viewModel = CreateTone();

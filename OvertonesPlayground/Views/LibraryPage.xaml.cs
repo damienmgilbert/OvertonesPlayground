@@ -46,7 +46,22 @@ public partial class LibraryPage : ContentPage
         }
     }
 
-    private void OnDeleteClicked(object? sender, EventArgs e) => RunRowCommand(sender, _viewModel.DeleteCommand);
+    ///<summary>
+    ///Asks before deleting the tapped clip, because its audio file is deleted too and can't be brought back.
+    ///</summary>
+    private async void OnDeleteClicked(object? sender, EventArgs e)
+    {
+        if (sender is not BindableObject { BindingContext: AudioClip clip })
+        {
+            return;
+        }
+
+        bool confirmed = await DisplayAlertAsync("Delete clip?", $"'{clip.Name}' and its audio file will be permanently deleted.", "Delete", "Cancel");
+        if (confirmed)
+        {
+            RunRowCommand(sender, _viewModel.DeleteCommand);
+        }
+    }
 
     private void OnEditClicked(object? sender, EventArgs e) => RunRowCommand(sender, _viewModel.EditCommand);
 

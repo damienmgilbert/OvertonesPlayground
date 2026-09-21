@@ -74,11 +74,37 @@ public partial class DrumSynthViewModel : BaseViewModel
         }
     }
 
+    ///<summary>
+    ///Forgets the preview once the controls no longer match it, so Save can't store a sound other than the one set up.
+    ///</summary>
+    private void DiscardStalePreview()
+    {
+        if (_pendingClip is null)
+        {
+            return;
+        }
+
+        _pendingClip = null;
+        CanSave = false;
+        StatusMessage = "Settings changed - tap Generate & Play to hear it before saving.";
+    }
+
+    private void OnDrumParameterChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e) => DiscardStalePreview();
+
+    partial void OnSelectedDrumParamsChanged(DrumSynthParametersViewModel oldValue, DrumSynthParametersViewModel newValue)
+    {
+        oldValue?.PropertyChanged -= OnDrumParameterChanged;
+        newValue.PropertyChanged += OnDrumParameterChanged;
+    }
+
     [LoggerMessage(Level = LogLevel.Error, Message = "Failed to generate a drum sample for {DrumType}.")]
     private partial void Log_GenerateFailed(Exception exception, DrumType drumType);
 
     [LoggerMessage(Level = LogLevel.Debug, Message = "Generating drum sample for {DrumType}.")]
     private partial void Log_GeneratingDrumSample(DrumType drumType);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Failed to save the generated clip.")]
+    private partial void Log_SaveFailed(Exception exception);
 
     [LoggerMessage(Level = LogLevel.Debug, Message = "Saving generated drum sample '{ClipName}'.")]
     private partial void Log_SavingDrumSample(string clipName);
@@ -106,6 +132,11 @@ public partial class DrumSynthViewModel : BaseViewModel
 
             _pendingClip = null;
             CanSave = false;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            Log_SaveFailed(ex);
+            StatusMessage = "Couldn't save that drum sample to your library.";
         }
         finally
         {

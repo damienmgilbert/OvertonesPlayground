@@ -47,6 +47,15 @@ public partial class MixerChannelViewModel : ObservableObject
     [LoggerMessage(Level = LogLevel.Debug, Message = "Channel '{ChannelName}' solo set to {IsSoloed}.")]
     private partial void Log_ChannelSoloChanged(string channelName, bool isSoloed);
 
+    ///<summary>
+    ///Being dimmed means another channel is soloed, so this one must go quiet too, not just look faded.
+    ///</summary>
+    partial void OnIsDimmedChanged(bool value)
+    {
+        Channel.IsSilencedBySolo = value;
+        _playbackService.UpdateChannel(Channel);
+    }
+
     partial void OnIsMutedChanged(bool value)
     {
         Channel.IsMuted = value;
@@ -140,8 +149,8 @@ public partial class MixerChannelViewModel : ObservableObject
     public bool HasSource => !string.IsNullOrEmpty(Channel.SourceClipPath);
 
     ///<summary>
-    ///Set by <see cref="MixerViewModel"/> to dim this strip when another channel is soloed, matching how DAWs like
-    ///Ableton and Audacity visually indicate a channel is silenced by another track's solo.
+    ///Set by <see cref="MixerViewModel"/> when another channel is soloed. The strip is dimmed and its voice is silenced,
+    ///matching how DAWs like Ableton and Audacity treat a channel silenced by another track's solo.
     ///</summary>
     [ObservableProperty]
     public partial bool IsDimmed { get; set; }

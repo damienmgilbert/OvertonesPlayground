@@ -66,7 +66,32 @@ public partial class ToneGeneratorViewModel : BaseViewModel
     #endregion
 
     #region Private methods
-    partial void OnSelectedWaveformChanged(WaveformType value) => OnPropertyChanged(nameof(IsFrequencyRelevant));
+    ///<summary>
+    ///Forgets the preview once the controls no longer match it, so Save can't store a sound other than the one set up.
+    ///</summary>
+    private void DiscardStalePreview()
+    {
+        if (_pendingClip is null)
+        {
+            return;
+        }
+
+        _pendingClip = null;
+        CanSave = false;
+        StatusMessage = "Settings changed - tap Generate & Play to hear it before saving.";
+    }
+
+    partial void OnAmplitudeChanged(double value) => DiscardStalePreview();
+
+    partial void OnDurationSecondsChanged(double value) => DiscardStalePreview();
+
+    partial void OnFrequencyHzChanged(double value) => DiscardStalePreview();
+
+    partial void OnSelectedWaveformChanged(WaveformType value)
+    {
+        OnPropertyChanged(nameof(IsFrequencyRelevant));
+        DiscardStalePreview();
+    }
 
     ///<summary>
     ///Synthesizes the current settings, previews the result, and enables Save.
@@ -127,6 +152,9 @@ public partial class ToneGeneratorViewModel : BaseViewModel
     [LoggerMessage(Level = LogLevel.Debug, Message = "Generating tone '{Name}' ({DurationSeconds}s, amplitude {Amplitude}).")]
     private partial void Log_GeneratingTone(string name, double durationSeconds, double amplitude);
 
+    [LoggerMessage(Level = LogLevel.Error, Message = "Failed to save the generated clip.")]
+    private partial void Log_SaveFailed(Exception exception);
+
     [LoggerMessage(Level = LogLevel.Debug, Message = "Saving generated clip '{ClipName}'.")]
     private partial void Log_SavingClip(string clipName);
 
@@ -153,6 +181,11 @@ public partial class ToneGeneratorViewModel : BaseViewModel
 
             _pendingClip = null;
             CanSave = false;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            Log_SaveFailed(ex);
+            StatusMessage = "Couldn't save that tone to your library.";
         }
         finally
         {

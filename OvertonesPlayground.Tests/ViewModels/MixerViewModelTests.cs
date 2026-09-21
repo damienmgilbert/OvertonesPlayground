@@ -208,6 +208,31 @@ public sealed class MixerViewModelTests
     }
 
     [Fact]
+    public void Soloing_OneChannel_SilencesTheOthersLiveVoices()
+    {
+        MixerViewModel viewModel = Create();
+        _playback.ClearReceivedCalls();
+
+        viewModel.Channels[1].ToggleSoloCommand.Execute(null);
+
+        Assert.Equal([true, false, true, true], viewModel.Channels.Select(c => c.Channel.IsSilencedBySolo));
+        Assert.Equal([0, 0.8, 0, 0], viewModel.Channels.Select(c => c.Channel.AudibleVolume));
+        _playback.Received(1).UpdateChannel(viewModel.Channels[0].Channel);
+        _playback.DidNotReceive().UpdateChannel(viewModel.Channels[1].Channel);
+    }
+
+    [Fact]
+    public void Soloing_ThenUnsoloing_BringsTheOthersBackToTheirOwnVolume()
+    {
+        MixerViewModel viewModel = Create();
+        viewModel.Channels[2].ToggleSoloCommand.Execute(null);
+
+        viewModel.Channels[2].ToggleSoloCommand.Execute(null);
+
+        Assert.All(viewModel.Channels, channel => Assert.Equal(0.8, channel.Channel.AudibleVolume));
+    }
+
+    [Fact]
     public void Soloing_ThenUnsoloingTheLastOne_UndimsEverything()
     {
         MixerViewModel viewModel = Create();

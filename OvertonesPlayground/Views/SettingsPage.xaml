@@ -26,7 +26,7 @@
 
         <Button AutomationId="settings-show-tips" Text="Show tips again" controls:Icon.Glyph="{x:Static models:IconFont.Lightbulb}" ToolTipProperties.Text="Show the one-time tips on the Library, Launchpad and Trim pages again" Command="{Binding ShowTipsAgainCommand}" />
 
-        <Button AutomationId="settings-clear-library" ToolTipProperties.Text="Delete every clip from your library." Text="Clear Library" controls:Icon.Glyph="{x:Static models:IconFont.Delete}" TextColor="{DynamicResource SystemFillColorCritical}" Command="{Binding ClearLibraryCommand}" />
+        <Button AutomationId="settings-clear-library" ToolTipProperties.Text="Delete every clip from your library." Text="Clear Library" controls:Icon.Glyph="{x:Static models:IconFont.Delete}" TextColor="{DynamicResource SystemFillColorCritical}" IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" Clicked="OnClearLibraryClicked" />
 
         <Label AutomationId="settings-status" Text="{Binding StatusMessage}" TextColor="{DynamicResource TextFillColorSecondary}" />
 

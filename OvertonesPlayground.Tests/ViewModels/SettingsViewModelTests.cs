@@ -41,6 +41,27 @@ public sealed class SettingsViewModelTests
     }
 
     [Fact]
+    public async Task ClearLibrary_DeleteFails_ReportsItAndIsNoLongerBusy()
+    {
+        _library.GetClipsAsync().Returns(TestData.Clips(TestData.Clip("First")));
+        _library.DeleteClipAsync(default!).ReturnsForAnyArgs(Task.FromException(new IOException()));
+        SettingsViewModel viewModel = Create();
+
+        await viewModel.ClearLibraryCommand.ExecuteAsync(null);
+
+        Assert.Equal("Couldn't clear the whole library. Some clips may be left.", viewModel.StatusMessage);
+        Assert.False(viewModel.IsBusy);
+    }
+
+    [Fact]
+    public async Task CountClips_SaysHowManyClearLibraryWouldDelete()
+    {
+        _library.GetClipsAsync().Returns(TestData.Clips(TestData.Clip("First"), TestData.Clip("Second")));
+
+        Assert.Equal(2, await Create().CountClipsAsync());
+    }
+
+    [Fact]
     public async Task ClearLibrary_LibraryAlreadyEmpty_DeletesNothingButStillReports()
     {
         _library.GetClipsAsync().Returns(TestData.Clips());
