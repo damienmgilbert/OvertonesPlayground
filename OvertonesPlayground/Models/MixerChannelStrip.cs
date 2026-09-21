@@ -18,6 +18,16 @@ public class MixerChannelStrip
     public string Id { get; init; } = Guid.NewGuid().ToString("N");
 
     ///<summary>
+    ///Name of the clip assigned to this channel, kept so a saved setup can show it again.
+    ///</summary>
+    public string? SourceName { get; set; }
+
+    ///<summary>
+    ///Whether the channel repeats its sample until stopped (the default) or plays it once.
+    ///</summary>
+    public bool IsLooping { get; set; } = true;
+
+    ///<summary>
     ///Whether the channel is muted.
     ///</summary>
     public bool IsMuted { get; set; }

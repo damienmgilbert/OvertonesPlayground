@@ -27,6 +27,12 @@ public partial class MixerChannelViewModel : ObservableObject
         Pan = channel.Pan;
         IsMuted = channel.IsMuted;
         IsSoloed = channel.IsSoloed;
+        IsLooping = channel.IsLooping;
+        if (!string.IsNullOrEmpty(channel.SourceClipPath))
+        {
+            SourceLabel = channel.SourceName ?? Path.GetFileNameWithoutExtension(channel.SourceClipPath);
+        }
+
         Log_ChannelCreated(Name);
     }
     #endregion
@@ -56,6 +62,12 @@ public partial class MixerChannelViewModel : ObservableObject
         _playbackService.UpdateChannel(Channel);
     }
 
+    partial void OnIsLoopingChanged(bool value)
+    {
+        Channel.IsLooping = value;
+        _playbackService.UpdateChannel(Channel);
+    }
+
     partial void OnIsMutedChanged(bool value)
     {
         Channel.IsMuted = value;
@@ -77,6 +89,15 @@ public partial class MixerChannelViewModel : ObservableObject
         Channel.Volume = value;
         _playbackService.UpdateChannel(Channel);
     }
+
+    ///<summary>
+    ///Puts the pan back in the centre.
+    ///</summary>
+    [RelayCommand]
+    private void ResetPan() => Pan = 0;
+
+    [RelayCommand]
+    private void ToggleLoop() => IsLooping = !IsLooping;
 
     [RelayCommand]
     private void ToggleMute()
@@ -123,6 +144,7 @@ public partial class MixerChannelViewModel : ObservableObject
         }
 
         Channel.SourceClipPath = filePath;
+        Channel.SourceName = label;
         SourceLabel = label;
         OnPropertyChanged(nameof(HasSource));
     }
@@ -154,6 +176,12 @@ public partial class MixerChannelViewModel : ObservableObject
     ///</summary>
     [ObservableProperty]
     public partial bool IsDimmed { get; set; }
+
+    ///<summary>
+    ///Whether the channel repeats its sample until stopped, rather than playing it once.
+    ///</summary>
+    [ObservableProperty]
+    public partial bool IsLooping { get; set; }
 
     ///<summary>
     ///Whether the channel is muted.

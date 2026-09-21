@@ -33,6 +33,8 @@ public partial class LaunchpadViewModel : BaseViewModel
     #endregion
 
     #region Fields
+    private CancellationTokenSource? _autosaveDelay;
+    private bool _layoutDirty;
 
     ///<summary>
     ///How long a pad or button flashes to acknowledge a press that has no other visible effect.
@@ -364,6 +366,11 @@ public partial class LaunchpadViewModel : BaseViewModel
     #endregion
 
     #region Public properties
+    ///<summary>
+    ///How long after the last edit the layout is written to disk. Zero writes after every edit.
+    ///</summary>
+    internal TimeSpan AutosaveDelay { get; set; } = TimeSpan.FromMilliseconds(400);
+
     ///<summary>
     ///Whether pads currently sound only while held: Custom mode with no tool, layer or edit mode in the way.
     ///</summary>

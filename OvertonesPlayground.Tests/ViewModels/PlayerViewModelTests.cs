@@ -3,11 +3,12 @@ namespace OvertonesPlayground.Tests.ViewModels;
 public sealed class PlayerViewModelTests
 {
     #region Fields
+    private readonly INavigationService _navigation = Substitute.For<INavigationService>();
     private readonly IAudioPlaybackService _playback = Substitute.For<IAudioPlaybackService>();
     #endregion
 
     #region Private methods
-    private PlayerViewModel Create() => new(_playback, NullLogger<PlayerViewModel>.Instance);
+    private PlayerViewModel Create() => new(_playback, _navigation, NullLogger<PlayerViewModel>.Instance);
 
     private static (IDispatcher Dispatcher, IDispatcherTimer Timer) CreateDispatcher()
     {
@@ -166,8 +167,101 @@ public sealed class PlayerViewModelTests
     }
 
     [Fact]
+    public void NothingLoaded_PlayAndStopAreDisabled()
+    {
+        PlayerViewModel viewModel = Create();
+
+        Assert.False(viewModel.HasClip);
+        Assert.False(viewModel.PlayPauseCommand.CanExecute(null));
+        Assert.False(viewModel.StopCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public void ClipLoaded_PlayAndStopAreEnabled()
+    {
+        _playback.CurrentClip.Returns(TestData.Clip("Song"));
+
+        PlayerViewModel viewModel = Create();
+
+        Assert.True(viewModel.PlayPauseCommand.CanExecute(null));
+        Assert.True(viewModel.StopCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public async Task PickFromLibrary_OpensTheLibrary()
+    {
+        await Create().PickFromLibraryCommand.ExecuteAsync(null);
+
+        await _navigation.Received(1).GoToAsync("//library");
+    }
+
+    [Fact]
+    public void Seeking_TheTimerDoesNotPullTheSliderBack()
+    {
+        (IDispatcher dispatcher, IDispatcherTimer timer) = CreateDispatcher();
+        _playback.CurrentClip.Returns(TestData.Clip("Song"));
+        _playback.Duration.Returns(TimeSpan.FromSeconds(100));
+        PlayerViewModel viewModel = Create();
+        viewModel.StartTicking(dispatcher);
+
+        viewModel.BeginSeek();
+        viewModel.PreviewSeek(60);
+        _playback.Position.Returns(TimeSpan.FromSeconds(5));
+        timer.Tick += Raise.Event();
+
+        Assert.Equal(60, viewModel.PositionSeconds);
+        Assert.Equal("01:00", viewModel.PositionText);
+    }
+
+    [Fact]
+    public void EndSeek_SeeksToTheDropPointAndResumesFollowingPlayback()
+    {
+        _playback.CurrentClip.Returns(TestData.Clip("Song"));
+        PlayerViewModel viewModel = Create();
+        viewModel.BeginSeek();
+
+        viewModel.EndSeek(42.5);
+        _playback.Position.Returns(TimeSpan.FromSeconds(43));
+        _playback.PlaybackStateChanged += Raise.Event();
+
+        _playback.Received(1).Seek(TimeSpan.FromSeconds(42.5));
+        Assert.Equal(43, viewModel.PositionSeconds);
+    }
+
+    [Fact]
+    public void Times_AnHourOrLonger_ShowHours()
+    {
+        _playback.Duration.Returns(TimeSpan.FromSeconds(3725));
+
+        Assert.Equal("1:02:05", Create().DurationText);
+    }
+
+    [Fact]
+    public void Timer_StopsWhenPlaybackStopsAndRestartsWhenItResumes()
+    {
+        (IDispatcher dispatcher, IDispatcherTimer timer) = CreateDispatcher();
+        _playback.CurrentClip.Returns(TestData.Clip("Song"));
+        _playback.IsPlaying.Returns(true);
+        PlayerViewModel viewModel = Create();
+        viewModel.StartTicking(dispatcher);
+        bool running = true;
+        timer.IsRunning.Returns(_ => running);
+        timer.When(t => t.Stop()).Do(_ => running = false);
+        timer.When(t => t.Start()).Do(_ => running = true);
+
+        _playback.IsPlaying.Returns(false);
+        _playback.PlaybackStateChanged += Raise.Event();
+        Assert.False(running);
+
+        _playback.IsPlaying.Returns(true);
+        _playback.PlaybackStateChanged += Raise.Event();
+        Assert.True(running);
+    }
+
+    [Fact]
     public void Stop_StopsTheTransport()
     {
+        _playback.CurrentClip.Returns(TestData.Clip("Song"));
         Create().StopCommand.Execute(null);
 
         _playback.Received(1).Stop();

@@ -138,7 +138,7 @@ public class AudioPlaybackService : IAudioPlaybackService
 
         _audioFocusService.RequestFocus();
         IAudioPlayer player = _audioManager.CreatePlayer(channel.SourceClipPath!);
-        player.Loop = true;
+        player.Loop = channel.IsLooping;
         player.Volume = channel.AudibleVolume;
         player.Balance = channel.Pan;
 
@@ -269,6 +269,7 @@ public class AudioPlaybackService : IAudioPlaybackService
         {
             player?.Volume = channel.AudibleVolume;
             player?.Balance = channel.Pan;
+            player?.Loop = channel.IsLooping;
         }
     }
     #endregion

@@ -224,6 +224,22 @@ public sealed class SoundBankViewModelTests : IDisposable
         Assert.Equal("The sound bank couldn't be loaded.", viewModel.StatusMessage);
         Assert.Empty(viewModel.Results);
         Assert.False(viewModel.IsBusy);
+        Assert.Contains("couldn't be loaded", viewModel.EmptyMessage);
+    }
+
+    [Fact]
+    public async Task EmptyMessage_SaysLoadingWhileTheCatalogLoadsThenNoMatches()
+    {
+        TaskCompletionSource<SampleIndex> gate = new();
+        _catalog.GetIndexAsync(Arg.Any<CancellationToken>()).Returns(gate.Task);
+        SoundBankViewModel viewModel = Create();
+
+        Task load = viewModel.LoadCommand.ExecuteAsync(null);
+        Assert.Equal("Loading the sound bank...", viewModel.EmptyMessage);
+
+        gate.SetResult(new SampleIndex(TestSamples.Library()));
+        await load;
+        Assert.Equal("No sounds match. Try removing a filter.", viewModel.EmptyMessage);
     }
 
     [Fact]

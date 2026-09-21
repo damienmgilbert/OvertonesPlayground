@@ -203,11 +203,11 @@ public partial class LaunchpadPage : ContentPage
         // and a labeled key one row tall holds an icon or two lines.
         double keyWidth = ((DeviceHost.Width - (2 * DeviceBody.Padding.Left)) / DeviceColumns) - (2 * gap) - 2;
         double keyHeight = ((DeviceHost.Height - (2 * DeviceBody.Padding.Top)) / DeviceRowUnits) - (2 * gap) - 2;
-        Resources["KeyFontSize"] = Math.Clamp(Math.Min(Math.Min(side / 80, keyWidth / 6.8), keyHeight / 6), 4, 12);
-        Resources["KeySubFontSize"] = Math.Clamp(Math.Min(Math.Min(side / 118, keyWidth / 5.5), keyHeight / 9), 3.5, 8);
+        Resources["KeyFontSize"] = Math.Clamp(Math.Min(Math.Min(side / 80, keyWidth / 6.8), keyHeight / 6), 6, 12);
+        Resources["KeySubFontSize"] = Math.Clamp(Math.Min(Math.Min(side / 118, keyWidth / 5.5), keyHeight / 9), 5, 8);
         Resources["KeyIconSize"] = Math.Clamp(Math.Min(side / 26, keyHeight * 0.45), 12, 30);
         Resources["KeyChevronSize"] = Math.Clamp(Math.Min(side / 48, keyHeight * 0.3), 8, 16);
-        Resources["PadFontSize"] = Math.Clamp(side / 85, 5, 10);
+        Resources["PadFontSize"] = Math.Clamp(side / 85, 6.5, 10);
     }
 
     ///<summary>
@@ -222,6 +222,35 @@ public partial class LaunchpadPage : ContentPage
     }
 
     ///<summary>
+    ///Shows the guide to every button on its own scrollable page, which reads better than an alert box for this much text.
+    ///</summary>
+    private async Task ShowGuideAsync()
+    {
+        Button close = new() { Text = "Got it", AutomationId = "launchpad-guide-close", HorizontalOptions = LayoutOptions.End };
+        close.Clicked += async (_, _) => await Navigation.PopModalAsync();
+
+        ContentPage guide = new()
+        {
+            Title = "Launchpad guide",
+            AutomationId = "launchpad-guide",
+            SafeAreaEdges = SafeAreaEdges.All,
+            Content = new Grid
+            {
+                RowDefinitions = [new RowDefinition(GridLength.Star), new RowDefinition(GridLength.Auto)],
+                Padding = new Thickness(20, 16),
+                RowSpacing = 12,
+                Children =
+                {
+                    new ScrollView { Content = new Label { Text = Guide, LineBreakMode = LineBreakMode.WordWrap } },
+                    close,
+                },
+            },
+        };
+        Grid.SetRow(close, 1);
+        await Navigation.PushModalAsync(guide);
+    }
+
+    ///<summary>
     ///Offers the guide to what every button does and the tutorials, and runs the choice.
     ///</summary>
     private async void OnLogoTapped(object? sender, TappedEventArgs e)
@@ -229,7 +258,7 @@ public partial class LaunchpadPage : ContentPage
         string? chosen = await DisplayActionSheetAsync("Guide and tutorials", "Cancel", null, [ButtonGuideChoice, .. _viewModel.Tutorials.Select(tutorial => tutorial.Title)]);
         if (string.Equals(chosen, ButtonGuideChoice, StringComparison.Ordinal))
         {
-            await DisplayAlertAsync("Launchpad guide", Guide, "Got it");
+            await ShowGuideAsync();
         }
         else if (_viewModel.Tutorials.FirstOrDefault(tutorial => string.Equals(tutorial.Title, chosen, StringComparison.Ordinal)) is { } picked)
         {
@@ -525,6 +554,11 @@ public partial class LaunchpadPage : ContentPage
         base.OnAppearing();
         Log_PageAppeared();
         _viewModel.WarmUpIdeas();
+        if (Window is { } window)
+        {
+            window.Stopped -= OnWindowStopped;
+            window.Stopped += OnWindowStopped;
+        }
 
         // Show the one-time tip once the page has settled in (its entrance animation is 250 ms).
         _ = Dispatcher.DispatchDelayed(TimeSpan.FromMilliseconds(500), () =>
@@ -533,6 +567,8 @@ public partial class LaunchpadPage : ContentPage
             _ = LaunchpadTip.ShowOnceAsync();
         });
     }
+
+    private void OnWindowStopped(object? sender, EventArgs e) => _viewModel.FlushLayout();
 
     protected override void OnDisappearing()
     {
@@ -543,6 +579,11 @@ public partial class LaunchpadPage : ContentPage
 
         // Leaving the page ends a tutorial, and puts the user's own pads back.
         _viewModel.ExitTutorial();
+        _viewModel.FlushLayout();
+        if (Window is { } window)
+        {
+            window.Stopped -= OnWindowStopped;
+        }
     }
 
     ///<summary>

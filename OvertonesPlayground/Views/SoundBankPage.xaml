@@ -12,13 +12,13 @@
         <ToolbarItem AutomationId="soundbank-filters-toggle" Text="Filters" controls:Icon.Glyph="{x:Static models:IconFont.Filter_alt}" controls:Icon.Size="24" Clicked="OnToggleFiltersClicked" />
     </ContentPage.ToolbarItems>
 
-    <Grid ColumnDefinitions="*,440">
+    <Grid x:Name="Root" ColumnDefinitions="*,440">
 
         <!-- Left: search, filters and the result list -->
         <Grid Grid.Column="0" RowDefinitions="Auto,Auto,Auto,*">
 
             <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="8" Padding="16,10,16,4">
-                <SearchBar AutomationId="soundbank-search" Grid.Column="0" Placeholder="Search names, instruments, kits, keys..." Text="{Binding SearchText}" />
+                <SearchBar AutomationId="soundbank-search" Grid.Column="0" Placeholder="Search names, instruments, kits, keys..." Text="{Binding SearchText}" TextChanged="OnSearchTextChanged" SemanticProperties.Description="Search the sound bank" />
                 <Picker AutomationId="soundbank-sort" Grid.Column="1" Title="Sort by" WidthRequest="130" VerticalOptions="Center"
                         ItemsSource="{Binding SortKeys}" SelectedItem="{Binding SortKey}" />
                 <Button AutomationId="soundbank-sort-direction" Grid.Column="2" Text="Order" ToolTipProperties.Text="Reverse the sort order" controls:Icon.Glyph="{x:Static models:IconFont.Trending_up}" Padding="12,6"
@@ -65,7 +65,7 @@
                                 <HorizontalStackLayout Spacing="6" BindableLayout.ItemsSource="{Binding Chips}">
                                     <BindableLayout.ItemTemplate>
                                         <DataTemplate x:DataType="vm:FacetChipViewModel">
-                                            <Border AutomationId="{Binding Key, StringFormat='soundbank-chip-{0}'}" StrokeShape="RoundRectangle 15" Padding="12,5" BackgroundColor="{DynamicResource ControlFillColorDefault}">
+                                            <Border AutomationId="{Binding Key, StringFormat='soundbank-chip-{0}'}" StrokeShape="RoundRectangle 22" Padding="14,5" MinimumHeightRequest="44" SemanticProperties.Description="{Binding Display}" SemanticProperties.Hint="Filter chip. Double tap to toggle." BackgroundColor="{DynamicResource ControlFillColorDefault}">
                                                 <Border.GestureRecognizers>
                                                     <TapGestureRecognizer Tapped="OnChipTapped" />
                                                 </Border.GestureRecognizers>
@@ -95,7 +95,7 @@
             <!-- Results: one virtualised list; the whole list is replaced on every change. -->
             <CollectionView Grid.Row="3" AutomationId="soundbank-results" ItemsSource="{Binding Results}" SelectionMode="None">
                 <CollectionView.EmptyView>
-                    <Label AutomationId="soundbank-empty" Text="No sounds match. Try removing a filter." HorizontalTextAlignment="Center" VerticalTextAlignment="Center" />
+                    <Label AutomationId="soundbank-empty" Text="{Binding EmptyMessage}" HorizontalTextAlignment="Center" VerticalTextAlignment="Center" />
                 </CollectionView.EmptyView>
                 <CollectionView.ItemTemplate>
                     <DataTemplate x:DataType="vm:SampleRowViewModel">
@@ -140,12 +140,13 @@
         </Grid>
 
         <!-- Right: everything the ontology knows about the selected sound -->
-        <ScrollView Grid.Column="1" AutomationId="soundbank-detail-scroll">
-            <Grid Padding="8,10,16,16">
-                <Label AutomationId="soundbank-detail-empty" Text="Select a sound to see how the ontology describes it." HorizontalTextAlignment="Center" VerticalTextAlignment="Center" Margin="0,40"
+        <ScrollView x:Name="DetailScroll" Grid.Column="1" AutomationId="soundbank-detail-scroll" BackgroundColor="{DynamicResource SolidBackgroundFillColorTertiary}">
+            <Grid Padding="8,10,16,16" RowDefinitions="Auto,*">
+                <Button x:Name="DetailBack" AutomationId="soundbank-detail-back" Grid.Row="0" IsVisible="False" HorizontalOptions="Start" Text="Back to results" controls:Icon.Glyph="{x:Static models:IconFont.Close}" Padding="12,6" Clicked="OnDetailBackClicked" />
+                <Label AutomationId="soundbank-detail-empty" Grid.Row="1" Text="Select a sound to see how the ontology describes it." HorizontalTextAlignment="Center" VerticalTextAlignment="Center" Margin="0,40"
                        TextColor="{DynamicResource TextFillColorSecondary}" IsVisible="{Binding HasDetail, Converter={StaticResource InvertedBool}}" />
 
-                <VerticalStackLayout IsVisible="{Binding HasDetail}">
+                <VerticalStackLayout Grid.Row="1" IsVisible="{Binding HasDetail}">
                 <VerticalStackLayout AutomationId="soundbank-detail" Spacing="12" BindingContext="{Binding Detail}" x:DataType="vm:SampleDetailViewModel">
 
                     <Label Style="{StaticResource SubtitleTextBlockStyle}" Text="{Binding Title}" LineBreakMode="WordWrap" />

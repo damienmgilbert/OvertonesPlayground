@@ -279,6 +279,115 @@ public sealed class LibraryViewModelTests
     }
 
     [Fact]
+    public async Task Load_ListAlreadyUpToDate_LeavesTheRowsUntouched()
+    {
+        AudioClip a = TestData.Clip("A");
+        AudioClip b = TestData.Clip("B");
+        _library.GetClipsAsync().Returns(TestData.Clips(a, b));
+        LibraryViewModel viewModel = Create();
+        await viewModel.LoadCommand.ExecuteAsync(null);
+        int changes = 0;
+        viewModel.Clips.CollectionChanged += (_, _) => changes++;
+
+        await viewModel.LoadCommand.ExecuteAsync(null);
+
+        Assert.Equal(0, changes);
+    }
+
+    [Fact]
+    public async Task Load_OneNewClip_AddsOnlyThatRow()
+    {
+        AudioClip a = TestData.Clip("A");
+        AudioClip fresh = TestData.Clip("Fresh");
+        _library.GetClipsAsync().Returns(TestData.Clips(a), TestData.Clips(fresh, a));
+        LibraryViewModel viewModel = Create();
+        await viewModel.LoadCommand.ExecuteAsync(null);
+        int changes = 0;
+        viewModel.Clips.CollectionChanged += (_, _) => changes++;
+
+        await viewModel.LoadCommand.ExecuteAsync(null);
+
+        Assert.Equal([fresh, a], viewModel.Clips);
+        Assert.Equal(1, changes);
+    }
+
+    [Fact]
+    public async Task Search_ListsOnlyClipsWhoseNameContainsTheText()
+    {
+        AudioClip kick = TestData.Clip("Big Kick");
+        AudioClip snare = TestData.Clip("Snare");
+        _library.GetClipsAsync().Returns(TestData.Clips(kick, snare));
+        LibraryViewModel viewModel = Create();
+        await viewModel.LoadCommand.ExecuteAsync(null);
+
+        viewModel.SearchText = "kick";
+
+        Assert.Equal([kick], viewModel.Clips);
+    }
+
+    [Fact]
+    public async Task Search_NothingMatches_SaysSoInsteadOfTheEmptyLibraryMessage()
+    {
+        _library.GetClipsAsync().Returns(TestData.Clips(TestData.Clip("Kick")));
+        LibraryViewModel viewModel = Create();
+        await viewModel.LoadCommand.ExecuteAsync(null);
+
+        viewModel.SearchText = "zzz";
+
+        Assert.Empty(viewModel.Clips);
+        Assert.Equal("No clips match your search.", viewModel.EmptyMessage);
+    }
+
+    [Fact]
+    public async Task Search_Cleared_ListsEverythingAgain()
+    {
+        AudioClip kick = TestData.Clip("Kick");
+        AudioClip snare = TestData.Clip("Snare");
+        _library.GetClipsAsync().Returns(TestData.Clips(kick, snare));
+        LibraryViewModel viewModel = Create();
+        await viewModel.LoadCommand.ExecuteAsync(null);
+        viewModel.SearchText = "kick";
+
+        viewModel.SearchText = string.Empty;
+
+        Assert.Equal([kick, snare], viewModel.Clips);
+    }
+
+    [Fact]
+    public async Task Sort_ByNameAndLongest_ReordersTheList()
+    {
+        AudioClip zed = TestData.Clip("Zed");
+        AudioClip amp = TestData.Clip("Amp");
+        zed.Duration = TimeSpan.FromSeconds(9);
+        amp.Duration = TimeSpan.FromSeconds(2);
+        _library.GetClipsAsync().Returns(TestData.Clips(zed, amp));
+        LibraryViewModel viewModel = Create();
+        await viewModel.LoadCommand.ExecuteAsync(null);
+
+        viewModel.SortOrder = LibrarySortOrder.Name;
+        Assert.Equal([amp, zed], viewModel.Clips);
+
+        viewModel.SortOrder = LibrarySortOrder.Longest;
+        Assert.Equal([zed, amp], viewModel.Clips);
+    }
+
+    [Fact]
+    public async Task Export_ShowsItsOwnProgressNotThePullToRefreshSpinner()
+    {
+        TaskCompletionSource<string?> gate = new();
+        _library.ExportClipAsync(default!, default).ReturnsForAnyArgs(gate.Task);
+        LibraryViewModel viewModel = Create();
+
+        Task export = viewModel.ExportClipAsync(TestData.Clip("Beat"), AudioExportFormat.Aac);
+
+        Assert.True(viewModel.IsExporting);
+        Assert.False(viewModel.IsBusy);
+        gate.SetResult("Music/Beat.m4a");
+        await export;
+        Assert.False(viewModel.IsExporting);
+    }
+
+    [Fact]
     public async Task Load_WhileAlreadyLoading_DoesNotStartASecondLoad()
     {
         TaskCompletionSource<IReadOnlyList<AudioClip>> gate = new();

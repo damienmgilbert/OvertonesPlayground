@@ -223,9 +223,54 @@ public partial class LaunchpadViewModel
     }
 
     ///<summary>
-    ///Writes the layout to app storage.
+    ///Asks for the layout to be written to app storage. A burst of edits (dragging, stepping through a pattern) is written once,
+    ///a moment after the last of them, instead of once per edit; <see cref="FlushLayout"/> writes it at once.
     ///</summary>
     private void SaveLayout()
+    {
+        if (AutosaveDelay <= TimeSpan.Zero)
+        {
+            WriteLayout();
+            return;
+        }
+
+        _layoutDirty = true;
+        _autosaveDelay?.Cancel();
+        _autosaveDelay = new CancellationTokenSource();
+        _ = SaveLayoutLaterAsync(_autosaveDelay.Token);
+    }
+
+    private async Task SaveLayoutLaterAsync(CancellationToken cancellation)
+    {
+        try
+        {
+            await Task.Delay(AutosaveDelay, cancellation);
+        }
+        catch (TaskCanceledException)
+        {
+            return;
+        }
+
+        FlushLayout();
+    }
+
+    ///<summary>
+    ///Writes any edit that is still waiting for its delayed save. The page calls this when it goes away or the app stops, so
+    ///nothing is lost when Android reclaims the app.
+    ///</summary>
+    public void FlushLayout()
+    {
+        if (!_layoutDirty)
+        {
+            return;
+        }
+
+        _autosaveDelay?.Cancel();
+        _layoutDirty = false;
+        WriteLayout();
+    }
+
+    private void WriteLayout()
     {
         // While a tutorial has borrowed the pads, the user's own layout stays on disk untouched.
         if (_tutorial is not null)

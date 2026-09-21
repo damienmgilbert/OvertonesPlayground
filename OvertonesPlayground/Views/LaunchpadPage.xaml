@@ -194,6 +194,15 @@
             </Border>
         </Grid>
 
+        <!-- Shown while an example loads or a project is generated; input passes through so the pads keep working. -->
+        <Border x:Name="BusyBanner" AutomationId="launchpad-busy" IsVisible="{Binding IsBusy}" InputTransparent="True" HorizontalOptions="Center" VerticalOptions="Start" Margin="0,12,0,0"
+                Padding="16,8" StrokeShape="RoundRectangle 20" BackgroundColor="{DynamicResource SolidBackgroundFillColorTertiary}">
+            <HorizontalStackLayout Spacing="10">
+                <ActivityIndicator IsRunning="{Binding IsBusy}" WidthRequest="20" HeightRequest="20" VerticalOptions="Center" />
+                <Label Text="{Binding StatusMessage, FallbackValue='Working...'}" VerticalOptions="Center" />
+            </HorizontalStackLayout>
+        </Border>
+
         <!-- Where the tip points: a hairline under the top bar's eye button. The button is a toolbar item, which a tip can't target,
              so the code-behind lines this up with it once the page has appeared. Until then it rests where the button usually is. -->
         <BoxView x:Name="TipAnchor" AutomationId="launchpad-tip-anchor" HorizontalOptions="End" VerticalOptions="Start" WidthRequest="40" HeightRequest="1"

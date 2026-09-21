@@ -286,6 +286,13 @@ public partial class SoundBankViewModel : BaseViewModel
 
     #region Properties
     ///<summary>
+    ///What the result list says when it has no rows: still loading, failed to load, or no sound matches.
+    ///</summary>
+    public string EmptyMessage => _index is null
+        ? IsBusy ? "Loading the sound bank..." : "The sound bank couldn't be loaded. Leave this page and come back to try again."
+        : "No sounds match. Try removing a filter.";
+
+    ///<summary>
     ///True while another page has asked the user to choose a sound: the page then offers "Use this sound" and "Cancel".
     ///</summary>
     public bool IsPickMode => _picker.IsPicking;
@@ -429,6 +436,7 @@ public partial class SoundBankViewModel : BaseViewModel
 
         IsBusy = true;
         StatusMessage = null;
+        OnPropertyChanged(nameof(EmptyMessage));
         try
         {
             _index = await _catalog.GetIndexAsync();
@@ -445,6 +453,7 @@ public partial class SoundBankViewModel : BaseViewModel
         finally
         {
             IsBusy = false;
+            OnPropertyChanged(nameof(EmptyMessage));
         }
     }
 

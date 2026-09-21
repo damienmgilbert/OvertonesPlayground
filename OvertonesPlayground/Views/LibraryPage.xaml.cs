@@ -24,6 +24,7 @@ public partial class LibraryPage : ContentPage
         InitializeComponent();
         BindingContext = _viewModel = viewModel;
         _logger = logger;
+        SizeChanged += OnPageSizeChanged;
     }
     #endregion
 
@@ -60,6 +61,17 @@ public partial class LibraryPage : ContentPage
         if (confirmed)
         {
             RunRowCommand(sender, _viewModel.DeleteCommand);
+        }
+    }
+
+    ///<summary>
+    ///Fits as many tile columns as the width allows (about 140 units each) instead of a fixed five.
+    ///</summary>
+    private void OnPageSizeChanged(object? sender, EventArgs e)
+    {
+        if (Width > 0)
+        {
+            TileLayout.Span = Math.Max(2, (int)(Width / 140));
         }
     }
 

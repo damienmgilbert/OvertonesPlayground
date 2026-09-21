@@ -26,7 +26,7 @@ public sealed class LaunchpadViewModelTests : IDisposable
         return clip;
     }
 
-    private LaunchpadViewModel Create() => new(_playback, _library, _synthesis, _mixdown, _preferences, _files, _examples, NullLogger<LaunchpadViewModel>.Instance);
+    private LaunchpadViewModel Create() => new(_playback, _library, _synthesis, _mixdown, _preferences, _files, _examples, NullLogger<LaunchpadViewModel>.Instance) { AutosaveDelay = TimeSpan.Zero };
 
     private LaunchpadProject DemoProject()
     {
@@ -428,6 +428,31 @@ public sealed class LaunchpadViewModelTests : IDisposable
         Assert.Equal(clip.FilePath, second.Pads[7].Pad.ClipPath);
         Assert.True(second.Pads[7].IsLooping);
         Assert.False(second.Pads[6].HasClip);
+    }
+
+    [Fact]
+    public async Task Layout_WithAnAutosaveDelay_IsWrittenOnceOnFlushNotAfterEachEdit()
+    {
+        LaunchpadViewModel viewModel = new(_playback, _library, _synthesis, _mixdown, _preferences, _files, _examples, NullLogger<LaunchpadViewModel>.Instance) { AutosaveDelay = TimeSpan.FromMinutes(10) };
+        await AssignAsync(viewModel, index: 2, name: "Snare");
+        viewModel.ToggleLoopCommand.Execute(viewModel.Pads[2]);
+        string path = _files.InAppData("launchpad.json");
+        Assert.False(File.Exists(path));
+
+        viewModel.FlushLayout();
+
+        Assert.True(File.Exists(path));
+        Assert.Contains("Snare", File.ReadAllText(path));
+    }
+
+    [Fact]
+    public void FlushLayout_NothingChanged_WritesNothing()
+    {
+        LaunchpadViewModel viewModel = Create();
+
+        viewModel.FlushLayout();
+
+        Assert.False(File.Exists(_files.InAppData("launchpad.json")));
     }
 
     [Fact]

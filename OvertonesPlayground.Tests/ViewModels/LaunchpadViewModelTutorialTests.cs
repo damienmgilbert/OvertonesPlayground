@@ -53,6 +53,7 @@ public sealed class LaunchpadViewModelTutorialTests : IDisposable
     private LaunchpadViewModel Create(ILaunchpadExampleService examples) =>
         new(_playback, _library, _synthesis, _mixdown, _preferences, _files, examples, NullLogger<LaunchpadViewModel>.Instance)
         {
+            AutosaveDelay = TimeSpan.Zero,
             Delay = (_, _) => Task.CompletedTask,
         };
 

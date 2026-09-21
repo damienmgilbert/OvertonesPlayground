@@ -41,7 +41,7 @@ public sealed class LaunchpadViewModelIdeasTests : IDisposable
     #endregion
 
     #region Private methods
-    private LaunchpadViewModel Create() => new(_playback, _library, _synthesis, _mixdown, _preferences, _files, _examples, NullLogger<LaunchpadViewModel>.Instance);
+    private LaunchpadViewModel Create() => new(_playback, _library, _synthesis, _mixdown, _preferences, _files, _examples, NullLogger<LaunchpadViewModel>.Instance) { AutosaveDelay = TimeSpan.Zero };
 
     private LaunchpadProject GeneratedProject()
     {

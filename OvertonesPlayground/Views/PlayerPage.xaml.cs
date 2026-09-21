@@ -34,7 +34,11 @@ public partial class PlayerPage : ContentPage
     ///<summary>
     ///Applies the seek slider's dropped position to the playback service.
     ///</summary>
-    private void OnSeekCompleted(object? sender, EventArgs e) => _viewModel.SeekCommand.Execute(PositionSlider.Value);
+    private void OnSeekCompleted(object? sender, EventArgs e) => _viewModel.EndSeek(PositionSlider.Value);
+
+    private void OnSeekStarted(object? sender, EventArgs e) => _viewModel.BeginSeek();
+
+    private void OnSeekValueChanged(object? sender, ValueChangedEventArgs e) => _viewModel.PreviewSeek(e.NewValue);
     #endregion
 
     #region Protected methods

@@ -11,19 +11,23 @@ namespace OvertonesPlayground.ViewModels;
 public partial class PlayerViewModel : BaseViewModel, IDisposable
 {
     #region Fields
+    private readonly INavigationService _navigation;
     private readonly IAudioPlaybackService _playbackService;
     private IDispatcherTimer? _positionTimer;
+    private bool _ticking;
     #endregion
 
     #region Constructors
     ///<summary>
     ///Creates the view model and syncs its initial state from the shared playback service.
     ///</summary>
-    public PlayerViewModel(IAudioPlaybackService playbackService, ILogger<PlayerViewModel> logger) : base(logger)
+    public PlayerViewModel(IAudioPlaybackService playbackService, INavigationService navigation, ILogger<PlayerViewModel> logger) : base(logger)
     {
         _playbackService = playbackService;
+        _navigation = navigation;
         Title = "Player";
 
+        Volume = _playbackService.Volume;
         _playbackService.PlaybackStateChanged += OnPlaybackStateChanged;
         RefreshFromService();
     }
@@ -52,7 +56,7 @@ public partial class PlayerViewModel : BaseViewModel, IDisposable
     ///<summary>
     ///Pauses if currently playing, otherwise resumes/starts playback.
     ///</summary>
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(HasClip))]
     private void PlayPause()
     {
         if (_playbackService.IsPlaying)
@@ -73,11 +77,80 @@ public partial class PlayerViewModel : BaseViewModel, IDisposable
     private void RefreshFromService()
     {
         ClipName = _playbackService.CurrentClip?.Name ?? "Nothing loaded";
+        HasClip = _playbackService.CurrentClip is not null;
         IsPlaying = _playbackService.IsPlaying;
-        PositionSeconds = _playbackService.Position.TotalSeconds;
         DurationSeconds = Math.Max(_playbackService.Duration.TotalSeconds, 1);
+
+        // While the user drags the seek slider its own value is the position; the timer must not pull it back.
+        if (!IsSeeking)
+        {
+            PositionSeconds = _playbackService.Position.TotalSeconds;
+        }
+
         OnPropertyChanged(nameof(PositionText));
         OnPropertyChanged(nameof(DurationText));
+        UpdateTimer();
+    }
+
+    ///<summary>
+    ///Runs the position timer only while a clip is playing, so a paused or idle player isn't waking up five times a second.
+    ///</summary>
+    private void UpdateTimer()
+    {
+        if (!_ticking || _positionTimer is null)
+        {
+            return;
+        }
+
+        if (IsPlaying && !_positionTimer.IsRunning)
+        {
+            _positionTimer.Start();
+        }
+        else if (!IsPlaying && _positionTimer.IsRunning)
+        {
+            _positionTimer.Stop();
+        }
+    }
+
+    ///<summary>
+    ///Formats a length of time as mm:ss, or h:mm:ss once it reaches an hour.
+    ///</summary>
+    private static string FormatTime(double seconds)
+    {
+        TimeSpan time = TimeSpan.FromSeconds(seconds);
+        return time.TotalHours >= 1 ? time.ToString(@"h\:mm\:ss") : time.ToString(@"mm\:ss");
+    }
+
+    ///<summary>
+    ///Opens the Library so a clip can be picked to play.
+    ///</summary>
+    [RelayCommand]
+    private Task PickFromLibraryAsync() => _navigation.GoToAsync("//library");
+
+    ///<summary>
+    ///The user has grabbed the seek slider: stop the timer overwriting its value until it's released.
+    ///</summary>
+    public void BeginSeek() => IsSeeking = true;
+
+    ///<summary>
+    ///Shows the position under the seek slider's thumb while it's dragged.
+    ///</summary>
+    public void PreviewSeek(double positionSeconds)
+    {
+        if (IsSeeking)
+        {
+            PositionSeconds = positionSeconds;
+            OnPropertyChanged(nameof(PositionText));
+        }
+    }
+
+    ///<summary>
+    ///The user let go of the seek slider: jump to where it was dropped and let the timer drive it again.
+    ///</summary>
+    public void EndSeek(double positionSeconds)
+    {
+        IsSeeking = false;
+        SeekCommand.Execute(positionSeconds);
     }
 
     ///<summary>
@@ -93,7 +166,7 @@ public partial class PlayerViewModel : BaseViewModel, IDisposable
     ///<summary>
     ///Stops playback and resets position to the start.
     ///</summary>
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(HasClip))]
     private void Stop()
     {
         Log_StoppingPlayback();
@@ -119,19 +192,26 @@ public partial class PlayerViewModel : BaseViewModel, IDisposable
     {
         if (_positionTimer is not null)
         {
+            _ticking = true;
+            RefreshFromService();
             return;
         }
 
         _positionTimer = dispatcher.CreateTimer();
         _positionTimer.Interval = TimeSpan.FromMilliseconds(200);
         _positionTimer.Tick += (_, _) => RefreshFromService();
+        _ticking = true;
         _positionTimer.Start();
     }
 
     ///<summary>
     ///Stops the position-refresh timer, e.g. when the page is no longer visible.
     ///</summary>
-    public void StopTicking() => _positionTimer?.Stop();
+    public void StopTicking()
+    {
+        _ticking = false;
+        _positionTimer?.Stop();
+    }
     #endregion
 
     #region Public properties
@@ -148,9 +228,23 @@ public partial class PlayerViewModel : BaseViewModel, IDisposable
     public partial double DurationSeconds { get; set; } = 1;
 
     ///<summary>
-    ///Total duration formatted as mm:ss.
+    ///Total duration formatted as mm:ss or h:mm:ss.
     ///</summary>
-    public string DurationText => TimeSpan.FromSeconds(DurationSeconds).ToString(@"mm\:ss");
+    public string DurationText => FormatTime(DurationSeconds);
+
+    ///<summary>
+    ///Whether a clip is loaded. Play and Stop do nothing without one.
+    ///</summary>
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(PlayPauseCommand))]
+    [NotifyCanExecuteChangedFor(nameof(StopCommand))]
+    public partial bool HasClip { get; set; }
+
+    ///<summary>
+    ///True while the user is dragging the seek slider.
+    ///</summary>
+    [ObservableProperty]
+    public partial bool IsSeeking { get; set; }
 
     ///<summary>
     ///Whether playback is currently active.
@@ -165,9 +259,9 @@ public partial class PlayerViewModel : BaseViewModel, IDisposable
     public partial double PositionSeconds { get; set; }
 
     ///<summary>
-    ///Current position formatted as mm:ss.
+    ///Current position formatted as mm:ss or h:mm:ss.
     ///</summary>
-    public string PositionText => TimeSpan.FromSeconds(PositionSeconds).ToString(@"mm\:ss");
+    public string PositionText => FormatTime(PositionSeconds);
 
     ///<summary>
     ///Master playback volume for the player.

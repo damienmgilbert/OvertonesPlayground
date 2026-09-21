@@ -20,6 +20,10 @@ public partial class LibraryViewModel : BaseViewModel
     private readonly IAudioLibraryService _libraryService;
     private readonly INavigationService _navigation;
     private readonly IAudioPlaybackService _playbackService;
+    ///<summary>
+    ///Every clip in the library, in the order the library returned them (newest first); <see cref="Clips"/> is this after the search and sort.
+    ///</summary>
+    private IReadOnlyList<AudioClip> _allClips = [];
     private readonly IPreferences _preferences;
     #endregion
 
@@ -49,7 +53,9 @@ public partial class LibraryViewModel : BaseViewModel
 
         Log_DeletingClip(clip.Name, clip.Id);
         await _libraryService.DeleteClipAsync(clip);
+        _allClips = [.. _allClips.Where(c => c.Id != clip.Id)];
         Clips.Remove(clip);
+        UpdateEmptyMessage();
     }
 
     [RelayCommand]
@@ -146,18 +152,81 @@ public partial class LibraryViewModel : BaseViewModel
     }
 
     ///<summary>
-    ///Replaces the contents of <see cref="Clips"/> with the library's clips, newest first.
+    ///Reloads the library's clips and shows them through the current search and sort.
     ///</summary>
     private async Task RefreshClipsAsync()
     {
-        IReadOnlyList<AudioClip> clips = await _libraryService.GetClipsAsync();
-        Log_LoadedClips(clips.Count);
-        Clips.Clear();
-        foreach (AudioClip clip in clips)
-        {
-            Clips.Add(clip);
-        }
+        _allClips = await _libraryService.GetClipsAsync();
+        Log_LoadedClips(_allClips.Count);
+        ApplyFilter();
     }
+
+    ///<summary>
+    ///Brings <see cref="Clips"/> in line with the search and sort. A list that already matches is left alone, so coming
+    ///back to the page doesn't reset the scroll position; otherwise only the differences are applied.
+    ///</summary>
+    private void ApplyFilter()
+    {
+        string search = SearchText.Trim();
+        IEnumerable<AudioClip> matching = string.IsNullOrEmpty(search) ? _allClips : _allClips.Where(c => c.Name.Contains(search, StringComparison.CurrentCultureIgnoreCase));
+        List<AudioClip> wanted = SortOrder switch
+        {
+            LibrarySortOrder.Oldest => [.. matching.OrderBy(c => c.ImportedAt)],
+            LibrarySortOrder.Name => [.. matching.OrderBy(c => c.Name, StringComparer.CurrentCultureIgnoreCase)],
+            LibrarySortOrder.Longest => [.. matching.OrderByDescending(c => c.Duration)],
+            _ => [.. matching],
+        };
+
+        for (int i = Clips.Count - 1; i >= 0; i--)
+        {
+            if (!wanted.Any(c => c.Id == Clips[i].Id))
+            {
+                Clips.RemoveAt(i);
+            }
+        }
+
+        for (int i = 0; i < wanted.Count; i++)
+        {
+            if (i < Clips.Count && ReferenceEquals(Clips[i], wanted[i]))
+            {
+                continue;
+            }
+
+            int existing = -1;
+            for (int j = i + 1; j < Clips.Count; j++)
+            {
+                if (Clips[j].Id == wanted[i].Id)
+                {
+                    existing = j;
+                    break;
+                }
+            }
+
+            if (existing >= 0)
+            {
+                Clips.RemoveAt(existing);
+            }
+            else if (i < Clips.Count && Clips[i].Id == wanted[i].Id)
+            {
+                Clips.RemoveAt(i);
+            }
+
+            Clips.Insert(i, wanted[i]);
+        }
+
+        UpdateEmptyMessage();
+    }
+
+    partial void OnSearchTextChanged(string value) => ApplyFilter();
+
+    partial void OnSortOrderChanged(LibrarySortOrder value) => ApplyFilter();
+
+    ///<summary>
+    ///Says why the list is empty: nothing in the library yet, or nothing matching the search.
+    ///</summary>
+    private void UpdateEmptyMessage() => EmptyMessage = _allClips.Count > 0 && Clips.Count == 0
+        ? "No clips match your search."
+        : "No audio clips yet. Import a file or record one in Audio Recorder.";
 
     [LoggerMessage(Level = LogLevel.Debug, Message = "Deleting clip '{ClipName}' ({ClipId}).")]
     private partial void Log_DeletingClip(string clipName, string clipId);
@@ -208,6 +277,12 @@ public partial class LibraryViewModel : BaseViewModel
         await _navigation.GoToAsync("//player");
     }
 
+    ///<summary>
+    ///The keyboard's search button. The list already filters as the user types, so this only re-applies it.
+    ///</summary>
+    [RelayCommand]
+    private void Search() => ApplyFilter();
+
     [RelayCommand]
     private void SetViewMode(LibraryViewMode mode)
     {
@@ -225,12 +300,12 @@ public partial class LibraryViewModel : BaseViewModel
     {
         ArgumentNullException.ThrowIfNull(clip);
 
-        if (IsBusy)
+        if (IsBusy || IsExporting)
         {
             return;
         }
 
-        IsBusy = true;
+        IsExporting = true;
         try
         {
             Log_ExportingClip(clip.Name, format);
@@ -248,16 +323,33 @@ public partial class LibraryViewModel : BaseViewModel
         }
         finally
         {
-            IsBusy = false;
+            IsExporting = false;
         }
     }
     #endregion
 
     #region Public properties
     ///<summary>
+    ///True while a clip is being exported, so the page can show its own progress instead of the pull-to-refresh spinner.
+    ///</summary>
+    [ObservableProperty]
+    public partial bool IsExporting { get; set; }
+
+    ///<summary>
+    ///Every sort order the picker offers.
+    ///</summary>
+    public IReadOnlyList<LibrarySortOrder> SortOrders { get; } = Enum.GetValues<LibrarySortOrder>();
+
+    ///<summary>
     ///Observable collection of audio clips shown in the library UI.
     ///</summary>
     public ObservableCollection<AudioClip> Clips { get; } = [];
+
+    ///<summary>
+    ///What the list says when it has no rows.
+    ///</summary>
+    [ObservableProperty]
+    public partial string EmptyMessage { get; set; } = "No audio clips yet. Import a file or record one in Audio Recorder.";
 
     ///<summary>
     ///How far through the current import it is, from 0 to 1. Meaningful while <see cref="IsImporting"/> is true.
@@ -276,6 +368,18 @@ public partial class LibraryViewModel : BaseViewModel
     ///</summary>
     [ObservableProperty]
     public partial bool IsImporting { get; set; }
+
+    ///<summary>
+    ///Text a clip's name must contain to be listed; empty lists every clip.
+    ///</summary>
+    [ObservableProperty]
+    public partial string SearchText { get; set; } = string.Empty;
+
+    ///<summary>
+    ///The order the clips are listed in.
+    ///</summary>
+    [ObservableProperty]
+    public partial LibrarySortOrder SortOrder { get; set; }
 
     ///<summary>
     ///How the library is currently laid out: list, detail cards, or tiles.
