@@ -35,7 +35,7 @@ public class SoundSynthesisService : ISoundSynthesisService
 
         // Through the shared writer, which never reuses a name: a millisecond timestamp alone is not unique, and two sounds
         // generated back to back would otherwise be written to the same file.
-        string path = await DerivedAudioFileWriter.SaveAsync(wav, SynthDirectory, prefix).ConfigureAwait(false);
+        string path = await DerivedAudioFileWriter.SaveAsync(wav, SynthDirectory, prefix);
 
         AudioClip audioClip = new() { Name = name, FilePath = path, Duration = wav.Duration, IsUserRecording = true, };
         return audioClip;
@@ -59,10 +59,9 @@ public class SoundSynthesisService : ISoundSynthesisService
 
     #region Public methods
     ///<inheritdoc/>
-    public async Task<AudioClip> GenerateDrumAsync(DrumType drum, string name, DrumSynthParameters parameters)
+    public Task<AudioClip> GenerateDrumAsync(DrumType drum, string name, DrumSynthParameters parameters) => AudioWork.RunAsync(async () =>
     {
-        // Synthesis is pure number-crunching, so it runs on a worker thread instead of freezing the page.
-        short[] samples = await Task.Run(() => drum switch
+        short[] samples = drum switch
         {
             DrumType.Kick => DrumSynthesizer.Kick(parameters),
             DrumType.Snare => DrumSynthesizer.Snare(parameters),
@@ -75,19 +74,19 @@ public class SoundSynthesisService : ISoundSynthesisService
             DrumType.Crash => DrumSynthesizer.Crash(parameters),
             DrumType.Shaker => DrumSynthesizer.Shaker(parameters),
             _ => throw new ArgumentOutOfRangeException(nameof(drum)),
-        }).ConfigureAwait(false);
+        };
 
         string prefix = $"drum_{drum}";
-        AudioClip audioClip = await WriteAsync(samples, parameters.SampleRate, prefix, name).ConfigureAwait(false);
+        AudioClip audioClip = await WriteAsync(samples, parameters.SampleRate, prefix, name);
         return audioClip;
-    }
+    });
 
     ///<inheritdoc/>
-    public async Task<AudioClip> GenerateToneAsync(WaveformType waveform, double frequencyHz, double durationSeconds, double amplitude, string name)
+    public Task<AudioClip> GenerateToneAsync(WaveformType waveform, double frequencyHz, double durationSeconds, double amplitude, string name) => AudioWork.RunAsync(async () =>
     {
-        short[] samples = await Task.Run(() => WaveformGenerator.Generate(waveform, frequencyHz, durationSeconds, SampleRate, amplitude)).ConfigureAwait(false);
-        AudioClip audioClip = await WriteAsync(samples, SampleRate, $"tone_{waveform}", name).ConfigureAwait(false);
+        short[] samples = WaveformGenerator.Generate(waveform, frequencyHz, durationSeconds, SampleRate, amplitude);
+        AudioClip audioClip = await WriteAsync(samples, SampleRate, $"tone_{waveform}", name);
         return audioClip;
-    }
+    });
     #endregion
 }

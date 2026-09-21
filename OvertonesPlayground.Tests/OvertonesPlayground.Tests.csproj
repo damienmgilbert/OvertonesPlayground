@@ -36,6 +36,7 @@
 		<Compile Include="..\OvertonesPlayground\Services\Implementations\AudioLibraryService.cs" Link="Linked\Services\AudioLibraryService.cs" />
 		<Compile Include="..\OvertonesPlayground\Services\Implementations\AudioPlaybackService.cs" Link="Linked\Services\AudioPlaybackService.cs" />
 		<Compile Include="..\OvertonesPlayground\Services\Implementations\AudioRecorderService.cs" Link="Linked\Services\AudioRecorderService.cs" />
+		<Compile Include="..\OvertonesPlayground\Services\Implementations\AudioWork.cs" Link="Linked\Services\AudioWork.cs" />
 		<Compile Include="..\OvertonesPlayground\Services\Implementations\BiquadFilter.cs" Link="Linked\Services\BiquadFilter.cs" />
 		<Compile Include="..\OvertonesPlayground\Services\Implementations\DerivedAudioFileWriter.cs" Link="Linked\Services\DerivedAudioFileWriter.cs" />
 		<Compile Include="..\OvertonesPlayground\Services\Implementations\DrumSynthesizer.cs" Link="Linked\Services\DrumSynthesizer.cs" />

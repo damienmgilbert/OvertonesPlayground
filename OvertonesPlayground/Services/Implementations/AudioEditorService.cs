@@ -82,351 +82,351 @@ public class AudioEditorService : IAudioEditorService
 
     #region Public methods
     ///<inheritdoc/>
-    public async Task<string> ApplyCompressionAsync(string sourcePath, double thresholdDb, double ratio, double attackMs, double releaseMs, string outputName)
+    public Task<string> ApplyCompressionAsync(string sourcePath, double thresholdDb, double ratio, double attackMs, double releaseMs, string outputName) => AudioWork.RunAsync(async () =>
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
-        ArgumentException.ThrowIfNullOrWhiteSpace(outputName);
+            ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
+            ArgumentException.ThrowIfNullOrWhiteSpace(outputName);
 
-        WavFile wav = await WavFile.ReadAsync(sourcePath).ConfigureAwait(false);
-        short[] output = (short[])wav.Samples.Clone();
-        DynamicsProcessor.Compress(output, wav.Channels, wav.SampleRate, thresholdDb, Math.Max(1, ratio), attackMs, releaseMs);
+            WavFile wav = await WavFile.ReadAsync(sourcePath);
+            short[] output = (short[])wav.Samples.Clone();
+            DynamicsProcessor.Compress(output, wav.Channels, wav.SampleRate, thresholdDb, Math.Max(1, ratio), attackMs, releaseMs);
 
-        return await SaveDerivedAsync(wav, output, outputName).ConfigureAwait(false);
-    }
+            return await SaveDerivedAsync(wav, output, outputName);
+    });
 
     ///<inheritdoc/>
-    public async Task<string> ApplyEqualizerAsync(string sourcePath, double lowGainDb, double midGainDb, double highGainDb, string outputName)
+    public Task<string> ApplyEqualizerAsync(string sourcePath, double lowGainDb, double midGainDb, double highGainDb, string outputName) => AudioWork.RunAsync(async () =>
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
-        ArgumentException.ThrowIfNullOrWhiteSpace(outputName);
+            ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
+            ArgumentException.ThrowIfNullOrWhiteSpace(outputName);
 
-        WavFile wav = await WavFile.ReadAsync(sourcePath).ConfigureAwait(false);
-        short[] output = (short[])wav.Samples.Clone();
+            WavFile wav = await WavFile.ReadAsync(sourcePath);
+            short[] output = (short[])wav.Samples.Clone();
 
-        BiquadFilter.ApplyLowShelf(output, wav.Channels, wav.SampleRate, EqLowShelfFrequencyHz, lowGainDb, EqBandQ);
-        BiquadFilter.ApplyPeaking(output, wav.Channels, wav.SampleRate, EqMidPeakFrequencyHz, midGainDb, EqBandQ);
-        BiquadFilter.ApplyHighShelf(output, wav.Channels, wav.SampleRate, EqHighShelfFrequencyHz, highGainDb, EqBandQ);
+            BiquadFilter.ApplyLowShelf(output, wav.Channels, wav.SampleRate, EqLowShelfFrequencyHz, lowGainDb, EqBandQ);
+            BiquadFilter.ApplyPeaking(output, wav.Channels, wav.SampleRate, EqMidPeakFrequencyHz, midGainDb, EqBandQ);
+            BiquadFilter.ApplyHighShelf(output, wav.Channels, wav.SampleRate, EqHighShelfFrequencyHz, highGainDb, EqBandQ);
 
-        return await SaveDerivedAsync(wav, output, outputName).ConfigureAwait(false);
-    }
+            return await SaveDerivedAsync(wav, output, outputName);
+    });
 
     ///<inheritdoc/>
-    public async Task<string> ApplyFadeAsync(string sourcePath, TimeSpan fadeIn, TimeSpan fadeOut, string outputName)
+    public Task<string> ApplyFadeAsync(string sourcePath, TimeSpan fadeIn, TimeSpan fadeOut, string outputName) => AudioWork.RunAsync(async () =>
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
-        ArgumentException.ThrowIfNullOrWhiteSpace(outputName);
+            ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
+            ArgumentException.ThrowIfNullOrWhiteSpace(outputName);
 
-        WavFile wav = await WavFile.ReadAsync(sourcePath).ConfigureAwait(false);
-        int frameCount = wav.Channels * wav.SampleRate;
-        int fadeInFrames = (int)(fadeIn.TotalSeconds * frameCount);
-        int fadeOutFrames = (int)(fadeOut.TotalSeconds * frameCount);
+            WavFile wav = await WavFile.ReadAsync(sourcePath);
+            int frameCount = wav.Channels * wav.SampleRate;
+            int fadeInFrames = (int)(fadeIn.TotalSeconds * frameCount);
+            int fadeOutFrames = (int)(fadeOut.TotalSeconds * frameCount);
 
-        short[] output = (short[])wav.Samples.Clone();
+            short[] output = (short[])wav.Samples.Clone();
 
-        for (int i = 0; i < fadeInFrames && i < output.Length; i++)
-        {
-            double multiplier = (double)i / fadeInFrames;
-            output[i] = PcmMath.ClampToShort(output[i] * multiplier);
-        }
-
-        for (int i = 0; i < fadeOutFrames && i < output.Length; i++)
-        {
-            int index = output.Length - 1 - i;
-            double multiplier = (double)i / fadeOutFrames;
-            output[index] = PcmMath.ClampToShort(output[index] * multiplier);
-        }
-
-        string outputPath = await SaveDerivedAsync(wav, output, outputName).ConfigureAwait(false);
-        return outputPath;
-    }
-
-    ///<inheritdoc/>
-    public async Task<string> ApplyGainAsync(string sourcePath, double gainDb, string outputName)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
-        ArgumentException.ThrowIfNullOrWhiteSpace(outputName);
-
-        WavFile wav = await WavFile.ReadAsync(sourcePath).ConfigureAwait(false);
-        double factor = Math.Pow(10, gainDb / 20.0);
-
-        short[] output = new short[wav.Samples.Length];
-        for (int i = 0; i < wav.Samples.Length; i++)
-        {
-            output[i] = PcmMath.ClampToShort(wav.Samples[i] * factor);
-        }
-
-        string outputPath = await SaveDerivedAsync(wav, output, outputName).ConfigureAwait(false);
-        return outputPath;
-    }
-
-    ///<inheritdoc/>
-    public async Task<string> ApplyVoiceChangeAsync(string sourcePath, double semitones, string outputName)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
-        ArgumentException.ThrowIfNullOrWhiteSpace(outputName);
-
-        WavFile wav = await WavFile.ReadAsync(sourcePath).ConfigureAwait(false);
-
-        // Treat the source as if it were recorded at a rate scaled by the pitch factor, then resample it back down
-        // to the file's own rate - the same trick Conform() uses for format conversion, just aimed at a musical
-        // ratio instead of a target device's rate. The output keeps wav.SampleRate, so playback speed (and with it,
-        // duration) shifts along with pitch - the "turntable at the wrong RPM" effect this is meant to be.
-        double pitchFactor = Math.Pow(2, semitones / 12.0);
-        int scaledSourceRate = Math.Max(1, (int)Math.Round(wav.SampleRate * pitchFactor));
-        short[] output = AudioFormatUtility.Resample(wav.Samples, wav.Channels, scaledSourceRate, wav.SampleRate);
-
-        return await SaveDerivedAsync(wav, output, outputName).ConfigureAwait(false);
-    }
-
-    ///<inheritdoc/>
-    public async Task<string> CutAsync(string sourcePath, TimeSpan start, TimeSpan end, string outputName)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
-        ArgumentException.ThrowIfNullOrWhiteSpace(outputName);
-
-        WavFile wav = await WavFile.ReadAsync(sourcePath).ConfigureAwait(false);
-
-        int startIndex = FrameAlignedIndex(wav, start, 0, wav.Samples.Length);
-        int endIndex = FrameAlignedIndex(wav, end, startIndex, wav.Samples.Length);
-
-        short[] output = new short[wav.Samples.Length - (endIndex - startIndex)];
-        Array.Copy(wav.Samples, 0, output, 0, startIndex);
-        Array.Copy(wav.Samples, endIndex, output, startIndex, wav.Samples.Length - endIndex);
-
-        string outputPath = await SaveDerivedAsync(wav, output, outputName).ConfigureAwait(false);
-        return outputPath;
-    }
-
-    ///<inheritdoc/>
-    public async Task<TimeSpan> FindNearestZeroCrossingAsync(string sourcePath, TimeSpan near, TimeSpan maxSearch)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
-
-        WavFile wav = await WavFile.ReadAsync(sourcePath).ConfigureAwait(false);
-        bool hasNoSamples = wav.Samples.Length < 2;
-        if (hasNoSamples)
-        {
-            return near;
-        }
-
-        int frameCount = wav.Channels * wav.SampleRate;
-        int centerIndex = Math.Clamp((int)(near.TotalSeconds * frameCount), 0, wav.Samples.Length - 1);
-        int maxOffset = Math.Max(1, (int)(maxSearch.TotalSeconds * frameCount));
-
-        int searchStart = Math.Max(0, centerIndex - maxOffset);
-        int searchEnd = Math.Min(wav.Samples.Length - 2, centerIndex + maxOffset);
-
-        int nearestIndex = centerIndex;
-        int nearestDistance = int.MaxValue;
-        for (int i = searchStart; i <= searchEnd; i++)
-        {
-            bool isCrossing = Math.Sign(wav.Samples[i]) != Math.Sign(wav.Samples[i + 1]);
-            if (!isCrossing)
+            for (int i = 0; i < fadeInFrames && i < output.Length; i++)
             {
-                continue;
+                double multiplier = (double)i / fadeInFrames;
+                output[i] = PcmMath.ClampToShort(output[i] * multiplier);
             }
 
-            int distance = Math.Abs(i - centerIndex);
-            if (distance < nearestDistance)
+            for (int i = 0; i < fadeOutFrames && i < output.Length; i++)
             {
-                nearestDistance = distance;
-                nearestIndex = i;
+                int index = output.Length - 1 - i;
+                double multiplier = (double)i / fadeOutFrames;
+                output[index] = PcmMath.ClampToShort(output[index] * multiplier);
             }
-        }
 
-        return TimeSpan.FromSeconds((double)nearestIndex / frameCount);
-    }
+            string outputPath = await SaveDerivedAsync(wav, output, outputName);
+            return outputPath;
+    });
 
     ///<inheritdoc/>
-    public async Task<float[]> GetWaveformPeaksAsync(string filePath, int peakCount)
+    public Task<string> ApplyGainAsync(string sourcePath, double gainDb, string outputName) => AudioWork.RunAsync(async () =>
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
+            ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
+            ArgumentException.ThrowIfNullOrWhiteSpace(outputName);
 
-        WavFile wav = await WavFile.ReadAsync(filePath).ConfigureAwait(false);
-        bool isEmpty = wav.Samples.Length == 0;
-        bool isInvalidPeakCount = peakCount <= 0;
-        if (isEmpty || isInvalidPeakCount)
-        {
-            return [];
-        }
+            WavFile wav = await WavFile.ReadAsync(sourcePath);
+            double factor = Math.Pow(10, gainDb / 20.0);
 
-        float[] peaks = new float[peakCount];
-        int samplesPerPeak = Math.Max(1, wav.Samples.Length / peakCount);
-
-        for (int i = 0; i < peakCount; i++)
-        {
-            int start = i * samplesPerPeak;
-            int end = Math.Min(start + samplesPerPeak, wav.Samples.Length);
-            int max = 0;
-            for (int j = start; j < end; j++)
+            short[] output = new short[wav.Samples.Length];
+            for (int i = 0; i < wav.Samples.Length; i++)
             {
-                // In an int: the absolute value of -32768 doesn't fit in a short, and would come out negative.
-                int abs = Math.Abs((int)wav.Samples[j]);
-                if (abs > max)
+                output[i] = PcmMath.ClampToShort(wav.Samples[i] * factor);
+            }
+
+            string outputPath = await SaveDerivedAsync(wav, output, outputName);
+            return outputPath;
+    });
+
+    ///<inheritdoc/>
+    public Task<string> ApplyVoiceChangeAsync(string sourcePath, double semitones, string outputName) => AudioWork.RunAsync(async () =>
+    {
+            ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
+            ArgumentException.ThrowIfNullOrWhiteSpace(outputName);
+
+            WavFile wav = await WavFile.ReadAsync(sourcePath);
+
+            // Treat the source as if it were recorded at a rate scaled by the pitch factor, then resample it back down
+            // to the file's own rate - the same trick Conform() uses for format conversion, just aimed at a musical
+            // ratio instead of a target device's rate. The output keeps wav.SampleRate, so playback speed (and with it,
+            // duration) shifts along with pitch - the "turntable at the wrong RPM" effect this is meant to be.
+            double pitchFactor = Math.Pow(2, semitones / 12.0);
+            int scaledSourceRate = Math.Max(1, (int)Math.Round(wav.SampleRate * pitchFactor));
+            short[] output = AudioFormatUtility.Resample(wav.Samples, wav.Channels, scaledSourceRate, wav.SampleRate);
+
+            return await SaveDerivedAsync(wav, output, outputName);
+    });
+
+    ///<inheritdoc/>
+    public Task<string> CutAsync(string sourcePath, TimeSpan start, TimeSpan end, string outputName) => AudioWork.RunAsync(async () =>
+    {
+            ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
+            ArgumentException.ThrowIfNullOrWhiteSpace(outputName);
+
+            WavFile wav = await WavFile.ReadAsync(sourcePath);
+
+            int startIndex = FrameAlignedIndex(wav, start, 0, wav.Samples.Length);
+            int endIndex = FrameAlignedIndex(wav, end, startIndex, wav.Samples.Length);
+
+            short[] output = new short[wav.Samples.Length - (endIndex - startIndex)];
+            Array.Copy(wav.Samples, 0, output, 0, startIndex);
+            Array.Copy(wav.Samples, endIndex, output, startIndex, wav.Samples.Length - endIndex);
+
+            string outputPath = await SaveDerivedAsync(wav, output, outputName);
+            return outputPath;
+    });
+
+    ///<inheritdoc/>
+    public Task<TimeSpan> FindNearestZeroCrossingAsync(string sourcePath, TimeSpan near, TimeSpan maxSearch) => AudioWork.RunAsync(async () =>
+    {
+            ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
+
+            WavFile wav = await WavFile.ReadAsync(sourcePath);
+            bool hasNoSamples = wav.Samples.Length < 2;
+            if (hasNoSamples)
+            {
+                return near;
+            }
+
+            int frameCount = wav.Channels * wav.SampleRate;
+            int centerIndex = Math.Clamp((int)(near.TotalSeconds * frameCount), 0, wav.Samples.Length - 1);
+            int maxOffset = Math.Max(1, (int)(maxSearch.TotalSeconds * frameCount));
+
+            int searchStart = Math.Max(0, centerIndex - maxOffset);
+            int searchEnd = Math.Min(wav.Samples.Length - 2, centerIndex + maxOffset);
+
+            int nearestIndex = centerIndex;
+            int nearestDistance = int.MaxValue;
+            for (int i = searchStart; i <= searchEnd; i++)
+            {
+                bool isCrossing = Math.Sign(wav.Samples[i]) != Math.Sign(wav.Samples[i + 1]);
+                if (!isCrossing)
                 {
-                    max = abs;
+                    continue;
+                }
+
+                int distance = Math.Abs(i - centerIndex);
+                if (distance < nearestDistance)
+                {
+                    nearestDistance = distance;
+                    nearestIndex = i;
                 }
             }
 
-            peaks[i] = Math.Min(max, short.MaxValue) / (float)short.MaxValue;
-        }
-
-        return peaks;
-    }
+            return TimeSpan.FromSeconds((double)nearestIndex / frameCount);
+    });
 
     ///<inheritdoc/>
-    public async Task<string> InsertAsync(string sourcePath, string insertPath, TimeSpan at, string outputName)
+    public Task<float[]> GetWaveformPeaksAsync(string filePath, int peakCount) => AudioWork.RunAsync(async () =>
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
-        ArgumentException.ThrowIfNullOrWhiteSpace(insertPath);
-        ArgumentException.ThrowIfNullOrWhiteSpace(outputName);
+            ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
 
-        WavFile source = await WavFile.ReadAsync(sourcePath).ConfigureAwait(false);
-        WavFile insert = await WavFile.ReadAsync(insertPath).ConfigureAwait(false);
-        short[] insertSamples = AudioFormatUtility.Conform(insert, source.Channels, source.SampleRate);
-
-        int insertIndex = FrameAlignedIndex(source, at, 0, source.Samples.Length);
-
-        short[] output = new short[source.Samples.Length + insertSamples.Length];
-        Array.Copy(source.Samples, 0, output, 0, insertIndex);
-        Array.Copy(insertSamples, 0, output, insertIndex, insertSamples.Length);
-        Array.Copy(source.Samples, insertIndex, output, insertIndex + insertSamples.Length, source.Samples.Length - insertIndex);
-
-        string outputPath = await SaveDerivedAsync(source, output, outputName).ConfigureAwait(false);
-        return outputPath;
-    }
-
-    ///<inheritdoc/>
-    public async Task<string> NormalizeAsync(string sourcePath, string outputName)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
-        ArgumentException.ThrowIfNullOrWhiteSpace(outputName);
-
-        WavFile wav = await WavFile.ReadAsync(sourcePath).ConfigureAwait(false);
-        bool isEmpty = wav.Samples.Length == 0;
-        if (isEmpty)
-        {
-            return await SaveDerivedAsync(wav, wav.Samples, outputName).ConfigureAwait(false);
-        }
-
-        int peak = 1;
-        foreach (short sample in wav.Samples)
-        {
-            // In an int: the absolute value of -32768 doesn't fit in a short, so a full-scale negative sample would be missed.
-            int abs = Math.Abs((int)sample);
-            if (abs > peak)
+            WavFile wav = await WavFile.ReadAsync(filePath);
+            bool isEmpty = wav.Samples.Length == 0;
+            bool isInvalidPeakCount = peakCount <= 0;
+            if (isEmpty || isInvalidPeakCount)
             {
-                peak = abs;
+                return [];
             }
-        }
 
-        double factor = short.MaxValue / (double)peak;
-        short[] output = new short[wav.Samples.Length];
-        for (int i = 0; i < wav.Samples.Length; i++)
-        {
-            output[i] = PcmMath.ClampToShort(wav.Samples[i] * factor);
-        }
+            float[] peaks = new float[peakCount];
+            int samplesPerPeak = Math.Max(1, wav.Samples.Length / peakCount);
 
-        string outputPath = await SaveDerivedAsync(wav, output, outputName).ConfigureAwait(false);
-        return outputPath;
-    }
-
-    ///<inheritdoc/>
-    public async Task<string> ReduceNoiseAsync(string sourcePath, TimeSpan noiseSampleDuration, string outputName)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
-        ArgumentException.ThrowIfNullOrWhiteSpace(outputName);
-
-        WavFile wav = await WavFile.ReadAsync(sourcePath).ConfigureAwait(false);
-        int noiseFrameCount = (int)(noiseSampleDuration.TotalSeconds * wav.SampleRate);
-
-        // Spectral subtraction is CPU-heavy (many FFTs over the whole clip) compared to this service's other
-        // sample-at-a-time edits, so it runs off the calling thread to avoid a UI stall on longer clips.
-        short[] output = await Task.Run(() => SpectralNoiseReducer.Reduce(wav.Samples, wav.Channels, noiseFrameCount)).ConfigureAwait(false);
-
-        return await SaveDerivedAsync(wav, output, outputName).ConfigureAwait(false);
-    }
-
-    ///<inheritdoc/>
-    public async Task<string> RemoveVocalsAsync(string sourcePath, string outputName)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
-        ArgumentException.ThrowIfNullOrWhiteSpace(outputName);
-
-        WavFile wav = await WavFile.ReadAsync(sourcePath).ConfigureAwait(false);
-        bool isNotStereo = wav.Channels != 2;
-        if (isNotStereo)
-        {
-            throw new NotSupportedException($"'{sourcePath}' has {wav.Channels} channel(s); vocal removal needs a stereo source to cancel out audio common to both channels.");
-        }
-
-        int frames = wav.Samples.Length / 2;
-        short[] output = new short[wav.Samples.Length];
-        for (int frame = 0; frame < frames; frame++)
-        {
-            int index = frame * 2;
-            short difference = PcmMath.ClampToShort(wav.Samples[index] - wav.Samples[index + 1]);
-            output[index] = difference;
-            output[index + 1] = difference;
-        }
-
-        return await SaveDerivedAsync(wav, output, outputName).ConfigureAwait(false);
-    }
-
-    ///<inheritdoc/>
-    public async Task<string> ReverseAsync(string sourcePath, string outputName)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
-        ArgumentException.ThrowIfNullOrWhiteSpace(outputName);
-
-        WavFile wav = await WavFile.ReadAsync(sourcePath).ConfigureAwait(false);
-        int frames = wav.Samples.Length / wav.Channels;
-        short[] output = new short[wav.Samples.Length];
-
-        for (int frame = 0; frame < frames; frame++)
-        {
-            int sourceFrame = frames - 1 - frame;
-            for (int ch = 0; ch < wav.Channels; ch++)
+            for (int i = 0; i < peakCount; i++)
             {
-                output[(frame * wav.Channels) + ch] = wav.Samples[(sourceFrame * wav.Channels) + ch];
+                int start = i * samplesPerPeak;
+                int end = Math.Min(start + samplesPerPeak, wav.Samples.Length);
+                int max = 0;
+                for (int j = start; j < end; j++)
+                {
+                    // In an int: the absolute value of -32768 doesn't fit in a short, and would come out negative.
+                    int abs = Math.Abs((int)wav.Samples[j]);
+                    if (abs > max)
+                    {
+                        max = abs;
+                    }
+                }
+
+                peaks[i] = Math.Min(max, short.MaxValue) / (float)short.MaxValue;
             }
-        }
 
-        return await SaveDerivedAsync(wav, output, outputName).ConfigureAwait(false);
-    }
-
-    ///<inheritdoc/>
-    public async Task<(string BeforePath, string AfterPath)> SplitAsync(string sourcePath, TimeSpan at, string outputNameBefore, string outputNameAfter)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
-        ArgumentException.ThrowIfNullOrWhiteSpace(outputNameBefore);
-        ArgumentException.ThrowIfNullOrWhiteSpace(outputNameAfter);
-
-        WavFile wav = await WavFile.ReadAsync(sourcePath).ConfigureAwait(false);
-        int splitIndex = FrameAlignedIndex(wav, at, 0, wav.Samples.Length);
-
-        short[] before = wav.Samples[..splitIndex];
-        short[] after = wav.Samples[splitIndex..];
-
-        string beforePath = await SaveDerivedAsync(wav, before, outputNameBefore).ConfigureAwait(false);
-        string afterPath = await SaveDerivedAsync(wav, after, outputNameAfter).ConfigureAwait(false);
-        return (beforePath, afterPath);
-    }
+            return peaks;
+    });
 
     ///<inheritdoc/>
-    public async Task<string> TrimAsync(string sourcePath, TimeSpan start, TimeSpan end, string outputName)
+    public Task<string> InsertAsync(string sourcePath, string insertPath, TimeSpan at, string outputName) => AudioWork.RunAsync(async () =>
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
-        ArgumentException.ThrowIfNullOrWhiteSpace(outputName);
+            ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
+            ArgumentException.ThrowIfNullOrWhiteSpace(insertPath);
+            ArgumentException.ThrowIfNullOrWhiteSpace(outputName);
 
-        WavFile wav = await WavFile.ReadAsync(sourcePath).ConfigureAwait(false);
+            WavFile source = await WavFile.ReadAsync(sourcePath);
+            WavFile insert = await WavFile.ReadAsync(insertPath);
+            short[] insertSamples = AudioFormatUtility.Conform(insert, source.Channels, source.SampleRate);
 
-        int startIndex = FrameAlignedIndex(wav, start, 0, wav.Samples.Length);
-        int endIndex = FrameAlignedIndex(wav, end, startIndex, wav.Samples.Length);
+            int insertIndex = FrameAlignedIndex(source, at, 0, source.Samples.Length);
 
-        short[] trimmed = wav.Samples[startIndex..endIndex];
-        string outputPath = await SaveDerivedAsync(wav, trimmed, outputName).ConfigureAwait(false);
-        return outputPath;
-    }
+            short[] output = new short[source.Samples.Length + insertSamples.Length];
+            Array.Copy(source.Samples, 0, output, 0, insertIndex);
+            Array.Copy(insertSamples, 0, output, insertIndex, insertSamples.Length);
+            Array.Copy(source.Samples, insertIndex, output, insertIndex + insertSamples.Length, source.Samples.Length - insertIndex);
+
+            string outputPath = await SaveDerivedAsync(source, output, outputName);
+            return outputPath;
+    });
+
+    ///<inheritdoc/>
+    public Task<string> NormalizeAsync(string sourcePath, string outputName) => AudioWork.RunAsync(async () =>
+    {
+            ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
+            ArgumentException.ThrowIfNullOrWhiteSpace(outputName);
+
+            WavFile wav = await WavFile.ReadAsync(sourcePath);
+            bool isEmpty = wav.Samples.Length == 0;
+            if (isEmpty)
+            {
+                return await SaveDerivedAsync(wav, wav.Samples, outputName);
+            }
+
+            int peak = 1;
+            foreach (short sample in wav.Samples)
+            {
+                // In an int: the absolute value of -32768 doesn't fit in a short, so a full-scale negative sample would be missed.
+                int abs = Math.Abs((int)sample);
+                if (abs > peak)
+                {
+                    peak = abs;
+                }
+            }
+
+            double factor = short.MaxValue / (double)peak;
+            short[] output = new short[wav.Samples.Length];
+            for (int i = 0; i < wav.Samples.Length; i++)
+            {
+                output[i] = PcmMath.ClampToShort(wav.Samples[i] * factor);
+            }
+
+            string outputPath = await SaveDerivedAsync(wav, output, outputName);
+            return outputPath;
+    });
+
+    ///<inheritdoc/>
+    public Task<string> ReduceNoiseAsync(string sourcePath, TimeSpan noiseSampleDuration, string outputName) => AudioWork.RunAsync(async () =>
+    {
+            ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
+            ArgumentException.ThrowIfNullOrWhiteSpace(outputName);
+
+            WavFile wav = await WavFile.ReadAsync(sourcePath);
+            int noiseFrameCount = (int)(noiseSampleDuration.TotalSeconds * wav.SampleRate);
+
+            // Spectral subtraction is CPU-heavy (many FFTs over the whole clip) compared to this service's other
+            // sample-at-a-time edits, so it runs off the calling thread to avoid a UI stall on longer clips.
+            short[] output = SpectralNoiseReducer.Reduce(wav.Samples, wav.Channels, noiseFrameCount);
+
+            return await SaveDerivedAsync(wav, output, outputName);
+    });
+
+    ///<inheritdoc/>
+    public Task<string> RemoveVocalsAsync(string sourcePath, string outputName) => AudioWork.RunAsync(async () =>
+    {
+            ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
+            ArgumentException.ThrowIfNullOrWhiteSpace(outputName);
+
+            WavFile wav = await WavFile.ReadAsync(sourcePath);
+            bool isNotStereo = wav.Channels != 2;
+            if (isNotStereo)
+            {
+                throw new NotSupportedException($"'{sourcePath}' has {wav.Channels} channel(s); vocal removal needs a stereo source to cancel out audio common to both channels.");
+            }
+
+            int frames = wav.Samples.Length / 2;
+            short[] output = new short[wav.Samples.Length];
+            for (int frame = 0; frame < frames; frame++)
+            {
+                int index = frame * 2;
+                short difference = PcmMath.ClampToShort(wav.Samples[index] - wav.Samples[index + 1]);
+                output[index] = difference;
+                output[index + 1] = difference;
+            }
+
+            return await SaveDerivedAsync(wav, output, outputName);
+    });
+
+    ///<inheritdoc/>
+    public Task<string> ReverseAsync(string sourcePath, string outputName) => AudioWork.RunAsync(async () =>
+    {
+            ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
+            ArgumentException.ThrowIfNullOrWhiteSpace(outputName);
+
+            WavFile wav = await WavFile.ReadAsync(sourcePath);
+            int frames = wav.Samples.Length / wav.Channels;
+            short[] output = new short[wav.Samples.Length];
+
+            for (int frame = 0; frame < frames; frame++)
+            {
+                int sourceFrame = frames - 1 - frame;
+                for (int ch = 0; ch < wav.Channels; ch++)
+                {
+                    output[(frame * wav.Channels) + ch] = wav.Samples[(sourceFrame * wav.Channels) + ch];
+                }
+            }
+
+            return await SaveDerivedAsync(wav, output, outputName);
+    });
+
+    ///<inheritdoc/>
+    public Task<(string BeforePath, string AfterPath)> SplitAsync(string sourcePath, TimeSpan at, string outputNameBefore, string outputNameAfter) => AudioWork.RunAsync(async () =>
+    {
+            ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
+            ArgumentException.ThrowIfNullOrWhiteSpace(outputNameBefore);
+            ArgumentException.ThrowIfNullOrWhiteSpace(outputNameAfter);
+
+            WavFile wav = await WavFile.ReadAsync(sourcePath);
+            int splitIndex = FrameAlignedIndex(wav, at, 0, wav.Samples.Length);
+
+            short[] before = wav.Samples[..splitIndex];
+            short[] after = wav.Samples[splitIndex..];
+
+            string beforePath = await SaveDerivedAsync(wav, before, outputNameBefore);
+            string afterPath = await SaveDerivedAsync(wav, after, outputNameAfter);
+            return (beforePath, afterPath);
+    });
+
+    ///<inheritdoc/>
+    public Task<string> TrimAsync(string sourcePath, TimeSpan start, TimeSpan end, string outputName) => AudioWork.RunAsync(async () =>
+    {
+            ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
+            ArgumentException.ThrowIfNullOrWhiteSpace(outputName);
+
+            WavFile wav = await WavFile.ReadAsync(sourcePath);
+
+            int startIndex = FrameAlignedIndex(wav, start, 0, wav.Samples.Length);
+            int endIndex = FrameAlignedIndex(wav, end, startIndex, wav.Samples.Length);
+
+            short[] trimmed = wav.Samples[startIndex..endIndex];
+            string outputPath = await SaveDerivedAsync(wav, trimmed, outputName);
+            return outputPath;
+    });
     #endregion
 }
