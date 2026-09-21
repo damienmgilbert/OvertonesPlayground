@@ -23,7 +23,7 @@ public partial class LaunchpadPage : ContentPage
     ///<summary>
     ///The height of the device's rows added up in units of one pad row, matching the row definitions of the device's grid.
     ///</summary>
-    private const double DeviceRowUnits = 10.05;
+    private const double DeviceRowUnits = 10.6;
 
     // The AutomationIds of the top bar's buttons (see the page's ToolbarItems).
     private const string ToggleInfoButtonId = "launchpad-toggle-info";
@@ -236,7 +236,7 @@ public partial class LaunchpadPage : ContentPage
     ///</summary>
     private VisualElement? FindKey(LaunchpadControl control, int column)
     {
-        foreach (FlexLayout layout in new[] { ShiftLayout, TopLayout, LeftLayout, RightLayout, TrackLayout, SetupLayout, FunctionLayout })
+        foreach (Layout layout in new Layout[] { ShiftLayout, TopLayout, LeftLayout, RightLayout, TrackLayout, SetupLayout, FunctionLayout })
         {
             foreach (IView child in layout.Children)
             {

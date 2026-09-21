@@ -26,10 +26,11 @@
             <Thickness x:Key="PadGap">2</Thickness>
 
             <!-- A button in the ring around the pads. It sits in a FlexLayout, where Grow with a zero Basis shares the row (or column)
-                 out evenly. The whole key is one tap target; the tap is routed through the code-behind, like the pads. A lit key gets
-                 a teal edge and lighter labels. -->
+                 out evenly. A track button instead sits in its pad column of a grid (a FlexLayout ignores Grid.Column). The whole key
+                 is one tap target; the tap is routed through the code-behind, like the pads. A lit key gets a teal edge and lighter
+                 labels. -->
             <DataTemplate x:Key="KeyTemplate" x:DataType="vm:LaunchpadKeyViewModel">
-                <Border FlexLayout.Grow="1" FlexLayout.Basis="0"
+                <Border FlexLayout.Grow="1" FlexLayout.Basis="0" Grid.Column="{Binding Column}"
                         Margin="{DynamicResource KeyGap}"
                         Style="{StaticResource DeviceKeyStyle}"
                         AutomationId="{Binding Id, StringFormat='launchpad-key-{0}'}"
@@ -129,12 +130,12 @@
     <Grid x:Name="Root">
 
         <!-- The Launchpad Pro: ten columns by eleven rows of cells. The middle eight columns and rows are the pads; around them are
-             the shift key and mode row above, the two side columns, and the two rows of keys below (the short row of track
+             the shift key and mode row above, the two side columns, and the two rows of keys below (the row of track
              buttons, and the labeled function buttons). It is stretched to fill the safe area, so on a phone the pads are
              rectangles, tall in portrait and wide in landscape. The code-behind scales the gaps and text to the size of a cell. -->
         <Grid x:Name="DeviceHost" SizeChanged="OnDeviceHostSizeChanged">
             <Border x:Name="DeviceBody" Style="{StaticResource DeviceBodyStyle}" Padding="6">
-                <Grid x:Name="Surface" ColumnDefinitions="*,*,*,*,*,*,*,*,*,*" RowDefinitions="0.9*,*,*,*,*,*,*,*,*,0.45*,0.7*">
+                <Grid x:Name="Surface" ColumnDefinitions="*,*,*,*,*,*,*,*,*,*" RowDefinitions="0.9*,*,*,*,*,*,*,*,*,*,0.7*">
 
                     <FlexLayout x:Name="ShiftLayout" Grid.Row="0" Grid.Column="0" Direction="Row"
                                 BindableLayout.ItemsSource="{Binding ShiftKeys}" BindableLayout.ItemTemplate="{StaticResource KeyTemplate}" />
@@ -163,8 +164,10 @@
                     <FlexLayout x:Name="RightLayout" Grid.Row="1" Grid.RowSpan="8" Grid.Column="9" Direction="Column"
                                 BindableLayout.ItemsSource="{Binding RightKeys}" BindableLayout.ItemTemplate="{StaticResource KeyTemplate}" />
 
-                    <FlexLayout x:Name="TrackLayout" Grid.Row="9" Grid.Column="1" Grid.ColumnSpan="8" Direction="Row"
-                                BindableLayout.ItemsSource="{Binding TrackKeys}" BindableLayout.ItemTemplate="{StaticResource KeyTemplate}" />
+                    <!-- The track buttons: a grid with the pads' columns, so each button is the size of the pad above it. (A FlexLayout
+                         applies a key's margin twice, which would leave these smaller than the pads.) -->
+                    <Grid x:Name="TrackLayout" Grid.Row="9" Grid.Column="1" Grid.ColumnSpan="8" ColumnDefinitions="*,*,*,*,*,*,*,*"
+                          BindableLayout.ItemsSource="{Binding TrackKeys}" BindableLayout.ItemTemplate="{StaticResource KeyTemplate}" />
 
                     <FlexLayout x:Name="SetupLayout" Grid.Row="10" Grid.Column="0" Direction="Row"
                                 BindableLayout.ItemsSource="{Binding SetupKeys}" BindableLayout.ItemTemplate="{StaticResource KeyTemplate}" />
