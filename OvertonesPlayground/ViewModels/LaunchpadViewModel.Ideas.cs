@@ -62,6 +62,7 @@ public partial class LaunchpadViewModel
         LaunchpadStyleInfo style = styles.FirstOrDefault(s => s.Key == styleKey) ?? styles[_random.Next(styles.Count)];
         IsBusy = true;
         Say($"Generating a {style.Name} project from the Sound Bank...");
+        long started = System.Diagnostics.Stopwatch.GetTimestamp();
         try
         {
             LaunchpadGeneratedProject generated = await _examples.GenerateAsync(new LaunchpadGenerationRequest(style.Key, _random.Next()));
@@ -73,6 +74,7 @@ public partial class LaunchpadViewModel
             Layer = LaunchpadLayer.None;
             Say($"Generated '{generated.Title}'. {generated.Description} Undo brings back what was here before.");
             Changed();
+            Log_Generated(generated.Title, (long)System.Diagnostics.Stopwatch.GetElapsedTime(started).TotalMilliseconds);
         }
         catch (Exception ex) when (ex is IOException or InvalidDataException or InvalidOperationException or UnauthorizedAccessException or ArgumentException or KeyNotFoundException or NotSupportedException)
         {
@@ -84,6 +86,9 @@ public partial class LaunchpadViewModel
             IsBusy = false;
         }
     }
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Generated the Launchpad project '{Title}' in {Milliseconds} ms.")]
+    private partial void Log_Generated(string title, long milliseconds);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Couldn't generate a Launchpad project in style {StyleKey}.")]
     private partial void Log_GenerateFailed(string styleKey, Exception exception);
@@ -172,6 +177,25 @@ public partial class LaunchpadViewModel
     #endregion
 
     #region Public methods
+    ///<summary>
+    ///Starts loading the sound bank and preparing the generator in the background, so generating, loading a setup or suggesting
+    ///a sound does not wait for them. Called when the Launchpad appears; a failure is only logged, and the work is retried when
+    ///it is next needed.
+    ///</summary>
+    public void WarmUpIdeas() => _ = WarmUpIdeasAsync();
+
+    private async Task WarmUpIdeasAsync()
+    {
+        try
+        {
+            await _examples.WarmUpAsync();
+        }
+        catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException)
+        {
+            Log_SuggestFailed(ex);
+        }
+    }
+
     ///<summary>
     ///Asks the page to list sounds of the Sound Bank that suit <paramref name="pad"/>, each with why, and puts the one picked on
     ///it. For a pad with a sound they are alternatives like it; for an empty pad, sounds for what its column holds, in the

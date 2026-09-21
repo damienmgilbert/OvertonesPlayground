@@ -189,5 +189,54 @@ public sealed class LaunchpadExampleServiceTests : IDisposable
         Assert.Equal(StyleProfiles.Presets.Count(), service.Presets.Count);
         Assert.Equal(StyleProfiles.All.Count, service.Styles.Count);
     }
+
+    [Fact]
+    public async Task WarmUpAsync_LoadsTheCatalogOnceSoLaterBuildsDoNotWaitForIt()
+    {
+        LaunchpadExampleService service = Create();
+
+        await service.WarmUpAsync(TestContext.Current.CancellationToken);
+        await service.WarmUpAsync(TestContext.Current.CancellationToken);
+        _ = await service.GenerateAsync(new LaunchpadGenerationRequest("house", 3), TestContext.Current.CancellationToken);
+
+        _ = await _catalog.Received(3).GetIndexAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task CreateAsync_CopiesTheSoundsInParallelAndStillPointsEachPadAtItsOwnSound()
+    {
+        int running = 0;
+        int mostAtOnce = 0;
+        _assets.CopyToAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(async call =>
+            {
+                int now = Interlocked.Increment(ref running);
+                InterlockedMax(ref mostAtOnce, now);
+                await Task.Delay(5);
+                string directory = call.ArgAt<string>(1);
+                _ = Directory.CreateDirectory(directory);
+                string path = Path.Combine(directory, call.ArgAt<string>(0));
+                await File.WriteAllBytesAsync(path, [1, 2, 3]);
+                _ = Interlocked.Decrement(ref running);
+                return path;
+            });
+
+        LaunchpadProject project = await Create().CreateAsync(LaunchpadExamples.ClubId, TestContext.Current.CancellationToken);
+
+        Assert.True(mostAtOnce > 1, $"at most {mostAtOnce} copy at a time");
+        Assert.All(project.Pads, pad =>
+        {
+            string stem = Path.GetFileNameWithoutExtension(pad.ClipPath!);
+            Assert.Equal(pad.IsLooping ? LaunchpadExampleBuilder.WithoutTempo(stem) : stem, pad.Label);
+        });
+
+        static void InterlockedMax(ref int target, int value)
+        {
+            int seen;
+            while (value > (seen = Volatile.Read(ref target)) && Interlocked.CompareExchange(ref target, value, seen) != seen)
+            {
+            }
+        }
+    }
     #endregion
 }

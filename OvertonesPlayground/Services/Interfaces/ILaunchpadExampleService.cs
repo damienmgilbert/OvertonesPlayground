@@ -36,6 +36,13 @@ public interface ILaunchpadExampleService
     Task<string> PrepareSampleAsync(string sampleName, CancellationToken cancellationToken = default);
 
     ///<summary>
+    ///Loads the sound bank catalog and prepares the generator in the background, so the first setup built after the Launchpad
+    ///opens does not wait for them. Calling it again does nothing more.
+    ///</summary>
+    ///<exception cref="InvalidDataException">The sound bank catalog can't be read.</exception>
+    Task WarmUpAsync(CancellationToken cancellationToken = default);
+
+    ///<summary>
     ///Generates a new setup in a style (see <see cref="Styles"/>) and copies its sounds out of the app package, the same way
     ///<see cref="CreateAsync"/> does. The same request always gives the same setup.
     ///</summary>

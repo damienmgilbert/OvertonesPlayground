@@ -207,6 +207,18 @@ public sealed class LaunchpadViewModelIdeasTests : IDisposable
         Assert.StartsWith("Swapped 1 drum on bank A for Roland TR-909 sounds.", viewModel.StatusMessage, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public async Task WarmUpIdeas_StartsPreparingTheSoundBankAndSwallowsAFailure()
+    {
+        _examples.WarmUpAsync(Arg.Any<CancellationToken>()).Returns(Task.FromException(new InvalidDataException("no catalog")));
+        LaunchpadViewModel viewModel = Create();
+
+        viewModel.WarmUpIdeas();
+        await Task.Yield();
+
+        await _examples.Received(1).WarmUpAsync(Arg.Any<CancellationToken>());
+    }
+
     public void Dispose() => _files.Dispose();
     #endregion
 }

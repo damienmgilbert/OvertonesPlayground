@@ -524,6 +524,7 @@ public partial class LaunchpadPage : ContentPage
     {
         base.OnAppearing();
         Log_PageAppeared();
+        _viewModel.WarmUpIdeas();
 
         // Show the one-time tip once the page has settled in (its entrance animation is 250 ms).
         _ = Dispatcher.DispatchDelayed(TimeSpan.FromMilliseconds(500), () =>

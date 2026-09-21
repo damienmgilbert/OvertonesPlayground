@@ -15,6 +15,9 @@ public sealed class LaunchpadExampleService : ILaunchpadExampleService
     ///</summary>
     internal const string SamplesFolderName = "LaunchpadSamples";
 
+    ///<summary>How many sounds are converted at once when a setup is built.</summary>
+    private static readonly int CopyParallelism = Math.Clamp(Environment.ProcessorCount / 2, 2, 4);
+
     ///<summary>The fewest sounds a kit needs to be offered for a kit swap.</summary>
     private const int MinKitSize = 12;
     #endregion
@@ -52,30 +55,33 @@ public sealed class LaunchpadExampleService : ILaunchpadExampleService
     ///their paths to learn which sounds the setup needs, copies those out of the app package (a sound already copied is reused),
     ///then builds again with the real files. The build is deterministic, so both come out the same.
     ///</summary>
-    private async Task<LaunchpadProject> MaterializeAsync(Func<SampleIndex, Func<Sample, string>, LaunchpadProject> build, CancellationToken cancellationToken)
-    {
-        SampleIndex index = await _catalog.GetIndexAsync(cancellationToken);
-
-        LaunchpadProject draft = build(index, sample => sample.Id);
-        List<string> needed =
-        [
-            .. draft.Pads.Select(pad => pad.ClipPath)
-                .Concat(draft.Sequence.Tracks.Select(track => track.ClipPath))
-                .OfType<string>()
-                .Distinct(StringComparer.Ordinal)
-                .Order(StringComparer.Ordinal),
-        ];
-
-        string directory = Path.Combine(_fileSystem.AppDataDirectory, SamplesFolderName);
-        Dictionary<string, string> paths = new(StringComparer.Ordinal);
-        foreach (string assetName in needed)
+    ///<remarks>
+    ///All of it runs off the UI thread: building a setup and converting its sounds to 16-bit take a few seconds on a tablet, and
+    ///the pads must keep drawing meanwhile. The sounds are converted <see cref="CopyParallelism"/> at a time, which is far below the
+    ///asset store's cache size, so no copy is trimmed from the cache before it is converted.
+    ///</remarks>
+    private Task<LaunchpadProject> MaterializeAsync(Func<SampleIndex, Func<Sample, string>, LaunchpadProject> build, CancellationToken cancellationToken) =>
+        Task.Run(
+        async () =>
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            paths[assetName] = await CopiedAsync(assetName, directory, cancellationToken);
-        }
+            SampleIndex index = await _catalog.GetIndexAsync(cancellationToken).ConfigureAwait(false);
+            LaunchpadProject draft = build(index, sample => sample.Id);
+            List<string> needed =
+            [
+                .. draft.Pads.Select(pad => pad.ClipPath)
+                    .Concat(draft.Sequence.Tracks.Select(track => track.ClipPath))
+                    .OfType<string>()
+                    .Distinct(StringComparer.Ordinal)
+                    .Order(StringComparer.Ordinal),
+            ];
 
-        return build(index, sample => paths[sample.Id]);
-    }
+            string directory = Path.Combine(_fileSystem.AppDataDirectory, SamplesFolderName);
+            System.Collections.Concurrent.ConcurrentDictionary<string, string> paths = new(StringComparer.Ordinal);
+            ParallelOptions options = new() { MaxDegreeOfParallelism = CopyParallelism, CancellationToken = cancellationToken };
+            await Parallel.ForEachAsync(needed, options, async (assetName, token) => paths[assetName] = await CopiedAsync(assetName, directory, token).ConfigureAwait(false)).ConfigureAwait(false);
+            return build(index, sample => paths[sample.Id]);
+        },
+        cancellationToken);
 
     private async Task<string> CopiedAsync(string assetName, string directory, CancellationToken cancellationToken)
     {
@@ -126,6 +132,16 @@ public sealed class LaunchpadExampleService : ILaunchpadExampleService
         Sample sample = index.Find(sampleName + ".wav") ?? throw new ArgumentException($"The sound bank has no sound called '{sampleName}'.", nameof(sampleName));
         return await CopiedAsync(sample.Id, Path.Combine(_fileSystem.AppDataDirectory, SamplesFolderName), cancellationToken);
     }
+
+    ///<inheritdoc/>
+    public Task WarmUpAsync(CancellationToken cancellationToken = default) =>
+        Task.Run(
+        async () =>
+        {
+            SampleIndex index = await _catalog.GetIndexAsync(cancellationToken).ConfigureAwait(false);
+            LaunchpadGenerator.WarmUp(index);
+        },
+        cancellationToken);
 
     ///<inheritdoc/>
     public async Task<LaunchpadGeneratedProject> GenerateAsync(LaunchpadGenerationRequest request, CancellationToken cancellationToken = default)

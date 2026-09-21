@@ -590,6 +590,16 @@ internal static class LaunchpadGenerator
     }
 
     ///<summary>
+    ///Groups the bank's samples the way the generator asks for them, and loads the style profiles, so the first
+    ///<see cref="Generate"/> does not have to. It is safe to call from any thread, and more than once.
+    ///</summary>
+    public static void WarmUp(SampleIndex index)
+    {
+        _ = PoolsOf(index);
+        _ = StyleProfiles.All;
+    }
+
+    ///<summary>
     ///The recipe of a ready-made preset (see <see cref="StyleProfile.Presets"/>).
     ///</summary>
     ///<exception cref="ArgumentException">There is no such preset.</exception>
