@@ -41,6 +41,11 @@ public class LaunchpadProject
         MasterVolume = Math.Clamp(MasterVolume, 0, 1);
         MasterPan = Math.Clamp(MasterPan, -1, 1);
         Transpose = Math.Clamp(Transpose, -12, 12);
+        ScaleIndex = Math.Clamp(ScaleIndex, 0, LaunchpadScale.Count - 1);
+        if (RootPitchClass is { } root)
+        {
+            RootPitchClass = ((root % 12) + 12) % 12;
+        }
     }
     #endregion
 
@@ -75,6 +80,27 @@ public class LaunchpadProject
     ///The project's name; also its file name when saved.
     ///</summary>
     public string Name { get; set; } = string.Empty;
+
+    ///<summary>
+    ///Where the project came from: made by hand, a ready-made example, or the generator.
+    ///</summary>
+    public LaunchpadProjectOrigin Origin { get; set; }
+
+    ///<summary>
+    ///The key's home note (0 = C ... 11 = B), or null when the project has no key. With <see cref="ScaleIndex"/> it is the key:
+    ///root 4 with the minor scale is E minor. Suggestions keep to it, and the generator writes it.
+    ///</summary>
+    public int? RootPitchClass { get; set; }
+
+    ///<summary>
+    ///The generator's seed, for a generated project: generating again with the same seed and choices gives the same project.
+    ///</summary>
+    public int? Seed { get; set; }
+
+    ///<summary>
+    ///The style the project was made in (a key of the style profiles, such as <c>boom-bap</c>), or null.
+    ///</summary>
+    public string? StyleKey { get; set; }
 
     ///<summary>
     ///Every pad that has a sample, in all banks.

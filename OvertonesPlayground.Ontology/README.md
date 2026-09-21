@@ -35,6 +35,21 @@ Key components
   - Taxonomies loads Data/taxonomy.json (instruments, kits, styles) and Data/lexicon.json (keyword sets) as embedded resources.
   - Lexicon and concept trees drive the filename and metadata classifiers.
 
+- Theory (music theory)
+  - PitchClass and Interval: notes of the octave, spelled with sharps or flats.
+  - Scale / Scales: major, minor, pentatonic, blues, chromatic and the modes. The order of Scales.All is fixed, because the Launchpad stores a scale by its position.
+  - Chord and ChordQuality: triads to elevenths, parsed from lead-sheet symbols and from sample names ("E-Piano LDre BbMaj7").
+  - Key: a tonic and a scale, with its diatonic chords and relative key.
+  - RomanNumeral and Progression: "i-VI-III-VII" played in any key.
+  - Meter and StepPattern: the X x o - ? . step notation, measures of a groove (density, syncopation) and a drummer's variations (ghost notes, nudges, thinning, fills).
+  - KeyCompatibility: whether a sample can sound in a key. It judges chords by their triad, notes by their pitch and loops strictly by their key, and treats drums as neutral.
+
+- Styles
+  - StyleProfiles loads Data/styles.json: 15 styles. Each has a tempo and swing range, scales, progressions, suitable kits, a pattern library for each part, and ready-made presets. The Launchpad's project generator follows these profiles, and tools/ProjectForge proposes the presets.
+
+- Recommendation
+  - SampleRecommender (in Querying): suggests samples for a slot of a project. It keeps to the slot's instrument, the key and the tempo, prefers the project's kits and character, avoids sub-bass masking and near copies, and gives the reasons in words. It also infers a project's key (InferKey) and tempo (InferTempo) from its samples.
+
 Quick start
 -----------
 

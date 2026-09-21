@@ -14,6 +14,9 @@ public sealed class LaunchpadExampleService : ILaunchpadExampleService
     ///so clearing the library does not take a setup's sounds away.
     ///</summary>
     internal const string SamplesFolderName = "LaunchpadSamples";
+
+    ///<summary>The fewest sounds a kit needs to be offered for a kit swap.</summary>
+    private const int MinKitSize = 12;
     #endregion
 
     #region Fields
@@ -35,6 +38,15 @@ public sealed class LaunchpadExampleService : ILaunchpadExampleService
     #endregion
 
     #region Private methods
+    ///<summary>
+    ///Builds a recipe once and makes its sounds real files (see the other overload).
+    ///</summary>
+    private Task<LaunchpadProject> MaterializeAsync(Func<SampleIndex, LaunchpadRecipe> recipe, CancellationToken cancellationToken)
+    {
+        LaunchpadRecipe? built = null;
+        return MaterializeAsync((index, pathOf) => (built ??= recipe(index)).Build(index, pathOf), cancellationToken);
+    }
+
     ///<summary>
     ///Builds a setup with <paramref name="build"/> and makes its sounds real files. It builds once with the sounds' asset names as
     ///their paths to learn which sounds the setup needs, copies those out of the app package (a sound already copied is reused),
@@ -77,12 +89,21 @@ public sealed class LaunchpadExampleService : ILaunchpadExampleService
     public async Task<LaunchpadProject> CreateAsync(string exampleId, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(exampleId);
+        if (Presets.Any(preset => preset.Id == exampleId))
+        {
+            LaunchpadProject preset = await MaterializeAsync(index => LaunchpadGenerator.Preset(exampleId, index), cancellationToken);
+            preset.Origin = LaunchpadProjectOrigin.Example;
+            return preset;
+        }
+
         if (Examples.All(example => example.Id != exampleId))
         {
             throw new ArgumentException($"There is no Launchpad example called '{exampleId}'.", nameof(exampleId));
         }
 
-        return await MaterializeAsync((index, pathOf) => LaunchpadExamples.Build(exampleId, index, pathOf), cancellationToken);
+        LaunchpadProject project = await MaterializeAsync((index, pathOf) => LaunchpadExamples.Build(exampleId, index, pathOf), cancellationToken);
+        project.Origin = LaunchpadProjectOrigin.Example;
+        return project;
     }
 
     ///<inheritdoc/>
@@ -105,10 +126,57 @@ public sealed class LaunchpadExampleService : ILaunchpadExampleService
         Sample sample = index.Find(sampleName + ".wav") ?? throw new ArgumentException($"The sound bank has no sound called '{sampleName}'.", nameof(sampleName));
         return await CopiedAsync(sample.Id, Path.Combine(_fileSystem.AppDataDirectory, SamplesFolderName), cancellationToken);
     }
+
+    ///<inheritdoc/>
+    public async Task<LaunchpadGeneratedProject> GenerateAsync(LaunchpadGenerationRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        LaunchpadRecipe? recipe = null;
+        LaunchpadProject project = await MaterializeAsync(index => recipe = LaunchpadGenerator.Generate(request, index), cancellationToken);
+        return new LaunchpadGeneratedProject(project, recipe!.Title, recipe.Description);
+    }
+
+    ///<inheritdoc/>
+    public async Task<IReadOnlyList<LaunchpadSuggestion>> SuggestAsync(LaunchpadProject project, int bank, int padIndex, int count, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(project);
+        SampleIndex index = await _catalog.GetIndexAsync(cancellationToken);
+        return await Task.Run(() => LaunchpadSuggestions.Suggest(project, bank, padIndex, count, index), cancellationToken);
+    }
+
+    ///<inheritdoc/>
+    public async Task<IReadOnlyList<LaunchpadPadAssignment>> SuggestColumnAsync(LaunchpadProject project, int bank, int column, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(project);
+        SampleIndex index = await _catalog.GetIndexAsync(cancellationToken);
+        return await Task.Run(() => LaunchpadSuggestions.FillColumn(project, bank, column, index), cancellationToken);
+    }
+
+    ///<inheritdoc/>
+    public async Task<IReadOnlyList<LaunchpadPadAssignment>> SuggestKitSwapAsync(LaunchpadProject project, int bank, string kitKey, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(project);
+        ArgumentException.ThrowIfNullOrWhiteSpace(kitKey);
+        SampleIndex index = await _catalog.GetIndexAsync(cancellationToken);
+        return await Task.Run(() => LaunchpadSuggestions.SwapKit(project, bank, kitKey, index), cancellationToken);
+    }
+
+    ///<inheritdoc/>
+    public async Task<IReadOnlyList<LaunchpadKitInfo>> GetKitsAsync(CancellationToken cancellationToken = default)
+    {
+        SampleIndex index = await _catalog.GetIndexAsync(cancellationToken);
+        return [.. index.GetKits().Where(kit => kit.Members.Count >= MinKitSize).Select(kit => new LaunchpadKitInfo(kit.Concept.Key, kit.Concept.DisplayName, kit.Members.Count))];
+    }
     #endregion
 
     #region Public properties
     ///<inheritdoc/>
     public IReadOnlyList<LaunchpadExampleInfo> Examples => LaunchpadExamples.All;
+
+    ///<inheritdoc/>
+    public IReadOnlyList<LaunchpadExampleInfo> Presets => LaunchpadGenerator.Presets;
+
+    ///<inheritdoc/>
+    public IReadOnlyList<LaunchpadStyleInfo> Styles => LaunchpadGenerator.Styles;
     #endregion
 }

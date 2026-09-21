@@ -33,6 +33,9 @@ public partial class LaunchpadPage : ContentPage
     private const string ButtonGuideChoice = "Guide to every button";
     private const string AssignSampleChoice = "Assign sample from Sound Bank...";
     private const string ImportSampleChoice = "Import from this device...";
+    private const string SuggestSampleChoice = "Suggest a sound from the Sound Bank...";
+    private const string SimilarSampleChoice = "Swap for a similar sound...";
+    private const string FillColumnChoice = "Fill this column's empty pads";
     private const string ClearPadChoice = "Clear pad";
     private const string LoopOffChoice = "Loop: turn off";
     private const string LoopOnChoice = "Loop: turn on";
@@ -50,7 +53,7 @@ public partial class LaunchpadPage : ContentPage
         Chord: the pads play chords built on that sample.
         Custom: each pad sounds only while you hold it.
         Sequencer: a 4-track, 32-step sequencer. The top four rows are steps for the chosen track; tap a pad below to give the track a sample.
-        Projects: save, open or start a project. Shift + Projects saves the current one.
+        Projects: save, open or start a project, load a ready-made setup in one of fifteen styles, or generate a new project from the Sound Bank. Shift + Projects saves the current one.
 
         LEFT COLUMN
         Up / Down arrows: transpose everything by a semitone.
@@ -74,7 +77,10 @@ public partial class LaunchpadPage : ContentPage
         Stop Clip: stop a column. Shift: Swing.
 
         SETUP
-        Scale for Note and Chord, reset the mixer, clear a bank or the sequencer.
+        Scale for Note and Chord, the key suggestions keep to, swap a bank's drums for another kit, reset the mixer, clear a bank or the sequencer.
+
+        SUGGESTIONS
+        Long-press a pad (or use the pencil) and choose Suggest a sound: the Sound Bank sounds that suit that column, in the project's key and at its tempo, each with the reason. On a pad with a sound it offers similar ones; Fill this column fills its empty pads.
 
         TOP BAR
         Eye: hides or shows the hints and messages floating over the pads. Pencil: edit mode. Square: stops every sound.
@@ -466,7 +472,7 @@ public partial class LaunchpadPage : ContentPage
     {
         string title = pad.HasClip ? $"Pad {pad.Index + 1}: {pad.Label}" : $"Pad {pad.Index + 1} (empty)";
 
-        List<string> choices = [AssignSampleChoice, ImportSampleChoice];
+        List<string> choices = [AssignSampleChoice, pad.HasClip ? SimilarSampleChoice : SuggestSampleChoice, FillColumnChoice, ImportSampleChoice];
         if (pad.HasClip)
         {
             choices.Add(pad.IsLooping ? LoopOffChoice : LoopOnChoice);
@@ -474,6 +480,9 @@ public partial class LaunchpadPage : ContentPage
         }
 
         string? chosen = await DisplayActionSheetAsync(title, "Cancel", pad.HasClip ? ClearPadChoice : null, [.. choices]);
+
+        // The sheet is closed, so a choice may open the next menu (the suggestions) without being taken for a repeat request.
+        _isMenuOpen = false;
         switch (chosen)
         {
             case AssignSampleChoice:
@@ -486,6 +495,13 @@ public partial class LaunchpadPage : ContentPage
                 break;
             case ImportSampleChoice:
                 await _viewModel.AssignCommand.ExecuteAsync(pad);
+                break;
+            case SuggestSampleChoice:
+            case SimilarSampleChoice:
+                await _viewModel.SuggestForPadAsync(pad);
+                break;
+            case FillColumnChoice:
+                await _viewModel.FillColumnAsync(pad);
                 break;
             case LoopOnChoice:
             case LoopOffChoice:

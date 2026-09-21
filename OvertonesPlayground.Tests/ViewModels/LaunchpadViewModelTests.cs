@@ -718,7 +718,7 @@ public sealed class LaunchpadViewModelTests : IDisposable
     }
 
     [Fact]
-    public void ProjectsButton_OffersSaveOpenExamplesNewAndDelete()
+    public void ProjectsButton_OffersSaveOpenExamplesStylesGenerateNewAndDelete()
     {
         LaunchpadViewModel viewModel = Create();
         MenuWatcher menu = new(viewModel);
@@ -726,7 +726,7 @@ public sealed class LaunchpadViewModelTests : IDisposable
         Press(viewModel, LaunchpadControl.Projects);
 
         Assert.StartsWith("Projects", menu.Last.Title);
-        Assert.Equal(["Save as...", "Open...", "Examples...", "New project", "Delete..."], menu.Last.Choices.Select(choice => choice.Text));
+        Assert.Equal(["Save as...", "Open...", "Examples...", "Ready-made setups by style...", "Generate a new project...", "New project", "Delete..."], menu.Last.Choices.Select(choice => choice.Text));
     }
 
     [Fact]

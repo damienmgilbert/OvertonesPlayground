@@ -4,5 +4,6 @@
   <Project Path="OvertonesPlayground/OvertonesPlayground.csproj">
     <Deploy Solution="Debug|*" />
   </Project>
+  <Project Path="tools/ProjectForge/ProjectForge.csproj" />
   <Project Path="tools/SampleAnalyzer/SampleAnalyzer.csproj" />
 </Solution>

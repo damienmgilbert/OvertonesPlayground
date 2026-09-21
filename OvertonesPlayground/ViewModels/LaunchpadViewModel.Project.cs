@@ -274,6 +274,21 @@ public partial class LaunchpadViewModel
             ShowExampleList();
             return Task.CompletedTask;
         }));
+        choices.Add(new LaunchpadMenuChoice("Ready-made setups by style...", () =>
+        {
+            ShowPresetStyles();
+            return Task.CompletedTask;
+        }));
+        choices.Add(new LaunchpadMenuChoice("Generate a new project...", () =>
+        {
+            ShowGenerateStyles();
+            return Task.CompletedTask;
+        }));
+        if (_project.Origin == LaunchpadProjectOrigin.Generated && _examples.Styles.FirstOrDefault(style => style.Key == _project.StyleKey) is { } current)
+        {
+            choices.Add(new LaunchpadMenuChoice($"Another {current.Name} project", () => GenerateAsync(current.Key)));
+        }
+
         choices.Add(new LaunchpadMenuChoice("New project", () =>
         {
             StartNewProject();
@@ -457,6 +472,12 @@ public partial class LaunchpadViewModel
                 CycleScale();
                 return Task.CompletedTask;
             }),
+            new LaunchpadMenuChoice($"Key for suggestions: {(LaunchpadScale.KeyOf(_project) is { } key ? key.Name : "none")} (tap for the next root)", () =>
+            {
+                CycleKey();
+                return Task.CompletedTask;
+            }),
+            new LaunchpadMenuChoice($"Swap bank {(char)('A' + Bank)}'s drums for another kit...", ShowKitSwapAsync),
             new LaunchpadMenuChoice("Reset the mixer, master and transpose", () =>
             {
                 ResetMixer();

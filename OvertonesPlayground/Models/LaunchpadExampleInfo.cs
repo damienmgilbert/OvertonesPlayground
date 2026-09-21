@@ -6,4 +6,5 @@ namespace OvertonesPlayground.Models;
 ///<param name="Id">Stable identifier, for example <c>boom-bap</c>.</param>
 ///<param name="Name">Title shown in the list, with the tempo and key: "Boom Bap · 90 BPM · E minor".</param>
 ///<param name="Description">What is on each bank and how to play it, shown when the setup is loaded.</param>
-public sealed record LaunchpadExampleInfo(string Id, string Name, string Description);
+///<param name="StyleKey">The style profile it belongs to (see <see cref="LaunchpadStyleInfo"/>), or null for a hand-made setup.</param>
+public sealed record LaunchpadExampleInfo(string Id, string Name, string Description, string? StyleKey = null);

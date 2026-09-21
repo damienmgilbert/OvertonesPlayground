@@ -47,6 +47,10 @@
 		<Compile Include="..\OvertonesPlayground\Services\Implementations\LaunchpadExamples.cs" Link="Linked\Services\LaunchpadExamples.cs" />
 		<Compile Include="..\OvertonesPlayground\Services\Implementations\LaunchpadLessons.cs" Link="Linked\Services\LaunchpadLessons.cs" />
 		<Compile Include="..\OvertonesPlayground\Services\Implementations\LaunchpadTutorials.cs" Link="Linked\Services\LaunchpadTutorials.cs" />
+		<Compile Include="..\OvertonesPlayground\Services\Implementations\LaunchpadGenerator.cs" Link="Linked\Services\LaunchpadGenerator.cs" />
+		<Compile Include="..\OvertonesPlayground\Services\Implementations\LaunchpadQuality.cs" Link="Linked\Services\LaunchpadQuality.cs" />
+		<Compile Include="..\OvertonesPlayground\Services\Implementations\LaunchpadRecipe.cs" Link="Linked\Services\LaunchpadRecipe.cs" />
+		<Compile Include="..\OvertonesPlayground\Services\Implementations\LaunchpadSuggestions.cs" Link="Linked\Services\LaunchpadSuggestions.cs" />
 		<Compile Include="..\OvertonesPlayground\Services\Implementations\PcmMath.cs" Link="Linked\Services\PcmMath.cs" />
 		<Compile Include="..\OvertonesPlayground\Services\Implementations\SampleAssetStore.cs" Link="Linked\Services\SampleAssetStore.cs" />
 		<Compile Include="..\OvertonesPlayground\Services\Implementations\SampleCatalogService.cs" Link="Linked\Services\SampleCatalogService.cs" />
@@ -91,6 +95,7 @@
 		<Using Include="OvertonesPlayground.Ontology.Facets" />
 		<Using Include="OvertonesPlayground.Ontology.Model" />
 		<Using Include="OvertonesPlayground.Ontology.Querying" />
+		<Using Include="OvertonesPlayground.Ontology.Styles" />
 		<Using Include="OvertonesPlayground.Services.Interfaces" />
 		<Using Include="OvertonesPlayground.Tests.TestSupport" />
 		<Using Include="OvertonesPlayground.ViewModels" />

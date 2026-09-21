@@ -17,7 +17,7 @@
 		<!-- preview-all turns on every optional rule. These are style-only (primary constructors, collection-expression
 		     suggestions, null-argument guards on internal-facing APIs, "Long"/"Short" enum names ...) and would bury real
 		     diagnostics; the app suppresses the same ones per type in GlobalSuppressions.cs. -->
-		<NoWarn>$(NoWarn);CA1062;CA1819;CA1308;CA1711;CA1720;CA2225;IDE0290;IDE0028;IDE0047;IDE0048;IDE0024;IDE0004;IDE0072;IDE0078;IDE0200;IDE0058</NoWarn>
+		<NoWarn>$(NoWarn);CA1062;CA1819;CA1308;CA1711;CA1720;CA2225;IDE0290;IDE0028;IDE0047;IDE0048;IDE0024;IDE0004;IDE0072;IDE0078;IDE0200;IDE0058;CA5394</NoWarn>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 	</PropertyGroup>
 
@@ -43,6 +43,8 @@
 		<Using Include="OvertonesPlayground.Ontology.Model" />
 		<Using Include="OvertonesPlayground.Ontology.Querying" />
 		<Using Include="OvertonesPlayground.Ontology.Concepts" />
+		<Using Include="OvertonesPlayground.Ontology.Theory" />
+		<Using Include="OvertonesPlayground.Ontology.Styles" />
 	</ItemGroup>
 
 	<ItemGroup>

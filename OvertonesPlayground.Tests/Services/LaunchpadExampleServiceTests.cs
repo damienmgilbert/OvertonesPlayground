@@ -133,5 +133,61 @@ public sealed class LaunchpadExampleServiceTests : IDisposable
 
     [Fact]
     public void Examples_AreTheSetupsTheRecipesKnow() { Assert.Same(LaunchpadExamples.All, Create().Examples); }
+
+    [Fact]
+    public async Task CreateAsync_AStylePreset_BuildsItWithRealFilesAndMarksItAsAnExample()
+    {
+        LaunchpadExampleInfo preset = Create().Presets[0];
+
+        LaunchpadProject project = await Create().CreateAsync(preset.Id, TestContext.Current.CancellationToken);
+
+        Assert.NotEmpty(project.Pads);
+        Assert.All(PathsUsedBy(project), path => Assert.True(File.Exists(path), path));
+        Assert.Equal(LaunchpadProjectOrigin.Example, project.Origin);
+        Assert.Equal(preset.StyleKey, project.StyleKey);
+        Assert.NotNull(project.RootPitchClass);
+    }
+
+    [Fact]
+    public async Task GenerateAsync_MakesAProjectWithRealFilesATitleAndADescription()
+    {
+        LaunchpadGeneratedProject generated = await Create().GenerateAsync(new LaunchpadGenerationRequest("house", 11), TestContext.Current.CancellationToken);
+
+        Assert.StartsWith("House · ", generated.Title, StringComparison.Ordinal);
+        Assert.Contains("Bank A", generated.Description, StringComparison.Ordinal);
+        Assert.All(PathsUsedBy(generated.Project), path => Assert.True(File.Exists(path), path));
+        Assert.Equal(LaunchpadProjectOrigin.Generated, generated.Project.Origin);
+        Assert.Equal("house", generated.Project.StyleKey);
+    }
+
+    [Fact]
+    public async Task SuggestAsync_ForAnExamplesEmptyPad_OffersSoundsOfTheBank()
+    {
+        LaunchpadProject project = await Create().CreateAsync(LaunchpadExamples.BoomBapId, TestContext.Current.CancellationToken);
+        project.Pads.RemoveAll(pad => pad.Bank == 0 && pad.Index == 3);
+
+        IReadOnlyList<LaunchpadSuggestion> suggestions = await Create().SuggestAsync(project, 0, 3, 5, TestContext.Current.CancellationToken);
+
+        Assert.NotEmpty(suggestions);
+        Assert.All(suggestions, suggestion => Assert.NotNull(RealCatalog.Index.Find(suggestion.SampleName + ".wav")));
+    }
+
+    [Fact]
+    public async Task GetKitsAsync_ListsTheBigKitsLargestFirst()
+    {
+        IReadOnlyList<LaunchpadKitInfo> kits = await Create().GetKitsAsync(TestContext.Current.CancellationToken);
+
+        Assert.Contains(kits, kit => kit.Key == "808");
+        Assert.Equal(kits.OrderByDescending(kit => kit.SampleCount).Select(kit => kit.Key), kits.Select(kit => kit.Key));
+    }
+
+    [Fact]
+    public void PresetsAndStyles_ComeFromTheStyleProfiles()
+    {
+        LaunchpadExampleService service = Create();
+
+        Assert.Equal(StyleProfiles.Presets.Count(), service.Presets.Count);
+        Assert.Equal(StyleProfiles.All.Count, service.Styles.Count);
+    }
     #endregion
 }
