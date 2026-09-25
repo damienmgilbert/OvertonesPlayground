@@ -1,5 +1,19 @@
 # OvertonesPlayground
 
+## Repository snapshot
+
+The repo currently contains five main pieces:
+
+| Area | Current role |
+| --- | --- |
+| `OvertonesPlayground/` | MAUI app for the Android target (`net10.0-android`), with the Launchpad, sound bank, editor, and mixer workflows. |
+| `OvertonesPlayground.Ontology/` | Shared `net10.0` library that owns the sample analysis pipeline, classifiers, music theory, and runtime querying/indexing. |
+| `OvertonesPlayground.Tests/` | Host-run xUnit suite that compiles selected app source files and directly exercises the ontology, services, and view models. |
+| `tools/SampleAnalyzer/` | Offline CLI used to build, repair, verify, and report on the bundled sample catalog. |
+| `tools/ProjectForge/` | Preset-generation tool that scores and writes Launchpad setup recipes from the ontology and style profiles. |
+
+The app, tools, and test project all share the ontology library rather than duplicating DSP or classification logic. The app itself is Android-only, while the shared library and command-line tooling are plain .NET 10 and run on the desktop developer machine.
+
 ## The Sound Bank and the sample ontology
 
 `OvertonesPlayground/Resources/Raw` holds about 2,200 bundled WAV samples (~970 MB). The **Sound Bank** page (flyout > *Sound

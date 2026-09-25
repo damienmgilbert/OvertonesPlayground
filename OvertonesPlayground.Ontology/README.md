@@ -1,5 +1,9 @@
 # OvertonesPlayground.Ontology
 
+## Current state
+
+This project is the shared `net10.0` data layer for the repo. It is intentionally MAUI-free so the desktop analyzer, app, and host-run tests all consume the same analysis, classification, and query logic. The library reads bundled WAV assets, extracts acoustic facets, classifies samples, and supports fast in-memory search over the precomputed catalog used by the app.
+
 Purpose
 -------
 

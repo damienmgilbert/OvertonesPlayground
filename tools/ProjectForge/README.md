@@ -1,5 +1,9 @@
 # ProjectForge
 
+## Current state
+
+This tool generates Launchpad-ready presets for the current style catalog and sample ontology. It scores candidate setups against the project quality checks, keeps the strongest kits per style, and writes the resulting JSON for the app's preset data. It is a desktop helper for tuning generator behavior when the sample catalog, taxonomy, or style profiles change.
+
 Purpose
 -------
 

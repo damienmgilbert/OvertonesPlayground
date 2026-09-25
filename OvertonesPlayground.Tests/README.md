@@ -1,5 +1,9 @@
 # OvertonesPlayground.Tests
 
+## Current state
+
+This project is the host-run test suite for the repo. It targets `net10.0`, links the app's host-safe source files into the test assembly, and verifies the shared ontology, service logic, and view-model behaviors without needing a device or MAUI runtime. The Android-only app itself is intentionally not directly referenced from the test project.
+
 Purpose
 -------
 

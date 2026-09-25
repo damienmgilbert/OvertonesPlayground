@@ -1,5 +1,9 @@
 # SampleAnalyzer
 
+## Current state
+
+This CLI is the catalog maintenance tool for the current repo. It runs on the desktop and is the source of truth for generating or repairing `OvertonesPlayground/Resources/Raw/sample-catalog.json`, which the Android app ships and reads at runtime. The current commands include full analysis, changed-file analysis, classification-only re-runs, quality reporting, and catalog verification.
+
 Purpose
 -------
 
