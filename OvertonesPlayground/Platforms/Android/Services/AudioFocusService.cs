@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Android.Content;
 using Android.Media;
 using OvertonesPlayground.Services.Interfaces;
@@ -11,6 +12,7 @@ namespace OvertonesPlayground.Platforms.Android.Services;
 /// </summary>
 public class AudioFocusService : Java.Lang.Object, IAudioFocusService, AudioManager.IOnAudioFocusChangeListener
 {
+    [SuppressMessage("Usage", "CA2213:Disposable fields should be disposed", Justification = "The AudioManager is a shared system service obtained from GetSystemService; it is owned by the platform, not by this service.")]
     private readonly AudioManager? _audioManager;
     private AudioFocusRequestClass? _focusRequest;
 
@@ -82,5 +84,16 @@ public class AudioFocusService : Java.Lang.Object, IAudioFocusService, AudioMana
     {
         bool haveFocus = focusChange == AudioFocus.Gain;
         FocusChanged?.Invoke(this, haveFocus);
+    }
+
+    /// <summary>Disposes the focus request built for API 26+ before releasing the Java peer.</summary>
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _focusRequest?.Dispose();
+        }
+
+        base.Dispose(disposing);
     }
 }

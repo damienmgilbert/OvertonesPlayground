@@ -107,9 +107,9 @@ public sealed class RiffBuilder
     ///</summary>
     public static byte[] Pcm16(params short[] samples) => [.. samples.SelectMany(BitConverter.GetBytes)];
 
-        ///<summary>
-///24-bit little-endian PCM bytes for integer sample values.
-///</summary>
+    ///<summary>
+    ///24-bit little-endian PCM bytes for integer sample values.
+    ///</summary>
     public static byte[] Pcm24(params int[] samples) => [.. samples.SelectMany(sample => new[] { (byte)sample, (byte)(sample >> 8), (byte)(sample >> 16) })];
 
     ///<summary>

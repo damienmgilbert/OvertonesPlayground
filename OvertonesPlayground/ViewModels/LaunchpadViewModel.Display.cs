@@ -225,7 +225,7 @@ public partial class LaunchpadViewModel
     {
         int bpm = TempoMin + (((pad.Row * Columns) + pad.Column) * TempoStep);
         string color = ColumnColors[pad.Column];
-        bool isCurrent = Math.Abs(bpm - _project.Tempo) < TempoStep / 2.0 + 0.01 || bpm == _project.Tempo;
+        bool isCurrent = (Math.Abs(bpm - _project.Tempo) < ((TempoStep / 2.0) + 0.01)) || (bpm == _project.Tempo);
         bool isLit = bpm <= _project.Tempo;
         return new PadLook(isCurrent ? "#FFFFFF" : isLit ? color : Dim(color, 0x1C), Number(bpm), isLit, $"Tempo {bpm} BPM");
     }

@@ -202,8 +202,8 @@ public sealed class LaunchpadViewModelTutorialTests : IDisposable
         Assert.False(viewModel.IsTutorialActive, "The tutorial should have reached its last step.");
         Assert.All(tutorial.Steps, step => Assert.Contains(prompts, prompt => prompt is not null && prompt.Title.StartsWith(step.Title, StringComparison.Ordinal)));
         Assert.Equal(before, Snapshot(viewModel));
-        Assert.Empty(viewModel.Pads.Where(pad => pad.IsSpotlit));
-        Assert.Empty(viewModel.AllKeys.Where(key => key.IsSpotlit));
+        Assert.DoesNotContain(viewModel.Pads, pad => pad.IsSpotlit);
+        Assert.DoesNotContain(viewModel.AllKeys, key => key.IsSpotlit);
         Assert.Equal(LaunchpadLayer.None, viewModel.Layer);
         Assert.False(viewModel.IsEditMode);
         Assert.False(viewModel.IsPlaying);
@@ -311,11 +311,11 @@ public sealed class LaunchpadViewModelTutorialTests : IDisposable
         viewModel.ExitTutorial();
 
         Assert.Equal("Mine", viewModel.Pads[3].Label);
-        Assert.Empty(viewModel.Pads.Where(pad => pad.HasClip && pad.Index != 3));
+        Assert.DoesNotContain(viewModel.Pads, pad => pad.HasClip && pad.Index != 3);
     }
 
     [Fact]
-    public void Tutorials_ListsAllNineForTheGuideMenu() => Assert.Equal(9, Create().Tutorials.Count);
+    public void Tutorials_ListsAllNineForTheGuideMenu() => Assert.Equal(9, LaunchpadViewModel.Tutorials.Count);
 
     [Fact]
     public async Task Host_Press_WithShift_RunsTheSecondFunctionAndReleasesShift()

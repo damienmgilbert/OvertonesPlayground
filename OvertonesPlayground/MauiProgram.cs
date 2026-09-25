@@ -1,6 +1,8 @@
 using CommunityToolkit.Maui;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+#if DEBUG
 using Microsoft.Maui.DevFlow.Agent;
+#endif
 using OvertonesPlayground.Controls;
 using OvertonesPlayground.Platforms.Android.Services;
 using OvertonesPlayground.Services.Implementations;

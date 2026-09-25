@@ -13,7 +13,7 @@ namespace OvertonesPlayground.Views;
 ///<see cref="NullReferenceException"/> per row (see <see cref="LibraryPage"/>). The sender inherits the row's, chip's or related
 ///sound's binding context, so the handler reads the item straight from it.
 ///</remarks>
-public partial class SoundBankPage : ContentPage
+public sealed partial class SoundBankPage : ContentPage, IDisposable
 {
     #region Constants
     private const double NarrowWidth = 900;
@@ -104,7 +104,7 @@ public partial class SoundBankPage : ContentPage
     ///</summary>
     private void ApplyResponsiveLayout()
     {
-        bool narrow = Width > 0 && Width < NarrowWidth;
+        bool narrow = Width is > 0 and < NarrowWidth;
         Root.ColumnDefinitions[1].Width = narrow ? new GridLength(0) : new GridLength(440);
         Grid.SetColumn(DetailScroll, narrow ? 0 : 1);
         Grid.SetColumnSpan(DetailScroll, narrow ? 2 : 1);
@@ -131,5 +131,10 @@ public partial class SoundBankPage : ContentPage
         _viewModel.StopPreviewCommand.Execute(null);
         _viewModel.AbandonPick();
     }
+    #endregion
+
+    #region IDisposable
+    ///<summary>Disposes the cancellation token source that debounces the search box.</summary>
+    public void Dispose() => _searchDebounce?.Dispose();
     #endregion
 }

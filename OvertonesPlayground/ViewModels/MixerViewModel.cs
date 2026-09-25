@@ -83,7 +83,10 @@ public partial class MixerViewModel : BaseViewModel
         }
 
         bool anySoloed = Channels.Any(c => c.IsSoloed);
-        Log_SoloStateChanged(Channels.Count(c => c.IsSoloed));
+        if (_logger.IsEnabled(LogLevel.Debug))
+        {
+            Log_SoloStateChanged(Channels.Count(c => c.IsSoloed));
+        }
         foreach (MixerChannelViewModel channel in Channels)
         {
             channel.IsDimmed = anySoloed && !channel.IsSoloed;
@@ -107,7 +110,7 @@ public partial class MixerViewModel : BaseViewModel
     ///Stops a single channel's voice.
     ///</summary>
     [RelayCommand]
-    private void StopChannel(MixerChannelViewModel? channel) { channel?.Stop(); }
+    private static void StopChannel(MixerChannelViewModel? channel) => channel?.Stop();
     #endregion
 
     #region Public properties

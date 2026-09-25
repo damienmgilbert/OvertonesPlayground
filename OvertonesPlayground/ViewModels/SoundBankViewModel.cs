@@ -113,7 +113,7 @@ public partial class SoundBankViewModel : BaseViewModel
         FacetGroupViewModel kits = new(
             "Kit",
             [.. index.GetKits().Take(MaxKitChips).Select(kit => new FacetChipViewModel(kit.Concept.Key, kit.Name, kit.Members.Count))],
-            key => SampleSpecs.KitIs(key));
+            SampleSpecs.KitIs);
 
         FacetGroupViewModel types = new(
             "Type",
@@ -210,7 +210,10 @@ public partial class SoundBankViewModel : BaseViewModel
         ResultSummary = $"{Results.Count:N0} of {_index.Count:N0} sounds";
         HasActiveFilters = HasAnyFilter();
         OnPropertyChanged(nameof(IsSimilarMode));
-        Log_Refreshed(Results.Count, Stopwatch.GetElapsedTime(started).TotalMilliseconds);
+        if (_logger.IsEnabled(LogLevel.Debug))
+        {
+            Log_Refreshed(Results.Count, Stopwatch.GetElapsedTime(started).TotalMilliseconds);
+        }
     }
 
     ///<summary>
@@ -275,13 +278,7 @@ public partial class SoundBankViewModel : BaseViewModel
     [LoggerMessage(Level = LogLevel.Warning, Message = "Could not add {Sample} to the library.")]
     private partial void Log_AddFailed(string sample, Exception ex);
 
-    private static void SetPreviewing(SampleRowViewModel? row, bool isPreviewing)
-    {
-        if (row is not null)
-        {
-            row.IsPreviewing = isPreviewing;
-        }
-    }
+    private static void SetPreviewing(SampleRowViewModel? row, bool isPreviewing) => row?.IsPreviewing = isPreviewing;
     #endregion
 
     #region Properties
@@ -480,10 +477,7 @@ public partial class SoundBankViewModel : BaseViewModel
             return;
         }
 
-        if (SelectedRow is not null)
-        {
-            SelectedRow.IsSelected = false;
-        }
+        SelectedRow?.IsSelected = false;
 
         row.IsSelected = true;
         SelectedRow = row;

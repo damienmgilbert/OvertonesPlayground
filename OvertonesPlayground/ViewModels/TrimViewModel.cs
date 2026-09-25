@@ -55,9 +55,9 @@ public partial class TrimViewModel : BaseViewModel
     private bool CanUndo() => _undoStack.Count > 0;
 
     [RelayCommand]
-    private void DecreaseEnd() { TrimEndSeconds = Math.Clamp(TrimEndSeconds - NudgeStepSeconds, TrimStartSeconds, DurationSeconds); }
+    private void DecreaseEnd() => TrimEndSeconds = Math.Clamp(TrimEndSeconds - NudgeStepSeconds, TrimStartSeconds, DurationSeconds);
     [RelayCommand]
-    private void DecreaseStart() { TrimStartSeconds = Math.Clamp(TrimStartSeconds - NudgeStepSeconds, 0, TrimEndSeconds); }
+    private void DecreaseStart() => TrimStartSeconds = Math.Clamp(TrimStartSeconds - NudgeStepSeconds, 0, TrimEndSeconds);
 
     ///<summary>
     ///Shifts the zoom window so it keeps including <paramref name="focusSeconds"/>, e.g. while dragging a handle near
@@ -95,9 +95,9 @@ public partial class TrimViewModel : BaseViewModel
     }
 
     [RelayCommand]
-    private void IncreaseEnd() { TrimEndSeconds = Math.Clamp(TrimEndSeconds + NudgeStepSeconds, TrimStartSeconds, DurationSeconds); }
+    private void IncreaseEnd() => TrimEndSeconds = Math.Clamp(TrimEndSeconds + NudgeStepSeconds, TrimStartSeconds, DurationSeconds);
     [RelayCommand]
-    private void IncreaseStart() { TrimStartSeconds = Math.Clamp(TrimStartSeconds + NudgeStepSeconds, 0, TrimEndSeconds); }
+    private void IncreaseStart() => TrimStartSeconds = Math.Clamp(TrimStartSeconds + NudgeStepSeconds, 0, TrimEndSeconds);
 
     [RelayCommand]
     private async Task InsertClipAsync(AudioClip? clipToInsert)
@@ -359,11 +359,11 @@ public partial class TrimViewModel : BaseViewModel
     }
 
     [RelayCommand]
-    private void SetMode(TrimMode mode) { Mode = mode; }
+    private void SetMode(TrimMode mode) => Mode = mode;
     [RelayCommand]
-    private void SkipToEnd() { _playbackService.Seek(TimeSpan.FromSeconds(TrimEndSeconds)); }
+    private void SkipToEnd() => _playbackService.Seek(TimeSpan.FromSeconds(TrimEndSeconds));
     [RelayCommand]
-    private void SkipToStart() { _playbackService.Seek(TimeSpan.FromSeconds(TrimStartSeconds)); }
+    private void SkipToStart() => _playbackService.Seek(TimeSpan.FromSeconds(TrimStartSeconds));
     [RelayCommand]
     private async Task SplitAtPlayheadAsync()
     {
@@ -399,7 +399,7 @@ public partial class TrimViewModel : BaseViewModel
     }
 
     [RelayCommand]
-    private void ToggleTool(TrimTool tool) { ActiveTool = ActiveTool == tool ? TrimTool.None : tool; }
+    private void ToggleTool(TrimTool tool) => ActiveTool = ActiveTool == tool ? TrimTool.None : tool;
     [RelayCommand(CanExecute = nameof(CanUndo))]
     private void Undo()
     {

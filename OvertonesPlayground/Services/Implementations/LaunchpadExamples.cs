@@ -42,6 +42,11 @@ public static class LaunchpadExamples
     private const int RootF = 5;
     #endregion
 
+    #region Fields
+    ///<summary>The hand-percussion instrument names gathered into the Percussion column and scored when picking a kit.</summary>
+    private static readonly string[] HandPercussionInstruments = ["shaker", "tambourine", "cabasa"];
+    #endregion
+
     #region Private methods
     ///<summary>
     ///Assembles one setup. The tests use this to look at where every sample went.
@@ -162,7 +167,7 @@ public static class LaunchpadExamples
         b.Fill(KitBank, Accent, Tag(b.Solid("clap", companion).OrderBy(Centroid), Clap).Concat(Tag(b.Solid("rim", primary).OrderBy(Centroid), Rim)));
         b.Fill(KitBank, Hats, Hat, Interleave(Choose(b.Solid("hihat-closed", companion), 4, Centroid), Choose(b.Solid("hihat-open", companion), 4, Centroid)));
         b.Fill(KitBank, Cymbals, Hat, Choose(b.Solid("crash", companion).Concat(b.Solid("ride", companion)), 6, Centroid));
-        b.Fill(KitBank, Percussion, HandPercussion, Choose(new[] { "shaker", "tambourine", "cabasa" }.SelectMany(i => b.Solid(i, companion)), 8, Centroid));
+        b.Fill(KitBank, Percussion, HandPercussion, Choose(HandPercussionInstruments.SelectMany(i => b.Solid(i, companion)), 8, Centroid));
         b.Fill(KitBank, Toms, Tom, Choose(b.Solid("tom", primary), 8, Centroid));
         b.Fill(KitBank, Colour, Fx, [b.Named("Stinger F 128 bpm"), b.Named("Impact Layered"), b.Named("Riser Synth"), b.Named("Riser White Noise")]);
 
@@ -219,7 +224,7 @@ public static class LaunchpadExamples
                 continue;
             }
 
-            int hand = new[] { "shaker", "tambourine", "cabasa" }.Sum(instrument => builder.Solid(instrument, kit).Count());
+            int hand = HandPercussionInstruments.Sum(instrument => builder.Solid(instrument, kit).Count());
             int score = Math.Min(closed, 4) + Math.Min(open, 4) + Math.Min(claps, 2) + Math.Min(hand, 4) + (needsKick ? Math.Min(kicks, 4) : 0);
             if (score > bestScore)
             {

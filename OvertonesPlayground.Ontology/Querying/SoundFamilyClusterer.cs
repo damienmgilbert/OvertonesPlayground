@@ -42,9 +42,9 @@ internal static class SoundFamilyClusterer
         return changed;
     }
 
-        ///<summary>
-///About sqrt(n / 2) families, the usual rule of thumb: 33 for the 2,220 bundled sounds.
-///</summary>
+    ///<summary>
+    ///About sqrt(n / 2) families, the usual rule of thumb: 33 for the 2,220 bundled sounds.
+    ///</summary>
     private static int DefaultCount(int points) => Math.Max(1, (int)Math.Round(Math.Sqrt(points / 2.0)));
 
     private static SoundFamily Describe(List<(Sample Sample, double[] Vector)> members, double[] center)
@@ -220,7 +220,7 @@ internal static class SoundFamilyClusterer
             }
         }
 
-        return[.. families.OrderByDescending(family => family.Members.Count).ThenBy(family => family.Name, StringComparer.OrdinalIgnoreCase)];
+        return [.. families.OrderByDescending(family => family.Members.Count).ThenBy(family => family.Name, StringComparer.OrdinalIgnoreCase)];
     }
     #endregion
 }

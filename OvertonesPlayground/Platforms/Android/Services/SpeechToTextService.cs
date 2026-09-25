@@ -126,25 +126,25 @@ public sealed class SpeechToTextService : ISpeechToTextService, IDisposable
             return;
         }
 
-        SpeechRecognizer? recognizer = SpeechRecognizer.CreateSpeechRecognizer(AndroidApp.Context);
-        if (recognizer is null)
+        // Assign straight to the field so ownership lives there from the start; TeardownRecognizer disposes it.
+        _recognizer = SpeechRecognizer.CreateSpeechRecognizer(AndroidApp.Context);
+        if (_recognizer is null)
         {
             RecognitionError?.Invoke(this, "Couldn't create a speech recognizer on this device.");
             return;
         }
 
-        recognizer.Error += OnError;
-        recognizer.Results += OnResults;
-        recognizer.PartialResults += OnPartialResults;
-        _recognizer = recognizer;
+        _recognizer.Error += OnError;
+        _recognizer.Results += OnResults;
+        _recognizer.PartialResults += OnPartialResults;
 
-        Intent intent = new(RecognizerIntent.ActionRecognizeSpeech);
+        using Intent intent = new(RecognizerIntent.ActionRecognizeSpeech);
         intent.PutExtra(RecognizerIntent.ExtraLanguageModel, RecognizerIntent.LanguageModelFreeForm);
         intent.PutExtra(RecognizerIntent.ExtraLanguage, Java.Util.Locale.Default.ToString());
         intent.PutExtra(RecognizerIntent.ExtraPartialResults, true);
         intent.PutExtra(RecognizerIntent.ExtraCallingPackage, AndroidApp.Context.PackageName);
 
-        recognizer.StartListening(intent);
+        _recognizer.StartListening(intent);
         IsListening = true;
     }
 

@@ -6,7 +6,7 @@ using Plugin.Maui.Audio;
 namespace OvertonesPlayground.Services.Implementations;
 
 ///<inheritdoc cref="IAudioRecorderService"/>
-public class AudioRecorderService : IAudioRecorderService, IDisposable
+public sealed class AudioRecorderService : IAudioRecorderService, IDisposable
 {
     #region Fields
     private readonly IAudioManager _audioManager;
@@ -62,6 +62,7 @@ public class AudioRecorderService : IAudioRecorderService, IDisposable
     {
         _tickTimer.Dispose();
         (_recorder as IDisposable)?.Dispose();
+        GC.SuppressFinalize(this);
     }
 
     ///<inheritdoc/>

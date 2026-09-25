@@ -92,7 +92,7 @@ public sealed class RhythmAnalyzer : IFeatureExtractor<RhythmFacet?>
     private static int CountOnsets(double[] strength, double framesPerSecond)
     {
         double mean = strength.Average();
-        double deviation = Math.Sqrt(strength.Select(value => (value - mean) * (value - mean)).Average());
+        double deviation = Math.Sqrt(strength.Average(value => (value - mean) * (value - mean)));
         // The floor relative to the strongest onset stops numerical noise in a steady tone from counting as onsets.
         double threshold = Math.Max(mean + (0.5 * deviation), 0.25 * strength.Max());
         int minGap = Math.Max(1, (int)(0.05 * framesPerSecond));

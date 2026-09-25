@@ -10,7 +10,7 @@ namespace OvertonesPlayground.ViewModels;
 ///they arrive. Android's speech recognizer has no reliable way to transcribe an existing recording - only live
 ///listening - so there's no "pick a clip" option here; see the Phase 5 notes for why.
 ///</summary>
-public partial class SpeechToTextViewModel : BaseViewModel, IDisposable
+public sealed partial class SpeechToTextViewModel : BaseViewModel, IDisposable
 {
     #region Fields
     private readonly IClipboard _clipboard;
@@ -152,6 +152,7 @@ public partial class SpeechToTextViewModel : BaseViewModel, IDisposable
         _speechToTextService.PartialResultReceived -= OnPartialResultReceived;
         _speechToTextService.FinalResultReceived -= OnFinalResultReceived;
         _speechToTextService.RecognitionError -= OnRecognitionError;
+        GC.SuppressFinalize(this);
     }
     #endregion
 

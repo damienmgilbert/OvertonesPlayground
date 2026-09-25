@@ -135,7 +135,7 @@ public sealed class SoundFamilyTests
     [Fact]
     public void GetSoundFamilies_TheSameCatalogAlwaysGivesTheSameFamilies()
     {
-        string[] Describe(SampleIndex index) { return[.. index.GetSoundFamilies().Select(family => $"{family.Name}: {string.Join(", ", family.Members.Select(sample => sample.Name))}")]; }
+        string[] Describe(SampleIndex index) { return [.. index.GetSoundFamilies().Select(family => $"{family.Name}: {string.Join(", ", family.Members.Select(sample => sample.Name))}")]; }
 
         Assert.Equal(Describe(Index()), Describe(Index()));
         Assert.Equal(Describe(Index()), Describe(new SampleIndex(TestSamples.Library().AsEnumerable().Reverse())));

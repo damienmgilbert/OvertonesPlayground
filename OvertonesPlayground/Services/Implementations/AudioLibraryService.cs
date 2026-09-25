@@ -6,7 +6,7 @@ using Plugin.Maui.Audio;
 namespace OvertonesPlayground.Services.Implementations;
 
 ///<inheritdoc cref="IAudioLibraryService"/>
-public class AudioLibraryService : IAudioLibraryService
+public sealed class AudioLibraryService : IAudioLibraryService, IDisposable
 {
     #region Constants
     ///<summary>
@@ -116,10 +116,14 @@ public class AudioLibraryService : IAudioLibraryService
         await _lock.WaitAsync();
         try
         {
+            // Double-checked locking: another caller may have populated the cache while we waited for the lock.
+            // CA1508's single-threaded flow analysis can't see that, so it reports this guard as dead code.
+#pragma warning disable CA1508
             if (_cache is not null)
             {
                 return;
             }
+#pragma warning restore CA1508
 
             bool fileExists = File.Exists(LibraryFilePath);
             if (fileExists)
@@ -374,6 +378,9 @@ public class AudioLibraryService : IAudioLibraryService
             await SaveAsync();
         }
     }
+
+    ///<summary>Disposes the semaphore that serialises catalog access.</summary>
+    public void Dispose() => _lock.Dispose();
     #endregion
 
     #region Nested types

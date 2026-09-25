@@ -2,7 +2,6 @@ using OvertonesPlayground.Models;
 using OvertonesPlayground.Ontology.Model;
 using OvertonesPlayground.Ontology.Querying;
 using static OvertonesPlayground.Services.Implementations.ExampleLevel;
-using static OvertonesPlayground.Services.Implementations.LaunchpadExampleBuilder;
 
 namespace OvertonesPlayground.Services.Implementations;
 

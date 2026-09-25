@@ -60,7 +60,10 @@ public sealed class StepPattern : IEquatable<StepPattern>
     #endregion
 
     #region Constructors
-    private StepPattern(StepHit[] steps) => _steps = steps;
+    private StepPattern(StepHit[] steps)
+    {
+        _steps = steps;
+    }
     #endregion
 
     #region Private methods

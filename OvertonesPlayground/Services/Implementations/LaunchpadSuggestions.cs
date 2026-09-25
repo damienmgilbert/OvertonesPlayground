@@ -136,7 +136,7 @@ internal static partial class LaunchpadSuggestions
     {
         SampleRecommender recommender = new(index);
         List<(LaunchpadPad Pad, Sample Sample)> all = [.. SamplesOf(project.Pads, index)];
-        HashSet<string> chosen = new(StringComparer.Ordinal);
+        HashSet<string> chosen = [];
         List<LaunchpadPadAssignment> swaps = [];
         foreach ((LaunchpadPad pad, Sample sample) in all.Where(pair => pair.Pad.Bank == bank).OrderBy(pair => pair.Pad.Index))
         {

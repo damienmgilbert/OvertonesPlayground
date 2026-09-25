@@ -20,7 +20,7 @@ public sealed class FingerprintSpace
     ///<summary>
     ///Names of the features, in vector order.
     ///</summary>
-    public static readonly IReadOnlyList<string> FeatureNames =["log centroid", "log rolloff", "log bandwidth", "flatness", "flux", "tilt", "sub", "bass", "low-mid", "mid", "high-mid", "presence", "air", "crest", "log attack", "log decay", "log duration", "pitch confidence", "harmonicity", "log onset rate", "log active length", "log onset centroid", "mfcc 1", "mfcc 2", "mfcc 3", "mfcc 4", "mfcc 5", "mfcc 6", "mfcc 7", "mfcc 8", "mfcc 9", "mfcc 10", "mfcc 11", "mfcc 12", ];
+    public static readonly IReadOnlyList<string> FeatureNames = ["log centroid", "log rolloff", "log bandwidth", "flatness", "flux", "tilt", "sub", "bass", "low-mid", "mid", "high-mid", "presence", "air", "crest", "log attack", "log decay", "log duration", "pitch confidence", "harmonicity", "log onset rate", "log active length", "log onset centroid", "mfcc 1", "mfcc 2", "mfcc 3", "mfcc 4", "mfcc 5", "mfcc 6", "mfcc 7", "mfcc 8", "mfcc 9", "mfcc 10", "mfcc 11", "mfcc 12",];
     private readonly double[] _mean = new double[Dimensions];
     private readonly double[] _scale = new double[Dimensions];
     private readonly Dictionary<string, double[]> _vectors = new(StringComparer.Ordinal);
@@ -100,7 +100,7 @@ public sealed class FingerprintSpace
 
         double[] bands = spectral.Bands.ToArray();
         double[] mfcc = spectral.Mfcc.Length == 12 ? spectral.Mfcc : new double[12];
-        return[Log10(spectral.CentroidHz), Log10(spectral.RolloffHz), Log10(spectral.BandwidthHz), spectral.Flatness, Math.Min(spectral.Flux, 2.0), Math.Clamp(spectral.TiltDbPerOctave, -24, 6), Math.Sqrt(bands[0]), Math.Sqrt(bands[1]), Math.Sqrt(bands[2]), Math.Sqrt(bands[3]), Math.Sqrt(bands[4]), Math.Sqrt(
+        return [Log10(spectral.CentroidHz), Log10(spectral.RolloffHz), Log10(spectral.BandwidthHz), spectral.Flatness, Math.Min(spectral.Flux, 2.0), Math.Clamp(spectral.TiltDbPerOctave, -24, 6), Math.Sqrt(bands[0]), Math.Sqrt(bands[1]), Math.Sqrt(bands[2]), Math.Sqrt(bands[3]), Math.Sqrt(bands[4]), Math.Sqrt(
                                                                                                                                                                                                                                                                                                            bands[
                                                                                                                                                                                                                                                                                                            5]), Math.Sqrt(
                                                                                                                                                                                                                                                                                                                 bands[

@@ -1,3 +1,4 @@
+using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using OvertonesPlayground.Models;
@@ -73,7 +74,7 @@ public partial class SoundCreatorViewModel : BaseViewModel
     ///</summary>
     private void OnElapsedChanged(object? sender, TimeSpan elapsed)
     {
-        string text = elapsed.ToString(@"mm\:ss");
+        string text = elapsed.ToString(@"mm\:ss", CultureInfo.InvariantCulture);
         if (_uiContext is null)
         {
             ElapsedText = text;

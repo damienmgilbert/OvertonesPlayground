@@ -147,7 +147,7 @@ public static class RiffWavReader
         ushort tag = 0;
         int channelCount = 0;
         int sampleRate = 0;
-        int bits = 0;
+        int bits;
         int bytesPerSample = 0;
         bool isExtensible = false;
 
@@ -176,7 +176,7 @@ public static class RiffWavReader
             }
 
             bool bodyFits = size <= remaining;
-            ReadOnlySpan<byte> body = bodyFits ? data.Slice(bodyStart, (int)size) : ReadOnlySpan<byte>.Empty;
+            ReadOnlySpan<byte> body = bodyFits ? data.Slice(bodyStart, (int)size) : [];
             if (bodyFits)
             {
                 switch (id)

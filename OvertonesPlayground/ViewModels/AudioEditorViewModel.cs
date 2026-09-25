@@ -59,15 +59,15 @@ public partial class AudioEditorViewModel : BaseViewModel
     }
 
     [RelayCommand]
-    private async Task ApplyCompressionAsync() { await ApplyEditAsync("compression", clip => _editorService.ApplyCompressionAsync(clip.FilePath, CompressionThresholdDb, CompressionRatio, CompressionAttackMs, CompressionReleaseMs, "compress")); }
+    private async Task ApplyCompressionAsync() => await ApplyEditAsync("compression", clip => _editorService.ApplyCompressionAsync(clip.FilePath, CompressionThresholdDb, CompressionRatio, CompressionAttackMs, CompressionReleaseMs, "compress"));
     [RelayCommand]
-    private async Task ApplyEqualizerAsync() { await ApplyEditAsync("EQ", clip => _editorService.ApplyEqualizerAsync(clip.FilePath, EqLowGainDb, EqMidGainDb, EqHighGainDb, "eq")); }
+    private async Task ApplyEqualizerAsync() => await ApplyEditAsync("EQ", clip => _editorService.ApplyEqualizerAsync(clip.FilePath, EqLowGainDb, EqMidGainDb, EqHighGainDb, "eq"));
     [RelayCommand]
-    private async Task ApplyFadeAsync() { await ApplyEditAsync("fade", clip => _editorService.ApplyFadeAsync(clip.FilePath, TimeSpan.FromSeconds(FadeInSeconds), TimeSpan.FromSeconds(FadeOutSeconds), "fade")); }
+    private async Task ApplyFadeAsync() => await ApplyEditAsync("fade", clip => _editorService.ApplyFadeAsync(clip.FilePath, TimeSpan.FromSeconds(FadeInSeconds), TimeSpan.FromSeconds(FadeOutSeconds), "fade"));
     [RelayCommand]
-    private async Task ApplyGainAsync() { await ApplyEditAsync("gain", clip => _editorService.ApplyGainAsync(clip.FilePath, GainDb, "gain")); }
+    private async Task ApplyGainAsync() => await ApplyEditAsync("gain", clip => _editorService.ApplyGainAsync(clip.FilePath, GainDb, "gain"));
     [RelayCommand]
-    private async Task ApplyVoiceChangeAsync() { await ApplyEditAsync("voice change", clip => _editorService.ApplyVoiceChangeAsync(clip.FilePath, VoiceChangeSemitones, "voice-change")); }
+    private async Task ApplyVoiceChangeAsync() => await ApplyEditAsync("voice change", clip => _editorService.ApplyVoiceChangeAsync(clip.FilePath, VoiceChangeSemitones, "voice-change"));
 
     private async Task LoadClipAsync(string clipId)
     {
@@ -119,7 +119,7 @@ public partial class AudioEditorViewModel : BaseViewModel
     private partial void Log_PreviewingClip(string clipName);
 
     [RelayCommand]
-    private async Task NormalizeAsync() { await ApplyEditAsync("normalize", clip => _editorService.NormalizeAsync(clip.FilePath, "normalize")); }
+    private async Task NormalizeAsync() => await ApplyEditAsync("normalize", clip => _editorService.NormalizeAsync(clip.FilePath, "normalize"));
 
     partial void OnClipIdChanged(string? value)
     {
@@ -155,13 +155,13 @@ public partial class AudioEditorViewModel : BaseViewModel
     }
 
     [RelayCommand]
-    private async Task ReduceNoiseAsync() { await ApplyEditAsync("noise reduction", clip => _editorService.ReduceNoiseAsync(clip.FilePath, TimeSpan.FromSeconds(NoiseSampleSeconds), "denoise")); }
+    private async Task ReduceNoiseAsync() => await ApplyEditAsync("noise reduction", clip => _editorService.ReduceNoiseAsync(clip.FilePath, TimeSpan.FromSeconds(NoiseSampleSeconds), "denoise"));
 
     [RelayCommand]
-    private async Task RemoveVocalsAsync() { await ApplyEditAsync("vocal removal", clip => _editorService.RemoveVocalsAsync(clip.FilePath, "no-vocals")); }
+    private async Task RemoveVocalsAsync() => await ApplyEditAsync("vocal removal", clip => _editorService.RemoveVocalsAsync(clip.FilePath, "no-vocals"));
 
     [RelayCommand]
-    private async Task ReverseAsync() { await ApplyEditAsync("reverse", clip => _editorService.ReverseAsync(clip.FilePath, "reverse")); }
+    private async Task ReverseAsync() => await ApplyEditAsync("reverse", clip => _editorService.ReverseAsync(clip.FilePath, "reverse"));
 
     private async Task SetLoadedClipAsync(AudioClip clip)
     {
@@ -173,7 +173,7 @@ public partial class AudioEditorViewModel : BaseViewModel
     }
 
     [RelayCommand]
-    private async Task TrimAsync() { await ApplyEditAsync("trim", clip => _editorService.TrimAsync(clip.FilePath, TimeSpan.FromSeconds(TrimStartSeconds), TimeSpan.FromSeconds(TrimEndSeconds), "trim")); }
+    private async Task TrimAsync() => await ApplyEditAsync("trim", clip => _editorService.TrimAsync(clip.FilePath, TimeSpan.FromSeconds(TrimStartSeconds), TimeSpan.FromSeconds(TrimEndSeconds), "trim"));
     #endregion
 
     #region Public properties

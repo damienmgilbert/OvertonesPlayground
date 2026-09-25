@@ -15,7 +15,10 @@ public readonly record struct PitchClass : IComparable<PitchClass>
     ///<summary>
     ///The pitch class <paramref name="value"/>, wrapped into 0 to 11 (so -1 is B and 12 is C).
     ///</summary>
-    public PitchClass(int value) => Value = Wrap(value);
+    public PitchClass(int value)
+    {
+        Value = Wrap(value);
+    }
     #endregion
 
     #region Public methods
@@ -102,10 +105,16 @@ public readonly record struct PitchClass : IComparable<PitchClass>
     public override string ToString() => Name();
 
     ///<summary>The pitch class as a number, 0 to 11.</summary>
-    public static implicit operator int(PitchClass pitchClass) => pitchClass.Value;
+    public static implicit operator int(PitchClass pitchClass)
+    {
+        return pitchClass.Value;
+    }
 
     ///<summary>The pitch class of a number of semitones above C.</summary>
-    public static explicit operator PitchClass(int value) => new(value);
+    public static explicit operator PitchClass(int value)
+    {
+        return new(value);
+    }
 
     ///<summary>Compares two pitch classes by number.</summary>
     public static bool operator <(PitchClass left, PitchClass right) => left.Value < right.Value;

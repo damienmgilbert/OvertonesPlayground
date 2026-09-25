@@ -94,7 +94,7 @@ internal static class LaunchpadGenerator
 
         public List<RecipeFill> Fills { get; } = [];
 
-        public HashSet<string> Used { get; } = new(StringComparer.Ordinal);
+        public HashSet<string> Used { get; } = [];
 
         public int CountAt(int bank, int lane) => Fills.Where(fill => fill.Bank == bank && fill.Lane == lane).Sum(fill => fill.Sounds.Count);
 
@@ -278,7 +278,7 @@ internal static class LaunchpadGenerator
         }
 
         List<string> present = [.. profile.Kits.Where(kit => pools.Usable.Count(sample => InKit(sample, kit)) >= 8)];
-        return present.Count > 0 ? PickTypical(random, present) : profile.Kits.FirstOrDefault() ?? "vinyl";
+        return present.Count > 0 ? PickTypical(random, present) : profile.Kits.Count > 0 ? profile.Kits[0] : "vinyl";
     }
 
     private static void FillKitBank(Draft draft)
@@ -501,8 +501,10 @@ internal static class LaunchpadGenerator
         ];
         return patterns;
 
-        static RecipePattern Pattern(int index, StepPattern kick, StepPattern backbeat, StepPattern hats, StepPattern extra) =>
-            new(index, [(0, kick.ToString()), (1, backbeat.ToString()), (2, hats.ToString()), (3, extra.ToString())]);
+        static RecipePattern Pattern(int index, StepPattern kick, StepPattern backbeat, StepPattern hats, StepPattern extra)
+        {
+            return new(index, [(0, kick.ToString()), (1, backbeat.ToString()), (2, hats.ToString()), (3, extra.ToString())]);
+        }
     }
 
     private static string Describe(Draft draft, LaunchpadRecipe recipe)

@@ -1,3 +1,4 @@
+using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using OvertonesPlayground.Services.Interfaces;
@@ -8,7 +9,7 @@ namespace OvertonesPlayground.ViewModels;
 ///View model for the global audio player. Exposes playback controls, current clip metadata and position information
 ///used by the player UI.
 ///</summary>
-public partial class PlayerViewModel : BaseViewModel, IDisposable
+public sealed partial class PlayerViewModel : BaseViewModel, IDisposable
 {
     #region Fields
     private readonly INavigationService _navigation;
@@ -118,7 +119,9 @@ public partial class PlayerViewModel : BaseViewModel, IDisposable
     private static string FormatTime(double seconds)
     {
         TimeSpan time = TimeSpan.FromSeconds(seconds);
-        return time.TotalHours >= 1 ? time.ToString(@"h\:mm\:ss") : time.ToString(@"mm\:ss");
+        return time.TotalHours >= 1
+            ? time.ToString(@"h\:mm\:ss", CultureInfo.InvariantCulture)
+            : time.ToString(@"mm\:ss", CultureInfo.InvariantCulture);
     }
 
     ///<summary>
@@ -183,6 +186,7 @@ public partial class PlayerViewModel : BaseViewModel, IDisposable
         Log_Disposing();
         _playbackService.PlaybackStateChanged -= OnPlaybackStateChanged;
         StopTicking();
+        GC.SuppressFinalize(this);
     }
 
     ///<summary>

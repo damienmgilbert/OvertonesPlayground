@@ -120,7 +120,7 @@ public sealed class LaunchpadTutorialsTests
             }
         }
 
-        Assert.Empty(Enum.GetValues<LaunchpadControl>().Where(control => !taught.Contains(control)));
+        Assert.DoesNotContain(Enum.GetValues<LaunchpadControl>(), control => !taught.Contains(control));
     }
 
     [Fact]
@@ -138,7 +138,7 @@ public sealed class LaunchpadTutorialsTests
 
         // Every button with a second function: Projects (Save) is a menu, so it is described but not run.
         LaunchpadControl[] expected = [LaunchpadControl.Duplicate, LaunchpadControl.Quantise, LaunchpadControl.RecordArm, LaunchpadControl.Mute, LaunchpadControl.Solo, LaunchpadControl.Volume, LaunchpadControl.Pan, LaunchpadControl.Sends, LaunchpadControl.Device, LaunchpadControl.StopClip];
-        Assert.Empty(expected.Where(control => !shifted.Contains(control)));
+        Assert.DoesNotContain(expected, control => !shifted.Contains(control));
     }
 
     [Theory]

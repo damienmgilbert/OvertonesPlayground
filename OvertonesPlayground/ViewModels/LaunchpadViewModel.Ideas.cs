@@ -74,7 +74,10 @@ public partial class LaunchpadViewModel
             Layer = LaunchpadLayer.None;
             Say($"Generated '{generated.Title}'. {generated.Description} Undo brings back what was here before.");
             Changed();
-            Log_Generated(generated.Title, (long)System.Diagnostics.Stopwatch.GetElapsedTime(started).TotalMilliseconds);
+            if (_logger.IsEnabled(LogLevel.Debug))
+            {
+                Log_Generated(generated.Title, (long)System.Diagnostics.Stopwatch.GetElapsedTime(started).TotalMilliseconds);
+            }
         }
         catch (Exception ex) when (ex is IOException or InvalidDataException or InvalidOperationException or UnauthorizedAccessException or ArgumentException or KeyNotFoundException or NotSupportedException)
         {

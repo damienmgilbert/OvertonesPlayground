@@ -89,7 +89,7 @@ public sealed class SampleIndex
             list.Add(sample);
         }
 
-        return[.. members
+        return [.. members
                 .Where(pair => Taxonomies.Kits.TryGet(pair.Key, out _))
             .Select(pair => new Kit(Taxonomies.Kits.Get(pair.Key), pair.Value))
             .OrderByDescending(kit => kit.Members.Count)
@@ -235,7 +235,7 @@ public sealed class SampleIndex
             }
         }
 
-        return[.. scored.OrderBy(pair => pair.Distance).ThenBy(pair => pair.Sample.Name, StringComparer.OrdinalIgnoreCase).Take(count)];
+        return [.. scored.OrderBy(pair => pair.Distance).ThenBy(pair => pair.Sample.Name, StringComparer.OrdinalIgnoreCase).Take(count)];
     }
 
     ///<summary>

@@ -2,6 +2,8 @@ namespace OvertonesPlayground.Ontology.Querying;
 
 ///<summary>
 ///A composable yes / no question about a sample (the specification pattern). Combine with <c>&amp;</c>, <c>|</c> and
+///<c>!</c> to build larger questions from smaller ones.
+///</summary>
 public abstract class SampleSpecification
 {
     #region Operators

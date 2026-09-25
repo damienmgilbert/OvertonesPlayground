@@ -51,7 +51,7 @@ public sealed class AudioWorkTests : IDisposable
         {
             await Task.Delay(10, TestContext.Current.CancellationToken);
             return 0;
-        }).ConfigureAwait(false);
+        });
 
         Assert.True(context.Posts > 0);
     }
@@ -63,7 +63,7 @@ public sealed class AudioWorkTests : IDisposable
         CountingContext context = new();
         AudioEditorService service = new(_files);
 
-        string output = await StartUnder(context, () => service.ApplyGainAsync(source, 6, "louder")).ConfigureAwait(false);
+        string output = await StartUnder(context, () => service.ApplyGainAsync(source, 6, "louder"));
 
         Assert.True(File.Exists(output));
         Assert.Equal(0, context.Posts);
@@ -76,7 +76,7 @@ public sealed class AudioWorkTests : IDisposable
         CountingContext context = new();
         AudioEditorService service = new(_files);
 
-        float[] peaks = await StartUnder(context, () => service.GetWaveformPeaksAsync(source, 50)).ConfigureAwait(false);
+        float[] peaks = await StartUnder(context, () => service.GetWaveformPeaksAsync(source, 50));
 
         Assert.Equal(50, peaks.Length);
         Assert.Equal(0, context.Posts);
@@ -91,7 +91,7 @@ public sealed class AudioWorkTests : IDisposable
         MixdownService service = new(_files);
         CountingContext context = new();
 
-        string output = await StartUnder(context, () => service.RenderAsync(new MixProject { Name = "Mix", Tracks = [track] }, "mix")).ConfigureAwait(false);
+        string output = await StartUnder(context, () => service.RenderAsync(new MixProject { Name = "Mix", Tracks = [track] }, "mix"));
 
         Assert.True(File.Exists(output));
         Assert.Equal(0, context.Posts);
@@ -119,7 +119,7 @@ public sealed class AudioWorkTests : IDisposable
         SoundSynthesisService service = new(_files);
         CountingContext context = new();
 
-        AudioClip clip = await StartUnder(context, () => service.GenerateToneAsync(WaveformType.Sine, 440, 0.2, 0.5, "Tone")).ConfigureAwait(false);
+        AudioClip clip = await StartUnder(context, () => service.GenerateToneAsync(WaveformType.Sine, 440, 0.2, 0.5, "Tone"));
 
         Assert.True(File.Exists(clip.FilePath));
         Assert.Equal(0, context.Posts);
@@ -137,7 +137,7 @@ public sealed class AudioWorkTests : IDisposable
         {
             await wav.WriteAsync(path).ConfigureAwait(false);
             return await WavFile.ReadAsync(path).ConfigureAwait(false);
-        }).ConfigureAwait(false);
+        });
 
         Assert.Equal(wav.Samples, read.Samples);
         Assert.Equal(0, context.Posts);

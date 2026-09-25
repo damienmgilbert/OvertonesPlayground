@@ -505,7 +505,7 @@ public partial class LaunchpadViewModel
         try
         {
             _project.Name = name;
-            File.WriteAllText(ProjectPath(name), JsonSerializer.Serialize(BuildProject()));
+            await File.WriteAllTextAsync(ProjectPath(name), JsonSerializer.Serialize(BuildProject()));
             Say($"Saved project '{name}'.");
             _ = FlashKeyAsync(LaunchpadControl.Projects);
             SaveLayout();

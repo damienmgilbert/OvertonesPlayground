@@ -30,7 +30,7 @@ public sealed class AudioEditorServiceTests : IDisposable
 
     private Task<string> Source(short[] samples, int channels = 1, int sampleRate = 1000, string name = "source.wav") => WavTestFiles.WriteAsync(_files.InAppData("in", name), samples, channels, sampleRate);
 
-        // Stereo samples are interleaved left, right, left, right... Numbering them 1, 2, 3, 4... makes every odd value a left sample.
+    // Stereo samples are interleaved left, right, left, right... Numbering them 1, 2, 3, 4... makes every odd value a left sample.
     // A cut that lands on a right sample would start the output on the wrong channel and swap left and right from there on.
     private static bool StartsOnALeftSample(short[] samples) => samples[0] % 2 == 1;
     #endregion

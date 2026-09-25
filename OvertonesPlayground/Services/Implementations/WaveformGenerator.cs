@@ -65,7 +65,7 @@ internal static class WaveformGenerator
         for (int i = 0; i < frameCount; i++)
         {
             double t = (double)i / sampleRate;
-            double phase = (t * frequencyHz) % 1.0;
+            double phase = t * frequencyHz % 1.0;
 
             double raw = type switch
             {

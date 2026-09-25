@@ -1,3 +1,4 @@
+using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using OvertonesPlayground.Models;
 
@@ -33,7 +34,7 @@ public partial class TrackClipViewModel : ObservableObject
     ///<summary>
     ///The source clip's duration, formatted as "mm:ss".
     ///</summary>
-    public string DurationText => TrackClip.Duration.ToString(@"mm\:ss");
+    public string DurationText => TrackClip.Duration.ToString(@"mm\:ss", CultureInfo.InvariantCulture);
 
     ///<summary>
     ///Gain applied to this clip within the track, in decibels.

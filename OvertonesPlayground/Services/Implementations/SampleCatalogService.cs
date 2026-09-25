@@ -6,7 +6,7 @@ using OvertonesPlayground.Services.Interfaces;
 namespace OvertonesPlayground.Services.Implementations;
 
 ///<inheritdoc cref="ISampleCatalogService"/>
-public class SampleCatalogService : ISampleCatalogService
+public sealed class SampleCatalogService : ISampleCatalogService, IDisposable
 {
     #region Constants
     ///<summary>
@@ -71,6 +71,9 @@ public class SampleCatalogService : ISampleCatalogService
             _ = _gate.Release();
         }
     }
+
+    ///<summary>Disposes the semaphore that serialises catalog loading.</summary>
+    public void Dispose() => _gate.Dispose();
     #endregion
 
     #region Public properties

@@ -2,7 +2,7 @@ namespace OvertonesPlayground.Services.Implementations;
 
 ///<summary>
 ///An iterative radix-2 Cooley-Tukey FFT/IFFT over parallel real/imaginary buffers, in place. The only spectral
-///primitive in the app; <see cref="SpectralNoiseReducer"/> is its first consumer, and the equalizer could reuse it
+///primitive in the app; <c>SpectralNoiseReducer</c> is its first consumer, and the equalizer could reuse it
 ///later for a frequency-response preview instead of doing the DSP itself.
 ///</summary>
 internal static class FastFourierTransform

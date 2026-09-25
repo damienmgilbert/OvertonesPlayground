@@ -33,6 +33,7 @@ public sealed class TextToSpeechService : Java.Lang.Object, ITextToSpeechService
     private TaskCompletionSource<bool>? _initCompletion;
     private readonly SemaphoreSlim _lock = new(1, 1);
     private TaskCompletionSource<bool>? _synthesisCompletion;
+    private SpeechSynthesisListener? _utteranceListener;
     #endregion
 
     #region Private methods
@@ -69,7 +70,9 @@ public sealed class TextToSpeechService : Java.Lang.Object, ITextToSpeechService
             throw new NotSupportedException("No text-to-speech engine is available on this device.");
         }
 
-        engine.SetOnUtteranceProgressListener(new SpeechSynthesisListener(success => _synthesisCompletion?.TrySetResult(success)));
+        _utteranceListener?.Dispose();
+        _utteranceListener = new SpeechSynthesisListener(success => _synthesisCompletion?.TrySetResult(success));
+        engine.SetOnUtteranceProgressListener(_utteranceListener);
         _engine = engine;
         return _engine;
     }
@@ -84,6 +87,7 @@ public sealed class TextToSpeechService : Java.Lang.Object, ITextToSpeechService
     {
         _engine?.Shutdown();
         _engine?.Dispose();
+        _utteranceListener?.Dispose();
         _lock.Dispose();
         base.Dispose();
     }

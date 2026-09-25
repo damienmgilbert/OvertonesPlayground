@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using Android.Media;
 using Java.Nio;
 using OvertonesPlayground.Models;
@@ -87,6 +88,8 @@ public class AudioFormatConverterService : IAudioFormatConverterService
     }
 
     /// <summary>Runs the blocking extractor/decoder pump loop and writes the result as a WAV file.</summary>
+    [SuppressMessage("Performance", "CA1849:Call async methods when in an async method", Justification = "The MediaExtractor/MediaCodec pump is an inherently synchronous Android API loop; the whole method is dispatched onto a background thread via Task.Run, so the blocking calls don't stall a caller.")]
+    [SuppressMessage("Reliability", "CA1508:Avoid dead conditional code", Justification = "'codec' is still null in the finally block when the failure happens before it is assigned (e.g. no audio track); the guard is required.")]
     private static async Task<string> DecodeToWavAsync(string sourcePath, string outputName, IProgress<double>? progress)
     {
         MediaExtractor extractor = new();
@@ -226,6 +229,8 @@ public class AudioFormatConverterService : IAudioFormatConverterService
     }
 
     /// <summary>Runs the blocking PCM-in/compressed-out encoder pump loop and writes the result to a file.</summary>
+    [SuppressMessage("Performance", "CA1849:Call async methods when in an async method", Justification = "The MediaCodec pump is an inherently synchronous Android API loop; the whole method is dispatched onto a background thread via Task.Run, so the blocking calls don't stall a caller.")]
+    [SuppressMessage("Reliability", "CA1508:Avoid dead conditional code", Justification = "'codec' is still null in the finally block when the failure happens before it is assigned; the guard is required.")]
     private static async Task<string> EncodeFromWavAsync(string sourcePath, AudioExportFormat format, string outputName)
     {
         WavFile source = await WavFile.ReadAsync(sourcePath);

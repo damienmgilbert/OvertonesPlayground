@@ -244,6 +244,87 @@ dotnet_naming_style.pascal_case.word_separator =
 dotnet_naming_style.pascal_case.capitalization = pascal_case
 
 dotnet_naming_style.begins_with_i.required_prefix = I
-dotnet_naming_style.begins_with_i.required_suffix = 
-dotnet_naming_style.begins_with_i.word_separator = 
+dotnet_naming_style.begins_with_i.required_suffix =
+dotnet_naming_style.begins_with_i.word_separator =
 dotnet_naming_style.begins_with_i.capitalization = pascal_case
+
+#### Analyzer rule severities ####
+# AnalysisLevel is set to preview-all, which turns on many opt-in analyzers.
+# The rules below are disabled because they are inappropriate for this project
+# (a .NET MAUI application, not a shipped library) or contradict framework guidance.
+# Genuine code-quality rules are left enabled and fixed in code.
+
+# CA2007: ConfigureAwait — application/UI code should resume on the captured
+# (UI) context; ConfigureAwait(false) is a library concern, not an app concern.
+dotnet_diagnostic.CA2007.severity = none
+
+# CA1062: Validate arguments of public methods — this is app code consumed
+# only within the app, not a public library surface.
+dotnet_diagnostic.CA1062.severity = none
+
+# CA1031: Do not catch general exception types — the broad catches here are
+# intentional defensive handling around platform audio/IO operations.
+dotnet_diagnostic.CA1031.severity = none
+
+# CA1002 / CA1819 / CA2227: Collection/array API-design rules — the affected
+# types are serializable app models where List<T>, arrays and settable
+# collection properties are required by System.Text.Json.
+dotnet_diagnostic.CA1002.severity = none
+dotnet_diagnostic.CA1819.severity = none
+dotnet_diagnostic.CA2227.severity = none
+
+# CA1003: Use generic EventHandler instances — the EventHandler<T> events used
+# here are a deliberate and idiomatic choice.
+dotnet_diagnostic.CA1003.severity = none
+
+# CA5394: Do not use insecure randomness — System.Random is used for musical
+# variation, not for security-sensitive values.
+dotnet_diagnostic.CA5394.severity = none
+
+# CA1716: Identifiers should not match keywords — the app is not consumed from
+# other .NET languages (e.g. VB), so these cross-language clashes don't apply.
+dotnet_diagnostic.CA1716.severity = none
+
+# CA1724: Type name conflicts with namespace — 'App' is the conventional MAUI
+# application class name and conflicts only with 'Android.App'.
+dotnet_diagnostic.CA1724.severity = none
+
+# CA1721: Property/method name confusion — 'Value' vs the inherited
+# BindableObject.GetValue is unavoidable for bindable controls.
+dotnet_diagnostic.CA1721.severity = none
+
+# CA1859: Use concrete types for performance — returning read-only interfaces
+# from these helpers is an intentional API choice.
+dotnet_diagnostic.CA1859.severity = none
+
+# CA1024: Use properties where appropriate — the affected methods perform real
+# work / return computed snapshots and read better as methods.
+dotnet_diagnostic.CA1024.severity = none
+
+# CA1308: Normalize strings to uppercase — the lowercasing here produces
+# human-facing display/hint text, not normalization keys.
+dotnet_diagnostic.CA1308.severity = none
+
+# CA1873: The log calls that trigger this all go through source-generated
+# [LoggerMessage] methods, which already guard on ILogger.IsEnabled internally,
+# and the call sites add an explicit IsEnabled(LogLevel.Debug) guard as well.
+# CA1873 doesn't recognise either guard for generated methods, so it's a false
+# positive here; the arguments (small collection counts, elapsed time) are cheap.
+dotnet_diagnostic.CA1873.severity = none
+
+# Style suggestions elevated to warnings by preview-all that are matters of
+# taste; the exhaustive-switch and conditional-expression rewrites often reduce
+# readability, and primary-constructor conversion changes field semantics.
+dotnet_diagnostic.IDE0010.severity = none
+dotnet_diagnostic.IDE0045.severity = none
+dotnet_diagnostic.IDE0046.severity = none
+dotnet_diagnostic.IDE0058.severity = none
+dotnet_diagnostic.IDE0072.severity = none
+dotnet_diagnostic.IDE0290.severity = none
+dotnet_diagnostic.IDE0130.severity = none
+
+# IDE0370 reports the 'null!' on properties that are assigned in a constructor
+# helper (e.g. BuildKeys) as an unnecessary suppression, but the compiler's
+# nullable analysis doesn't trace those helpers, so the '!' is required to avoid
+# CS8618. The rule is a false positive for that idiom here.
+dotnet_diagnostic.IDE0370.severity = none

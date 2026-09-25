@@ -70,6 +70,12 @@ public static class LaunchpadTutorials
 
     // I, V, vi, IV in C major on the bottom row of Chord mode.
     private static readonly int[] _progression = [63, 60, 61, 59];
+
+    // The four sequencer tracks pressed in turn (ending back on the first) to demonstrate track selection.
+    private static readonly int[] _trackTour = [0, 1, 2, 3, 0];
+
+    // The three columns armed in the recording tutorial.
+    private static readonly int[] _recordColumns = [0, 1, 3];
     #endregion
 
     #region Private methods
@@ -178,7 +184,7 @@ public static class LaunchpadTutorials
                 OnTrack(0, [1, 2, 3], Rows(4, 7)),
                 async host =>
                 {
-                    foreach (int track in new[] { 0, 1, 2, 3, 0 })
+                    foreach (int track in _trackTour)
                     {
                         await host.PressTrackAsync(track);
                         await host.WaitAsync(450);
@@ -503,7 +509,7 @@ public static class LaunchpadTutorials
                 async host =>
                 {
                     await Press(host, RecordArm);
-                    foreach (int column in new[] { 0, 1, 3 })
+                    foreach (int column in _recordColumns)
                     {
                         await host.PressTrackAsync(column);
                         await host.WaitAsync(300);

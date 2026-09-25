@@ -59,7 +59,7 @@ internal static class DrumSynthesizer
             double t = (double)i / p.SampleRate;
             double freqDelta = p.StartFrequencyHz - p.EndFrequencyHz;
             double sweep = Math.Exp(-t * p.SweepRate);
-            double freqOffset = (freqDelta * sweep);
+            double freqOffset = freqDelta * sweep;
             double freq = freqOffset + p.EndFrequencyHz;
             phase += 2 * Math.PI * freq / p.SampleRate;
 

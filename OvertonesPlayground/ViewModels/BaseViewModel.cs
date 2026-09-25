@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace OvertonesPlayground.ViewModels;
@@ -10,9 +11,12 @@ public partial class BaseViewModel : ObservableObject
     #region Fields
 
     ///<summary>
-    ///Logger scoped to the concrete view model type, used to trace command execution during debugging.
+    ///Logger scoped to the concrete view model type, used to trace command execution during debugging. This is a
+    ///protected field rather than a property because the [LoggerMessage] source generator requires an accessible
+    ///ILogger field in every derived view model that declares generated log methods (SYSLIB1019 otherwise).
     ///</summary>
-    protected ILogger _logger;
+    [SuppressMessage("Design", "CA1051:Do not declare visible instance fields", Justification = "The [LoggerMessage] source generator requires an accessible ILogger field, not a property, in derived view models.")]
+    protected readonly ILogger _logger;
     #endregion
 
     #region Constructors

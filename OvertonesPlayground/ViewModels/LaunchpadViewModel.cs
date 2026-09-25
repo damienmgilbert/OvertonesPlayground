@@ -13,7 +13,7 @@ namespace OvertonesPlayground.ViewModels;
 ///different job (see <see cref="LaunchpadControl"/>). The class is split by concern: this file holds the state and the pad
 ///and key entry points, and the other files hold the pad drawing, the buttons, the sound, the sequencer and the saved state.
 ///</summary>
-public partial class LaunchpadViewModel : BaseViewModel
+public sealed partial class LaunchpadViewModel : BaseViewModel, IDisposable
 {
     #region Constants
 
@@ -488,5 +488,18 @@ public partial class LaunchpadViewModel : BaseViewModel
     ///page, which owns the native prompt.
     ///</summary>
     public Func<string, string, string, Task<string?>>? TextPrompt { get; set; }
+    #endregion
+
+    #region IDisposable
+    ///<summary>
+    ///Disposes the cancellation token sources that back autosave, the metronome click, the transport and the tutorial.
+    ///</summary>
+    public void Dispose()
+    {
+        _autosaveDelay?.Dispose();
+        _clickCts?.Dispose();
+        _transportCts?.Dispose();
+        _tutorialCts?.Dispose();
+    }
     #endregion
 }

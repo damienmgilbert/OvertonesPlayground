@@ -153,8 +153,8 @@
 
                     <HorizontalStackLayout Spacing="8">
                         <Button AutomationId="soundbank-detail-play" Text="Audition" controls:Icon.Glyph="{x:Static models:IconFont.Play_arrow}" Padding="14,6" Clicked="OnDetailPreviewClicked" />
-                        <Button AutomationId="soundbank-detail-use" Text="Use this sound" controls:Icon.Glyph="{x:Static models:IconFont.Check}" Padding="14,6" IsVisible="{Binding IsPickMode}" Clicked="OnDetailUseClicked" />
-                        <Button AutomationId="soundbank-detail-add" Text="Add to library" IsVisible="{Binding IsPickMode, Converter={StaticResource InvertedBool}}" controls:Icon.Glyph="{x:Static models:IconFont.Add}" Padding="14,6" Clicked="OnDetailAddClicked" />
+                        <Button AutomationId="soundbank-detail-use" Text="Use this sound" controls:Icon.Glyph="{x:Static models:IconFont.Check}" Padding="14,6" IsVisible="{Binding IsPickMode, Source={RelativeSource AncestorType={x:Type vm:SoundBankViewModel}}}" Clicked="OnDetailUseClicked" />
+                        <Button AutomationId="soundbank-detail-add" Text="Add to library" IsVisible="{Binding IsPickMode, Source={RelativeSource AncestorType={x:Type vm:SoundBankViewModel}}, Converter={StaticResource InvertedBool}}" controls:Icon.Glyph="{x:Static models:IconFont.Add}" Padding="14,6" Clicked="OnDetailAddClicked" />
                         <Button AutomationId="soundbank-detail-similar" Text="Sounds like this" controls:Icon.Glyph="{x:Static models:IconFont.Graphic_eq}" Padding="14,6" Clicked="OnDetailSimilarClicked" />
                     </HorizontalStackLayout>
 

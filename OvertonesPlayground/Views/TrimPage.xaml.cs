@@ -215,7 +215,7 @@ public partial class TrimPage : ContentPage
         }
 
         string trimmed = input.Trim();
-        if (trimmed.Contains(':'))
+        if (trimmed.Contains(':', StringComparison.Ordinal))
         {
             string[] parts = trimmed.Split(':');
             double minutes = 0;

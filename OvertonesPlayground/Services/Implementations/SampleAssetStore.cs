@@ -4,7 +4,7 @@ using OvertonesPlayground.Services.Interfaces;
 namespace OvertonesPlayground.Services.Implementations;
 
 ///<inheritdoc cref="ISampleAssetStore"/>
-public class SampleAssetStore : ISampleAssetStore
+public sealed class SampleAssetStore : ISampleAssetStore, IDisposable
 {
     #region Constants
     ///<summary>
@@ -127,6 +127,9 @@ public class SampleAssetStore : ISampleAssetStore
         await WriteAsLibraryClipAsync(cached, target, cancellationToken);
         return target;
     }
+
+    ///<summary>Disposes the semaphore that serialises cache access.</summary>
+    public void Dispose() => _gate.Dispose();
 
     ///<inheritdoc/>
     public async Task<string> GetLocalPathAsync(string assetName, CancellationToken cancellationToken = default)

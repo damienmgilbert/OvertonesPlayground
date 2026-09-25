@@ -143,6 +143,7 @@ public sealed class EvidenceFusion
     ///<param name="context">The sample and its parsed name.</param>
     ///<param name="proposals">Votes from every classifier.</param>
     ///<param name="manual">A hand-written override for this file, if any.</param>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "EvidenceFusion is a deliberately injectable, independently testable classifier collaborator, so Fuse stays an instance method.")]
     public SampleClassification Fuse(ClassificationContext context, IReadOnlyList<ClassificationProposal> proposals, OverrideEntry? manual)
     {
         List<ClassificationProposal> votes = [.. proposals];

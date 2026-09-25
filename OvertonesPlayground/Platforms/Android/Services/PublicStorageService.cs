@@ -61,7 +61,7 @@ public class PublicStorageService : IPublicStorageService
             return null;
         }
 
-        ContentValues values = new();
+        using ContentValues values = new();
         values.Put(MediaStore.IMediaColumns.DisplayName, displayFileName);
         values.Put(MediaStore.IMediaColumns.MimeType, GetMimeType(sourceFilePath));
         values.Put(MediaStore.IMediaColumns.RelativePath, $"{AndroidEnvironment.DirectoryMusic}/{SubFolder}");
@@ -85,7 +85,7 @@ public class PublicStorageService : IPublicStorageService
             await input.CopyToAsync(output);
         }
 
-        ContentValues pendingValues = new();
+        using ContentValues pendingValues = new();
         pendingValues.Put(MediaStore.IMediaColumns.IsPending, 0);
         resolver.Update(itemUri, pendingValues, null, null);
 

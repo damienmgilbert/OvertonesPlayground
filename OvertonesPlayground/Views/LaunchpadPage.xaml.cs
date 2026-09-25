@@ -192,7 +192,7 @@ public partial class LaunchpadPage : ContentPage
         }
 
         // The size of a square device whose cells are as big as these (their geometric mean); the scale below was worked out for one.
-        double side = Math.Floor(Math.Sqrt((DeviceHost.Width / DeviceColumns) * (DeviceHost.Height / DeviceRowUnits)) * DeviceColumns);
+        double side = Math.Floor(Math.Sqrt(DeviceHost.Width / DeviceColumns * (DeviceHost.Height / DeviceRowUnits)) * DeviceColumns);
         DeviceBody.Padding = new Thickness(side * 0.014);
 
         double gap = Math.Max(1, side * 0.0045);
@@ -255,12 +255,12 @@ public partial class LaunchpadPage : ContentPage
     ///</summary>
     private async void OnLogoTapped(object? sender, TappedEventArgs e)
     {
-        string? chosen = await DisplayActionSheetAsync("Guide and tutorials", "Cancel", null, [ButtonGuideChoice, .. _viewModel.Tutorials.Select(tutorial => tutorial.Title)]);
+        string? chosen = await DisplayActionSheetAsync("Guide and tutorials", "Cancel", null, [ButtonGuideChoice, .. LaunchpadViewModel.Tutorials.Select(tutorial => tutorial.Title)]);
         if (string.Equals(chosen, ButtonGuideChoice, StringComparison.Ordinal))
         {
             await ShowGuideAsync();
         }
-        else if (_viewModel.Tutorials.FirstOrDefault(tutorial => string.Equals(tutorial.Title, chosen, StringComparison.Ordinal)) is { } picked)
+        else if (LaunchpadViewModel.Tutorials.FirstOrDefault(tutorial => string.Equals(tutorial.Title, chosen, StringComparison.Ordinal)) is { } picked)
         {
             await _viewModel.StartTutorialAsync(picked);
         }

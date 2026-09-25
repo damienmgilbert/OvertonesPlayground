@@ -114,30 +114,30 @@ public class MixdownService : IMixdownService
     ///<inheritdoc/>
     public Task<string> RenderAsync(MixProject project, string outputName) => AudioWork.RunAsync(async () =>
     {
-            ArgumentNullException.ThrowIfNull(project);
-            ArgumentException.ThrowIfNullOrWhiteSpace(outputName);
+        ArgumentNullException.ThrowIfNull(project);
+        ArgumentException.ThrowIfNullOrWhiteSpace(outputName);
 
-            bool anySoloed = project.Tracks.Any(t => t.IsSoloed);
-            IEnumerable<Track> includedTracks = project.Tracks.Where(t => anySoloed ? t.IsSoloed : !t.IsMuted);
+        bool anySoloed = project.Tracks.Any(t => t.IsSoloed);
+        IEnumerable<Track> includedTracks = project.Tracks.Where(t => anySoloed ? t.IsSoloed : !t.IsMuted);
 
-            List<(short[] Samples, int StartFrame, double LeftGain, double RightGain)> placements = await LoadPlacementsAsync(includedTracks);
+        List<(short[] Samples, int StartFrame, double LeftGain, double RightGain)> placements = await LoadPlacementsAsync(includedTracks);
 
-            bool hasNoPlacements = placements.Count == 0;
-            if (hasNoPlacements)
-            {
-                throw new InvalidOperationException("Cannot render a mix project with no audible clips.");
-            }
+        bool hasNoPlacements = placements.Count == 0;
+        if (hasNoPlacements)
+        {
+            throw new InvalidOperationException("Cannot render a mix project with no audible clips.");
+        }
 
-            double[] mixBuffer = Accumulate(placements);
+        double[] mixBuffer = Accumulate(placements);
 
-            short[] output = new short[mixBuffer.Length];
-            for (int i = 0; i < mixBuffer.Length; i++)
-            {
-                output[i] = PcmMath.ClampToShort(mixBuffer[i]);
-            }
+        short[] output = new short[mixBuffer.Length];
+        for (int i = 0; i < mixBuffer.Length; i++)
+        {
+            output[i] = PcmMath.ClampToShort(mixBuffer[i]);
+        }
 
-            WavFile mixed = new() { Channels = TargetChannels, SampleRate = TargetSampleRate, BitsPerSample = 16, Samples = output, };
-            return await DerivedAudioFileWriter.SaveAsync(mixed, MixesDirectory, outputName);
+        WavFile mixed = new() { Channels = TargetChannels, SampleRate = TargetSampleRate, BitsPerSample = 16, Samples = output, };
+        return await DerivedAudioFileWriter.SaveAsync(mixed, MixesDirectory, outputName);
     });
     #endregion
 }

@@ -32,6 +32,8 @@ public sealed record RhythmFacet(double? DetectedBpm, double TempoConfidence, do
 
     #region Public properties
     ///<summary>
+    ///The detected tempo, but only when it was detected confidently enough (<see cref="MinTrustedConfidence"/>); otherwise null.
+    ///</summary>
     [JsonIgnore]
     public double? TrustedBpm => DetectedBpm is { } bpm && TempoConfidence >= MinTrustedConfidence ? bpm : null;
     #endregion

@@ -331,7 +331,7 @@ public partial class LaunchpadViewModel : ILaunchpadTutorialHost
     ///<summary>
     ///The tutorials, in the order they are taught.
     ///</summary>
-    public IReadOnlyList<LaunchpadTutorial> Tutorials => LaunchpadTutorials.All;
+    public static IReadOnlyList<LaunchpadTutorial> Tutorials => LaunchpadTutorials.All;
     #endregion
 
     #region ILaunchpadTutorialHost
