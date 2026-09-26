@@ -182,3 +182,7 @@ The tests use `TestSupport/FakePreferences` and `TestSupport/TempFileSystem` for
 * A new view model, model or service interface is picked up automatically (they are linked by wildcard).
 * A new **service implementation** has to be added to the explicit list in the test project's `.csproj`. That is deliberate, so a
   device-bound service is never linked by accident. If it won't compile there, it still calls a static platform API.
+
+## License
+
+Licensed under the MIT License — see [LICENSE](LICENSE).
