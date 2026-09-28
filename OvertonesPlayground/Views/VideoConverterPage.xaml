@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:OvertonesPlayground.ViewModels"
+             xmlns:models="clr-namespace:OvertonesPlayground.Models"
+             xmlns:controls="clr-namespace:OvertonesPlayground.Controls"
+             x:Class="OvertonesPlayground.Views.VideoConverterPage" AutomationId="videoconverter-page" SafeAreaEdges="All"
+             x:DataType="vm:VideoConverterViewModel"
+             Title="{Binding Title}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="24" Spacing="18">
+
+            <controls:IconLabel Style="{StaticResource SubtitleTextBlockStyle}" Caption="Video to Audio" Glyph="{x:Static models:IconFont.Video_file}" />
+            <Label Style="{StaticResource CaptionTextBlockStyle}" Text="Pick an MP4 video and pull out its audio track as a WAV or MP3 file, saved to your device's Music folder."
+                   TextColor="{DynamicResource TextFillColorSecondary}" />
+
+            <Label Style="{StaticResource BodyStrongTextBlockStyle}" Text="Convert to" />
+            <Picker AutomationId="videoconverter-format" ToolTipProperties.Text="The audio format the video's audio track is converted to."
+                    ItemsSource="{Binding Formats}"
+                    SelectedItem="{Binding SelectedFormat}" IsEnabled="{Binding IsConverting, Converter={StaticResource InvertedBool}}" />
+
+            <Button AutomationId="videoconverter-convert" ToolTipProperties.Text="Choose an MP4 video and convert its audio track." Style="{StaticResource AccentButtonStyle}" Text="Choose Video &amp; Convert" controls:Icon.Glyph="{x:Static models:IconFont.Video_file}"
+                    Command="{Binding ConvertCommand}" IsEnabled="{Binding IsConverting, Converter={StaticResource InvertedBool}}" />
+
+            <HorizontalStackLayout AutomationId="videoconverter-progress-panel" IsVisible="{Binding IsConverting}" Spacing="8">
+                <ActivityIndicator IsRunning="{Binding IsConverting}" HeightRequest="20" WidthRequest="20" />
+                <Label AutomationId="videoconverter-status" Text="{Binding ConversionStatus}" TextColor="{DynamicResource TextFillColorSecondary}" VerticalOptions="Center" />
+            </HorizontalStackLayout>
+
+            <Label AutomationId="videoconverter-result" Text="{Binding StatusMessage}" TextColor="{DynamicResource TextFillColorSecondary}" IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBool}}" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>
