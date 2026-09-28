@@ -44,6 +44,7 @@ public static class MauiProgram
         services.AddSingleton<IAudioEditorService, AudioEditorService>();
         services.AddSingleton<IAudioFocusService, AudioFocusService>();
         services.AddSingleton<IAudioFormatConverterService, AudioFormatConverterService>();
+        services.AddSingleton<IVideoConverterService, VideoConverterService>();
         services.AddSingleton<IMixdownService, MixdownService>();
         services.AddSingleton<ISoundSynthesisService, SoundSynthesisService>();
         services.AddSingleton<IPublicStorageService, PublicStorageService>();
@@ -113,6 +114,9 @@ public static class MauiProgram
 
         services.AddTransient<SettingsViewModel>();
         services.AddTransient<SettingsPage>();
+
+        services.AddTransient<VideoConverterViewModel>();
+        services.AddTransient<VideoConverterPage>();
 
         // Resolved once in App.CreateWindow so it can receive a logger, rather than being constructed with `new`.
         services.AddTransient<AppShell>();
