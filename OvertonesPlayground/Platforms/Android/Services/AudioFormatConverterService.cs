@@ -9,8 +9,11 @@ namespace OvertonesPlayground.Platforms.Android.Services;
 
 /// <summary>
 /// Converts between 16-bit PCM WAV and compressed audio using Android's <see cref="MediaExtractor"/>/
-/// <see cref="MediaCodec"/>: decoding MP3/AAC/OGG/etc. into WAV so the app's WAV-only pipeline can read them, and
-/// encoding WAV to AAC/MP3 for export.
+/// <see cref="MediaCodec"/>: decoding MP3/AAC/OGG/MP4/etc. into WAV so the app's WAV-only pipeline can read them
+/// (pulling the audio track straight out of a video container works the same way, since only the first audio track is
+/// ever selected), and encoding WAV to AAC/MP3 for export. Both directions stream to/from disk in bounded chunks
+/// rather than buffering a whole file in memory, since a source can be a multi-hour mixtape - hundreds of megabytes
+/// of raw PCM once decoded.
 /// </summary>
 public class AudioFormatConverterService : IAudioFormatConverterService
 {
@@ -22,13 +25,9 @@ public class AudioFormatConverterService : IAudioFormatConverterService
     /// profile-1).</summary>
     private const int AacLcProfile = 2;
 
-    /// <summary>Constant bit rate used for both AAC and (best-effort) MP3 export - fixed rather than user-configurable,
-    /// consistent with this feature's "cheap DSP" scope.</summary>
-    private const int EncodeBitRateBps = 128_000;
-
     private const long DequeueTimeoutUs = 10_000;
 
-    /// <summary>The fewest milliseconds between two decode progress reports.</summary>
+    /// <summary>The fewest milliseconds between two progress reports.</summary>
     private const long ProgressIntervalMs = 100;
 
     /// <summary>The 13 sample rates ADTS's 4-bit frequency-index field can represent, in index order - not an
@@ -47,12 +46,12 @@ public class AudioFormatConverterService : IAudioFormatConverterService
     }
 
     /// <inheritdoc />
-    public Task<string> ConvertFromWavAsync(string sourcePath, AudioExportFormat format, string outputName)
+    public Task<string> ConvertFromWavAsync(string sourcePath, AudioExportFormat format, string outputName, int bitRateBps = 128_000, IProgress<double>? progress = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
         ArgumentException.ThrowIfNullOrWhiteSpace(outputName);
 
-        return Task.Run(() => EncodeFromWavAsync(sourcePath, format, outputName));
+        return Task.Run(() => EncodeFromWavAsync(sourcePath, format, outputName, bitRateBps, progress));
     }
 
     /// <inheritdoc />
@@ -71,26 +70,100 @@ public class AudioFormatConverterService : IAudioFormatConverterService
         return !string.Equals(Path.GetExtension(filePath), ".wav", StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <inheritdoc />
+    public Task<TimeSpan> ProbeDurationAsync(string sourcePath)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
+        return Task.Run(() => ProbeDuration(sourcePath));
+    }
+
+    /// <summary>Opens just <paramref name="sourcePath"/>'s container metadata to read its audio track's duration,
+    /// without decoding any of it.</summary>
+    private static TimeSpan ProbeDuration(string sourcePath)
+    {
+        MediaExtractor extractor = new();
+        try
+        {
+            extractor.SetDataSource(sourcePath);
+
+            for (int i = 0; i < extractor.TrackCount; i++)
+            {
+                MediaFormat format = extractor.GetTrackFormat(i);
+                string? mime = format.GetString(MediaFormat.KeyMime);
+                bool isAudioTrack = mime?.StartsWith("audio/", StringComparison.Ordinal) == true;
+                if (isAudioTrack)
+                {
+                    long durationUs = format.ContainsKey(MediaFormat.KeyDuration) ? format.GetLong(MediaFormat.KeyDuration) : 0;
+                    return TimeSpan.FromMicroseconds(durationUs);
+                }
+            }
+
+            throw new NotSupportedException($"'{sourcePath}' has no audio track.");
+        }
+        finally
+        {
+            extractor.Release();
+            extractor.Dispose();
+        }
+    }
+
     /// <summary>Tells <paramref name="progress"/> how far <paramref name="positionUs"/> is through
     /// <paramref name="durationUs"/>, but no more often than <see cref="ProgressIntervalMs"/> so a long decode doesn't flood
     /// the UI thread with updates.</summary>
     private static void ReportDecodeProgress(IProgress<double>? progress, long positionUs, long durationUs, Stopwatch clock)
     {
-        bool cannotReport = progress is null || durationUs <= 0 || clock.ElapsedMilliseconds < ProgressIntervalMs;
+        if (durationUs <= 0)
+        {
+            return;
+        }
+
+        ReportThrottledProgress(progress, (double)positionUs / durationUs, clock);
+    }
+
+    /// <summary>Shared throttle behind <see cref="ReportDecodeProgress"/> and the encode loop's byte-based progress:
+    /// reports <paramref name="fraction"/>, clamped to [0, 1], but no more often than <see cref="ProgressIntervalMs"/>.</summary>
+    private static void ReportThrottledProgress(IProgress<double>? progress, double fraction, Stopwatch clock)
+    {
+        bool cannotReport = progress is null || clock.ElapsedMilliseconds < ProgressIntervalMs;
         if (cannotReport)
         {
             return;
         }
 
         clock.Restart();
-        progress!.Report(Math.Clamp((double)positionUs / durationUs, 0, 1));
+        progress!.Report(Math.Clamp(fraction, 0, 1));
     }
 
-    /// <summary>Runs the blocking extractor/decoder pump loop and writes the result as a WAV file.</summary>
+    /// <summary>Reads up to <paramref name="count"/> bytes from <paramref name="stream"/> into <paramref name="buffer"/>,
+    /// looping until either that many bytes have been read or the stream ends. A local file stream's <c>Read</c> can
+    /// legally return fewer bytes than asked for even before end-of-stream, so a single <c>Read</c> call isn't enough
+    /// to trust the buffer is full.</summary>
+    private static int ReadFully(System.IO.Stream stream, byte[] buffer, int count)
+    {
+        int totalRead = 0;
+        while (totalRead < count)
+        {
+            int read = stream.Read(buffer, totalRead, count - totalRead);
+            if (read <= 0)
+            {
+                break;
+            }
+
+            totalRead += read;
+        }
+
+        return totalRead;
+    }
+
+    /// <summary>Runs the blocking extractor/decoder pump loop, streaming the result straight to a WAV file on disk
+    /// instead of buffering it in memory.</summary>
     private static async Task<string> DecodeToWavAsync(string sourcePath, string outputName, IProgress<double>? progress)
     {
+        string outputPath = DerivedAudioFileWriter.ReservePath(ConvertedDirectory, outputName, "wav");
         MediaExtractor extractor = new();
         MediaCodec? codec = null;
+        WavStream.Writer? wavWriter = null;
+        bool completed = false;
         try
         {
             extractor.SetDataSource(sourcePath);
@@ -136,7 +209,6 @@ public class AudioFormatConverterService : IAudioFormatConverterService
             long durationUs = trackFormat.ContainsKey(MediaFormat.KeyDuration) ? trackFormat.GetLong(MediaFormat.KeyDuration) : 0;
             Stopwatch progressClock = Stopwatch.StartNew();
 
-            using MemoryStream pcm = new();
             using MediaCodec.BufferInfo info = new();
             bool sawInputEos = false;
             bool sawOutputEos = false;
@@ -171,12 +243,16 @@ public class AudioFormatConverterService : IAudioFormatConverterService
                 {
                     if (info.Size > 0)
                     {
+                        // Deferred until the first real output: Android emits OUTPUT_FORMAT_CHANGED (if at all) before
+                        // any actual audio, so channels/sampleRate are final by the time there's anything to write.
+                        wavWriter ??= WavStream.CreateWriter(outputPath, (short)channels, sampleRate);
+
                         ByteBuffer outputBuffer = codec.GetOutputBuffer(outputIndex)!;
                         byte[] chunk = new byte[info.Size];
                         outputBuffer.Position(info.Offset);
                         outputBuffer.Limit(info.Offset + info.Size);
                         outputBuffer.Get(chunk);
-                        pcm.Write(chunk, 0, chunk.Length);
+                        await wavWriter.WriteAsync(chunk, chunk.Length);
                     }
 
                     codec.ReleaseOutputBuffer(outputIndex, false);
@@ -195,15 +271,23 @@ public class AudioFormatConverterService : IAudioFormatConverterService
                 }
             }
 
-            byte[] bytes = pcm.ToArray();
-            short[] samples = new short[bytes.Length / 2];
-            System.Buffer.BlockCopy(bytes, 0, samples, 0, samples.Length * 2);
-
-            WavFile wav = new() { Channels = (short)channels, SampleRate = sampleRate, BitsPerSample = 16, Samples = samples, };
-            return await DerivedAudioFileWriter.SaveAsync(wav, ConvertedDirectory, outputName);
+            // The track produced no audio at all (e.g. a zero-length track) - still write a valid, empty WAV rather
+            // than leaving nothing on disk.
+            wavWriter ??= WavStream.CreateWriter(outputPath, (short)channels, sampleRate);
+            await wavWriter.CompleteAsync();
+            completed = true;
+            return outputPath;
         }
         finally
         {
+            wavWriter?.Dispose();
+            if (wavWriter is not null && !completed)
+            {
+                // The decode failed partway through - what's on disk is a truncated, header-only WAV, not a usable
+                // partial result, so don't leave it behind.
+                TryDelete(outputPath);
+            }
+
             if (codec is not null)
             {
                 try
@@ -225,10 +309,23 @@ public class AudioFormatConverterService : IAudioFormatConverterService
         }
     }
 
-    /// <summary>Runs the blocking PCM-in/compressed-out encoder pump loop and writes the result to a file.</summary>
-    private static async Task<string> EncodeFromWavAsync(string sourcePath, AudioExportFormat format, string outputName)
+    /// <summary>Best-effort delete; a failed conversion's own cleanup shouldn't throw a second exception over it.</summary>
+    private static void TryDelete(string path)
     {
-        WavFile source = await WavFile.ReadAsync(sourcePath);
+        try
+        {
+            File.Delete(path);
+        }
+        catch (IOException)
+        {
+        }
+    }
+
+    /// <summary>Runs the blocking PCM-in/compressed-out encoder pump loop, streaming the source WAV's data chunk
+    /// straight from disk and the encoded result straight to disk, so neither has to fit in memory at once.</summary>
+    private static async Task<string> EncodeFromWavAsync(string sourcePath, AudioExportFormat format, string outputName, int bitRateBps, IProgress<double>? progress)
+    {
+        using WavStream.Reader source = WavStream.OpenDataReader(sourcePath);
         string mimeType = format == AudioExportFormat.Aac ? "audio/mp4a-latm" : "audio/mpeg";
 
         int adtsFrequencyIndex = -1;
@@ -242,11 +339,16 @@ public class AudioFormatConverterService : IAudioFormatConverterService
             }
         }
 
+        string extension = format == AudioExportFormat.Aac ? "aac" : "mp3";
+        string outputPath = DerivedAudioFileWriter.ReservePath(ConvertedDirectory, outputName, extension);
+        bool completed = false;
+
         MediaCodec? codec = null;
+        FileStream? destination = null;
         try
         {
             using MediaFormat outputFormat = MediaFormat.CreateAudioFormat(mimeType, source.SampleRate, source.Channels);
-            outputFormat.SetInteger(MediaFormat.KeyBitRate, EncodeBitRateBps);
+            outputFormat.SetInteger(MediaFormat.KeyBitRate, bitRateBps);
             if (format == AudioExportFormat.Aac)
             {
                 outputFormat.SetInteger(MediaFormat.KeyAacProfile, (int)MediaCodecProfileType.Aacobjectlc);
@@ -263,15 +365,13 @@ public class AudioFormatConverterService : IAudioFormatConverterService
             }
 
             codec.Start();
+            destination = File.Create(outputPath);
 
-            byte[] pcmBytes = new byte[source.Samples.Length * 2];
-            System.Buffer.BlockCopy(source.Samples, 0, pcmBytes, 0, pcmBytes.Length);
-
-            using MemoryStream encoded = new();
             using MediaCodec.BufferInfo info = new();
-            int inputPosition = 0;
+            long bytesRead = 0;
             bool sawInputEos = false;
             bool sawOutputEos = false;
+            Stopwatch progressClock = Stopwatch.StartNew();
 
             while (!sawOutputEos)
             {
@@ -282,8 +382,8 @@ public class AudioFormatConverterService : IAudioFormatConverterService
                     {
                         ByteBuffer inputBuffer = codec.GetInputBuffer(inputIndex)!;
                         inputBuffer.Clear();
-                        int chunkSize = Math.Min(inputBuffer.Capacity(), pcmBytes.Length - inputPosition);
-                        bool isDone = chunkSize <= 0;
+                        int toRead = (int)Math.Min(inputBuffer.Capacity(), source.DataLength - bytesRead);
+                        bool isDone = toRead <= 0;
                         if (isDone)
                         {
                             codec.QueueInputBuffer(inputIndex, 0, 0, 0, MediaCodecBufferFlags.EndOfStream);
@@ -291,9 +391,21 @@ public class AudioFormatConverterService : IAudioFormatConverterService
                         }
                         else
                         {
-                            inputBuffer.Put(pcmBytes, inputPosition, chunkSize);
-                            codec.QueueInputBuffer(inputIndex, 0, chunkSize, 0, MediaCodecBufferFlags.None);
-                            inputPosition += chunkSize;
+                            byte[] chunk = new byte[toRead];
+                            int actuallyRead = ReadFully(source.Data, chunk, toRead);
+                            if (actuallyRead <= 0)
+                            {
+                                // The file is shorter than its header claimed - end the input here rather than spin.
+                                codec.QueueInputBuffer(inputIndex, 0, 0, 0, MediaCodecBufferFlags.EndOfStream);
+                                sawInputEos = true;
+                            }
+                            else
+                            {
+                                inputBuffer.Put(chunk, 0, actuallyRead);
+                                codec.QueueInputBuffer(inputIndex, 0, actuallyRead, 0, MediaCodecBufferFlags.None);
+                                bytesRead += actuallyRead;
+                                ReportThrottledProgress(progress, (double)bytesRead / source.DataLength, progressClock);
+                            }
                         }
                     }
                 }
@@ -311,10 +423,10 @@ public class AudioFormatConverterService : IAudioFormatConverterService
 
                         if (format == AudioExportFormat.Aac)
                         {
-                            WriteAdtsHeader(encoded, chunk.Length, adtsFrequencyIndex, source.Channels);
+                            WriteAdtsHeader(destination, chunk.Length, adtsFrequencyIndex, source.Channels);
                         }
 
-                        encoded.Write(chunk, 0, chunk.Length);
+                        await destination.WriteAsync(chunk);
                     }
 
                     codec.ReleaseOutputBuffer(outputIndex, false);
@@ -327,11 +439,18 @@ public class AudioFormatConverterService : IAudioFormatConverterService
                 }
             }
 
-            string extension = format == AudioExportFormat.Aac ? "aac" : "mp3";
-            return await DerivedAudioFileWriter.SaveBytesAsync(encoded.ToArray(), ConvertedDirectory, outputName, extension);
+            await destination.FlushAsync();
+            completed = true;
+            return outputPath;
         }
         finally
         {
+            destination?.Dispose();
+            if (destination is not null && !completed)
+            {
+                TryDelete(outputPath);
+            }
+
             if (codec is not null)
             {
                 try

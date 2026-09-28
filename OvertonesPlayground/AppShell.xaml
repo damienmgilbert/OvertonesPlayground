@@ -11,6 +11,10 @@
         <ShellContent ContentTemplate="{DataTemplate views:LibraryPage}" Route="library" />
     </FlyoutItem>
 
+    <FlyoutItem AutomationId="flyout-convert" Title="Convert" Route="convert">
+        <ShellContent ContentTemplate="{DataTemplate views:ConvertPage}" Route="convert" />
+    </FlyoutItem>
+
     <FlyoutItem AutomationId="flyout-soundbank" Title="Sound Bank" Route="soundbank">
         <ShellContent ContentTemplate="{DataTemplate views:SoundBankPage}" Route="soundbank" />
     </FlyoutItem>
