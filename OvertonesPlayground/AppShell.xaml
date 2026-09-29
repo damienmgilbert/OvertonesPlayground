@@ -55,10 +55,6 @@
         <ShellContent ContentTemplate="{DataTemplate views:SpeechToTextPage}" Route="speechtotext" />
     </FlyoutItem>
 
-    <FlyoutItem AutomationId="flyout-videoconverter" Title="Video Converter" Route="videoconverter">
-        <ShellContent ContentTemplate="{DataTemplate views:VideoConverterPage}" Route="videoconverter" />
-    </FlyoutItem>
-
     <FlyoutItem AutomationId="flyout-settings" Title="Settings" Route="settings">
         <ShellContent ContentTemplate="{DataTemplate views:SettingsPage}" Route="settings" />
     </FlyoutItem>
