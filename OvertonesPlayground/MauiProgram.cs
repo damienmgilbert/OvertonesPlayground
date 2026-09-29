@@ -93,6 +93,11 @@ public static class MauiProgram
         services.AddSingleton<SoundBankViewModel>();
         services.AddSingleton<SoundBankPage>();
 
+        // A conversion can run for many minutes on a long mixtape, for the same reason Library's import is a
+        // singleton: a fresh view model on returning to the page would know nothing of a still-running conversion.
+        services.AddSingleton<ConvertViewModel>();
+        services.AddSingleton<ConvertPage>();
+
         // Re-created fresh each time they're navigated to.
         services.AddTransient<SoundCreatorViewModel>();
         services.AddTransient<SoundCreatorPage>();

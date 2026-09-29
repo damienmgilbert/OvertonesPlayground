@@ -11,14 +11,15 @@ public interface IAudioFormatConverterService
 {
     #region Public methods
     ///<summary>
-    ///Encodes <paramref name="sourcePath"/> (a 16-bit PCM WAV file) into <paramref name="format"/> and returns the
-    ///new file's path.
+    ///Encodes <paramref name="sourcePath"/> (a 16-bit PCM WAV file) into <paramref name="format"/> at
+    ///<paramref name="bitRateBps"/> and returns the new file's path. <paramref name="progress"/> receives the
+    ///fraction encoded (0 to 1), from a background thread.
     ///</summary>
     ///<exception cref="ArgumentException"><paramref name="sourcePath"/> or <paramref name="outputName"/> is null,
     ///empty, or whitespace.</exception>
     ///<exception cref="NotSupportedException">The platform has no encoder for <paramref name="format"/>, or
     ///<paramref name="sourcePath"/>'s sample rate isn't one AAC's ADTS framing supports.</exception>
-    Task<string> ConvertFromWavAsync(string sourcePath, AudioExportFormat format, string outputName);
+    Task<string> ConvertFromWavAsync(string sourcePath, AudioExportFormat format, string outputName, int bitRateBps = 128_000, IProgress<double>? progress = null);
 
     ///<summary>
     ///Decodes <paramref name="sourcePath"/> into a new 16-bit PCM WAV file and returns its path. <paramref name="progress"/>
@@ -35,5 +36,14 @@ public interface IAudioFormatConverterService
     ///extension.
     ///</summary>
     bool NeedsConversion(string filePath);
+
+    ///<summary>
+    ///Reads just <paramref name="sourcePath"/>'s container metadata to return its audio track's duration, without
+    ///decoding it. Used to size a compression bit rate against a target file size before running a (possibly long)
+    ///conversion.
+    ///</summary>
+    ///<exception cref="ArgumentException"><paramref name="sourcePath"/> is null, empty, or whitespace.</exception>
+    ///<exception cref="NotSupportedException"><paramref name="sourcePath"/> carries no audio track.</exception>
+    Task<TimeSpan> ProbeDurationAsync(string sourcePath);
     #endregion
 }

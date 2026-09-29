@@ -62,6 +62,7 @@
 		<Compile Include="..\OvertonesPlayground\Services\Implementations\SpectralNoiseReducer.cs" Link="Linked\Services\SpectralNoiseReducer.cs" />
 		<Compile Include="..\OvertonesPlayground\Services\Implementations\TeachingTipsService.cs" Link="Linked\Services\TeachingTipsService.cs" />
 		<Compile Include="..\OvertonesPlayground\Services\Implementations\WavFile.cs" Link="Linked\Services\WavFile.cs" />
+		<Compile Include="..\OvertonesPlayground\Services\Implementations\WavStream.cs" Link="Linked\Services\WavStream.cs" />
 		<Compile Include="..\OvertonesPlayground\Services\Implementations\WaveformGenerator.cs" Link="Linked\Services\WaveformGenerator.cs" />
 	</ItemGroup>
 

@@ -40,6 +40,13 @@ internal static class DerivedAudioFileWriter
 
     #region Public methods
     ///<summary>
+    ///Reserves a timestamped, filename-sanitized, not-yet-existing path for <paramref name="outputName"/> inside
+    ///<paramref name="directory"/> (created if missing), for a caller that streams bytes into it directly instead of
+    ///writing them all at once.
+    ///</summary>
+    public static string ReservePath(string directory, string outputName, string extension) => BuildPath(directory, outputName, extension);
+
+    ///<summary>
     ///Writes raw encoded bytes (e.g. AAC/MP3) into <paramref name="directory"/> (created if missing) as a
     ///timestamped, filename-sanitized file named after <paramref name="outputName"/>, and returns its path.
     ///</summary>

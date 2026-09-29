@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:models="clr-namespace:OvertonesPlayground.Models"
+             xmlns:controls="clr-namespace:OvertonesPlayground.Controls"
+             xmlns:vm="clr-namespace:OvertonesPlayground.ViewModels"
+             x:Class="OvertonesPlayground.Views.ConvertPage" AutomationId="convert-page" SafeAreaEdges="All"
+             x:DataType="vm:ConvertViewModel"
+             Title="{Binding Title}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="40" Spacing="20" MaximumWidthRequest="600" HorizontalOptions="Center">
+
+            <controls:IconLabel Style="{StaticResource SubtitleTextBlockStyle}" Caption="Convert" Glyph="{x:Static models:IconFont.Compress}" HorizontalTextAlignment="Center" />
+            <Label Text="Turn any audio file - or a video's audio track, like an MP4 - into WAV, AAC, or MP3, and shrink it to a target size."
+                   HorizontalTextAlignment="Center" TextColor="{DynamicResource TextFillColorSecondary}" />
+
+            <Button AutomationId="convert-pick" ToolTipProperties.Text="Choose an audio file, or a video file (e.g. MP4) to pull the audio out of."
+                    Text="Choose a file..." controls:Icon.Glyph="{x:Static models:IconFont.Upload}"
+                    Command="{Binding PickCommand}" IsEnabled="{Binding IsConverting, Converter={StaticResource InvertedBool}}" />
+
+            <VerticalStackLayout AutomationId="convert-source-panel" IsVisible="{Binding HasSource}" Spacing="2">
+                <Label AutomationId="convert-source-name" Text="{Binding SourceFileName}" FontAttributes="Bold" HorizontalTextAlignment="Center" LineBreakMode="MiddleTruncation" />
+                <Label AutomationId="convert-source-summary" Text="{Binding SourceSummary}" TextColor="{DynamicResource TextFillColorSecondary}" HorizontalTextAlignment="Center" />
+            </VerticalStackLayout>
+
+            <VerticalStackLayout IsVisible="{Binding HasSource}" Spacing="10">
+
+                <Label Text="Convert to" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                <HorizontalStackLayout AutomationId="convert-target-format" Spacing="8">
+                    <Button AutomationId="convert-target-wav" Text="WAV (lossless)" Padding="12,6" Command="{Binding SetTargetFormatCommand}" CommandParameter="{x:Static models:ConversionTargetFormat.Wav}">
+                        <Button.Triggers>
+                            <DataTrigger TargetType="Button" Binding="{Binding TargetFormat}" Value="{x:Static models:ConversionTargetFormat.Wav}">
+                                <Setter Property="BackgroundColor" Value="{DynamicResource AccentFillColorDefault}" />
+                                <Setter Property="TextColor" Value="{DynamicResource TextOnAccentFillColorPrimary}" />
+                                <Setter Property="BorderColor" Value="{DynamicResource ControlStrokeColorOnAccentDefault}" />
+                            </DataTrigger>
+                        </Button.Triggers>
+                    </Button>
+                    <Button AutomationId="convert-target-aac" Text="AAC (recommended)" Padding="12,6" Command="{Binding SetTargetFormatCommand}" CommandParameter="{x:Static models:ConversionTargetFormat.Aac}">
+                        <Button.Triggers>
+                            <DataTrigger TargetType="Button" Binding="{Binding TargetFormat}" Value="{x:Static models:ConversionTargetFormat.Aac}">
+                                <Setter Property="BackgroundColor" Value="{DynamicResource AccentFillColorDefault}" />
+                                <Setter Property="TextColor" Value="{DynamicResource TextOnAccentFillColorPrimary}" />
+                                <Setter Property="BorderColor" Value="{DynamicResource ControlStrokeColorOnAccentDefault}" />
+                            </DataTrigger>
+                        </Button.Triggers>
+                    </Button>
+                    <Button AutomationId="convert-target-mp3" Text="MP3 (best-effort)" Padding="12,6" Command="{Binding SetTargetFormatCommand}" CommandParameter="{x:Static models:ConversionTargetFormat.Mp3}">
+                        <Button.Triggers>
+                            <DataTrigger TargetType="Button" Binding="{Binding TargetFormat}" Value="{x:Static models:ConversionTargetFormat.Mp3}">
+                                <Setter Property="BackgroundColor" Value="{DynamicResource AccentFillColorDefault}" />
+                                <Setter Property="TextColor" Value="{DynamicResource TextOnAccentFillColorPrimary}" />
+                                <Setter Property="BorderColor" Value="{DynamicResource ControlStrokeColorOnAccentDefault}" />
+                            </DataTrigger>
+                        </Button.Triggers>
+                    </Button>
+                </HorizontalStackLayout>
+
+                <VerticalStackLayout AutomationId="convert-compression-panel" IsVisible="{Binding ShowsCompressionControls}" Spacing="10">
+                    <Label Text="Compression" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                    <HorizontalStackLayout AutomationId="convert-bitrate-presets" Spacing="8">
+                        <Button AutomationId="convert-bitrate-standard" Text="Standard (128 kbps)" Padding="12,6" Command="{Binding SetStandardBitRateCommand}" />
+                        <Button AutomationId="convert-bitrate-smaller" Text="Smaller (96 kbps)" Padding="12,6" Command="{Binding SetSmallerBitRateCommand}" />
+                        <Button AutomationId="convert-bitrate-smallest" Text="Smallest (64 kbps)" Padding="12,6" Command="{Binding SetSmallestBitRateCommand}" />
+                    </HorizontalStackLayout>
+
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                        <Entry AutomationId="convert-target-size" Grid.Column="0" Placeholder="Target size (MB), e.g. 95" Keyboard="Numeric"
+                               Text="{Binding TargetSizeText}" ToolTipProperties.Text="Computes a bit rate that should land the converted file at or under this size." />
+                        <Label AutomationId="convert-bitrate-summary" Grid.Column="1" Text="{Binding BitRateSummary}" VerticalOptions="Center" TextColor="{DynamicResource TextFillColorSecondary}" />
+                    </Grid>
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+
+            <Button AutomationId="convert-run" Style="{StaticResource AccentButtonStyle}" Text="Convert" HeightRequest="56"
+                    controls:Icon.Glyph="{x:Static models:IconFont.Download}" controls:Icon.Size="24"
+                    Command="{Binding ConvertCommand}" IsVisible="{Binding HasSource}" />
+
+            <VerticalStackLayout AutomationId="convert-progress-panel" IsVisible="{Binding IsConverting}" Spacing="6">
+                <Label AutomationId="convert-status" Style="{StaticResource CaptionTextBlockStyle}" Text="{Binding ConvertStatus}" TextColor="{DynamicResource TextFillColorSecondary}" HorizontalTextAlignment="Center" />
+                <ProgressBar AutomationId="convert-progress" Progress="{Binding ConvertFraction}" SemanticProperties.Description="Conversion progress" />
+            </VerticalStackLayout>
+
+            <Label AutomationId="convert-result" Text="{Binding StatusMessage}" HorizontalTextAlignment="Center" TextColor="{DynamicResource TextFillColorSecondary}"
+                   IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBool}}" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>
