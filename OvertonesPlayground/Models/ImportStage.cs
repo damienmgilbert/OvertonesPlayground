@@ -1,7 +1,7 @@
 namespace OvertonesPlayground.Models;
 
 ///<summary>
-///The step an audio import or video-to-audio conversion is currently working through.
+///The step an audio import is currently working through.
 ///</summary>
 public enum ImportStage
 {
@@ -11,17 +11,12 @@ public enum ImportStage
     Copying,
 
     ///<summary>
-    ///Decoding a compressed file (MP3, AAC, OGG, ...) or a video's audio track into WAV.
+    ///Decoding a compressed file (MP3, AAC, OGG, ...) into WAV.
     ///</summary>
     Decoding,
 
     ///<summary>
-    ///Encoding a decoded WAV into a compressed output format (e.g. converting a video's audio to MP3).
-    ///</summary>
-    Encoding,
-
-    ///<summary>
-    ///Reading the clip's duration and saving it to the library, or saving a converted file to shared storage.
+    ///Reading the clip's duration and saving it to the library.
     ///</summary>
     Finishing,
 }
